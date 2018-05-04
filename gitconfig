@@ -1,0 +1,14 @@
+[user]
+    email = 230@fumire.moe
+    name = Jaewoong Lee
+[core]
+    editor = vim
+[push]
+    default = simple
+[pull]
+    rebase = true
+[merge]
+    conflictstyle = diff3
+    ff = false
+[fetch]
+    prune = true
