@@ -10,9 +10,3 @@ fi
 ln -s ~/.dotfiles/zshrc ~/.zshrc
 
 ln -s ~/.dotfiles/oh-my-zsh/themes/custom.zsh-theme ~/.oh-my-zsh/themes/custom.zsh-theme
-
-if [ -e ~/.alias.zsh ]; then
-    mv -f ~/.alias.zsh ~/.dotfiles/_old/alias.zsh
-fi
-ln -s ~/.dotfiles/oh-my-zsh/alias.zsh ~/.alias.zsh
-source ~/.alias.zsh

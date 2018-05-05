@@ -32,3 +32,11 @@ export SSH_KEY_PATH="~/.ssh/rsa_id"
 PATH=~/.dotfiles/bin:$PATH
 
 stty -ixon
+
+# Python3
+alias py='Python3'
+
+# common typos
+alias claer='clear'
+alias clera='clear'
+alias celar='clear'
