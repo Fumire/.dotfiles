@@ -3,6 +3,7 @@
     name = Jaewoong Lee
 [core]
     editor = vim
+	excludesfile = ~/.gitignore_global
 [push]
     default = simple
 [pull]
