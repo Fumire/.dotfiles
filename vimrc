@@ -79,6 +79,12 @@ set tabstop=4
 set softtabstop=4
 set expandtab
 
+" change Tab to Space
+autocmd FileType c retab
+autocmd FileType py retab
+autocmd FileType java retab
+autocmd FileType clojure retab
+
 " general settings
 set nowrap
 set ruler
@@ -116,7 +122,7 @@ endif
 
 " keymap
 let mapleader=','
-noremap <silent> <SPACE> :noh<CR>
+noremap <silent> <SPACE> :nohl<CR>
 nmap <silent> <leader>af :Autoformat<CR>
 
 " fugitive
