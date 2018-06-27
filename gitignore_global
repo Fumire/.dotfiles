@@ -1,4 +1,5 @@
 *~
+.*.sw*
 ## Mac
 .DS_Store
 
