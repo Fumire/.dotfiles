@@ -11,16 +11,16 @@ export ZSH=~/.oh-my-zsh
 ZSH_THEME="custom"
 
 plugins=(
-  git vi-mode sudo
+git vi-mode sudo
 )
 
 source $ZSH/oh-my-zsh.sh
 
 # Preferred editor for local and remote sessions
 if [[ -n $SSH_CONNECTION ]]; then
-  export EDITOR='vim'
+    export EDITOR='vim'
 else
-  export EDITOR='mvim'
+    export EDITOR='mvim'
 fi
 
 # Compilation flags
@@ -32,6 +32,16 @@ export SSH_KEY_PATH="~/.ssh/rsa_id"
 PATH=~/.dotfiles/bin:$PATH
 
 stty -ixon
+
+if command -v tmux>/dev/null; then
+    if [[ ! $TERM =~ screen ]] && [ -z $TMUX ]; then
+        if tmux ls&>/dev/null; then
+            exec tmux attach-session -t $(tmux ls | tail -n 1 | awk '{ print $1 }')
+        else
+            exec tmux
+        fi
+    fi
+fi
 
 # Python3
 alias py='python3'
