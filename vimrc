@@ -15,7 +15,7 @@ Plug 'vim-syntastic/syntastic'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-repeat'
-Plug 'int3/vim-taglist-plus'
+"Plug 'int3/vim-taglist-plus'
 Plug 'johngrib/vim-game-code-break'
 Plug 'vim-scripts/AutoComplPop'
 call plug#end()
