@@ -33,15 +33,15 @@ PATH=~/.dotfiles/bin:$PATH
 
 stty -ixon
 
-if command -v tmux>/dev/null; then
-    if [[ ! $TERM =~ screen ]] && [ -z $TMUX ]; then
-        if tmux ls&>/dev/null; then
-            exec tmux attach-session -t $(tmux ls | tail -n 1 | awk '{ print $1 }')
-        else
-            exec tmux
-        fi
-    fi
-fi
+#if command -v tmux>/dev/null; then
+#    if [[ ! $TERM =~ screen ]] && [ -z $TMUX ]; then
+#        if tmux ls&>/dev/null; then
+#            exec tmux attach-session -t $(tmux ls | tail -n 1 | awk '{ print $1 }')
+#        else
+#            exec tmux
+#        fi
+#    fi
+#fi
 
 # Python3
 alias py='python3'
