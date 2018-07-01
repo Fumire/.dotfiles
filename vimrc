@@ -18,6 +18,7 @@ Plug 'tpope/vim-repeat'
 "Plug 'int3/vim-taglist-plus'
 Plug 'johngrib/vim-game-code-break'
 Plug 'vim-scripts/AutoComplPop'
+Plug 'StanAngeloff/php.vim'
 call plug#end()
 
 " START - Setting up Vundle - the vim plugin bundler
