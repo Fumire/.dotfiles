@@ -67,7 +67,7 @@ autocmd FileType java retab
 autocmd FileType clojure retab
 
 " general settings
-set nowrap
+set wrap
 set ruler
 set cursorline
 set laststatus=2
