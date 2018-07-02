@@ -1,10 +1,12 @@
 " plug settings
 if empty(glob("~/.vim/autoload/plug.vim"))
-    silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-    autocmd VimEnter * PlugInstall | source $MYVIMRC
+	silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+	autocmd VimEnter * PlugInstall | source $MYVIMRC
 endif
 call plug#begin()
 Plug 'vim-airline/vim-airline'
+" Plug 'vim-airline/vim-airline-themes'
+
 Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
 Plug 'tpope/vim-fugitive'
 Plug 'bling/vim-bufferline'
@@ -17,53 +19,29 @@ Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-repeat'
 
 Plug 'majutsushi/tagbar' " Replace right below
-"Plug 'int3/vim-taglist-plus'
+" Plug 'int3/vim-taglist-plus'
 
 Plug 'vim-scripts/AutoComplPop'
 Plug 'StanAngeloff/php.vim'
 Plug 'johngrib/vim-game-code-break'
 call plug#end()
 
-" START - Setting up Vundle - the vim plugin bundler
-"let iCanHazVundle=1
-"let vundle_readme=expand('~/.vim/bundle/Vundle.vim/README.md')
-"if !filereadable(vundle_readme)
-"    echo "Installing Vundle.."
-"    echo ""
-"    silent !mkdir -p ~/.vim/bundle
-"    silent !git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
-"    let iCanHazVundle=0
-"endif
-"set rtp+=~/.vim/bundle/Vundle.vim/
-"call vundle#rc()
-" let Vundle manage Vundle, required
-"Plugin 'VundleVim/Vundle.vim'
-"if iCanHazVundle == 0
-"    echo "Installing Bundles, please ignore key map error messages"
-"    echo ""
-"    :PluginInstall
-"endif
-" END - Setting up Vundle - the vim plugin bundler
-"call vundle#begin()
-"call vundle#end()
-"filetype plugin indent on
-
-" syntax highlight
 if empty(glob("~/.vim/colors/jellybeans.vim"))
-    silent !curl -fLo ~/.vim/colors/jellybeans.vim --create-dirs https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
+	silent !curl -fLo ~/.vim/colors/jellybeans.vim --create-dirs https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
 endif
 syntax on
 colorscheme jellybeans
 
 " Nerdtree settings
-map <F9> :NERDTreeToggle <cr>
-let NERDTreeQuitOnOpen=1
-let NERDTreeShowHidden=1
+map <F9> :NERDTreeToggle <Return>
+let NERDTreeQuitOnOpen = 1
+let NERDTreeShowHidden = 1
 let NERDTreeWinPos = "left"
-let NERDTreeIgnore = ['\.pyc$']
+let NERDTreeIgnore = ['\.pyc$', '\.swp$', '\.git$']
+let NERDTreeShowLineNumbers = 1
 
 " Tag settings
-map <F10> :TagbarToggle <cr>
+map <F10> :TagbarToggle <Return>
 
 " autoformat settings
 let g:formatdef_astyle = '"astyle -A2SLYMpHjoxC200"'
@@ -95,7 +73,6 @@ set cursorline
 set laststatus=2
 set showcmd
 set showmatch
-set showmode
 set autoread
 set scrolloff=3
 set wildmenu
@@ -107,9 +84,13 @@ set hidden
 set wildignore+=*.swp,*.pyc,*.zip,venv,.git
 set backspace=indent,eol,start
 set wmnu
-set wrap
 set list
-set listchars=tab:→\ ,trail:·,precedes:«,extends:»,eol:¶
+
+if has('macunix')
+	set listchars=tab:→\ ,trail:·,precedes:«,extends:»,eol:¶
+else
+	set listchars=tab:..,trail:_,precedes:<,extends:>,eol:$
+endif
 
 " search settings
 set ignorecase
@@ -118,26 +99,27 @@ set hlsearch
 set incsearch
 set showcmd
 
+" status line settings
 set statusline=\ %<%l:%v\ [%P]%=%a\ %h%m%r\ %F\
 
 if has('mouse')
-    set mouse=a
+	set mouse=a
 endif
 
-" autocmd settings
-" autocmd BufWrite * :Autoformat
+" airline settings
+let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#tabline#left_sep =''
+let g:airline#extensions#tabline#right_sep = ''
+let g:airline#extensions#tabline#fnamemod = ':t'
+let g:airline#extensions#tabline#buffer_nr_show = 1
+let g:airline#extensions#tabline#buffer_nr_format = '%s:'
+nnoremap <C-t> :enew<Return>
+nnoremap <C-h> :bprevious<Return>
+nnoremap <C-l> :bnext<Return>
+nnoremap <C-q> :bp <BAR> bd #<Return>
 
 " keymap
-let mapleader=','
-noremap <silent> <SPACE> :nohl<CR>
-nmap <silent> <leader>af :Autoformat<CR>
-
-" fugitive
-nmap <silent> <leader>gs :Gstatus<CR>
-nmap <silent> <leader>gc :Gcommit<CR>
-nmap <silent> <leader>gw :Gwrite<CR>
-nmap <silent> <leader>gd :Gdiff<CR>
-nmap <silent> <leader>ge :Gedit<CR>
-nmap <silent> <leader>gb :Gblame<CR>
-nmap <silent> <leader>gp :Gpush<CR>
-nmap <silent> <leader>gl :Gpull<CR>
+noremap <silent> <SPACE> :nohlsearch<Return>
+nnoremap <silent> <leader>af :Autoformat<Return>
+nnoremap <C-w>m :sp 
+nnoremap <C-w>l :vs 
