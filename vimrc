@@ -15,10 +15,13 @@ Plug 'vim-syntastic/syntastic'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-repeat'
+
+Plug 'majutsushi/tagbar' " Replace right below
 "Plug 'int3/vim-taglist-plus'
-Plug 'johngrib/vim-game-code-break'
+
 Plug 'vim-scripts/AutoComplPop'
 Plug 'StanAngeloff/php.vim'
+Plug 'johngrib/vim-game-code-break'
 call plug#end()
 
 " START - Setting up Vundle - the vim plugin bundler
@@ -53,16 +56,14 @@ syntax on
 colorscheme jellybeans
 
 " Nerdtree settings
-map <F9> :NERDTreeToggle<cr>
+map <F9> :NERDTreeToggle <cr>
 let NERDTreeQuitOnOpen=1
 let NERDTreeShowHidden=1
 let NERDTreeWinPos = "left"
 let NERDTreeIgnore = ['\.pyc$']
 
-" TagList settings
-map <F10> :TlistToggle<cr>
-
-" airline settings
+" Tag settings
+map <F10> :TagbarToggle <cr>
 
 " autoformat settings
 let g:formatdef_astyle = '"astyle -A2SLYMpHjoxC200"'
@@ -78,10 +79,11 @@ set smartindent
 set shiftwidth=4
 set tabstop=4
 set softtabstop=4
-set expandtab
+set noexpandtab
 
 " change Tab to Space
 autocmd FileType c retab
+autocmd FileType cpp retab
 autocmd FileType py retab
 autocmd FileType java retab
 autocmd FileType clojure retab
@@ -89,6 +91,7 @@ autocmd FileType clojure retab
 " general settings
 set nowrap
 set ruler
+set cursorline
 set laststatus=2
 set showcmd
 set showmatch
@@ -105,12 +108,15 @@ set wildignore+=*.swp,*.pyc,*.zip,venv,.git
 set backspace=indent,eol,start
 set wmnu
 set wrap
+set list
+set listchars=tab:→\ ,trail:·,precedes:«,extends:»,eol:¶
 
 " search settings
 set ignorecase
 set smartcase
 set hlsearch
 set incsearch
+set showcmd
 
 set statusline=\ %<%l:%v\ [%P]%=%a\ %h%m%r\ %F\
 
