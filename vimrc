@@ -55,9 +55,9 @@ filetype indent plugin on
 set autoindent
 set smartindent
 set shiftwidth=4
+set expandtab
 set tabstop=4
 set softtabstop=4
-set noexpandtab
 
 " change Tab to Space
 autocmd FileType c retab
@@ -68,6 +68,8 @@ autocmd FileType clojure retab
 
 " general settings
 set wrap
+set linebreak
+set showbreak=···
 set ruler
 set cursorline
 set laststatus=2
@@ -87,9 +89,9 @@ set wmnu
 set list
 
 if has('macunix')
-	set listchars=tab:→\ ,trail:·,precedes:«,extends:»,eol:¶
+	set listchars=tab:⇥\ ,trail:·,precedes:«,extends:»,eol:¶
 else
-	set listchars=tab:..,trail:_,precedes:<,extends:>,eol:$
+	set listchars=tab:-\ ,trail:_,precedes:<,extends:>,eol:$
 endif
 
 " search settings
@@ -98,6 +100,7 @@ set smartcase
 set hlsearch
 set incsearch
 set showcmd
+set mps+=<:>
 
 " status line settings
 set statusline=\ %<%l:%v\ [%P]%=%a\ %h%m%r\ %F\
@@ -121,5 +124,5 @@ nnoremap <C-q> :bp <BAR> bd #<Return>
 " keymap
 noremap <silent> <SPACE> :nohlsearch<Return>
 nnoremap <silent> <leader>af :Autoformat<Return>
-nnoremap <C-w>m :sp 
-nnoremap <C-w>l :vs 
+nnoremap <C-w>m :split 
+nnoremap <C-w>l :vsplit 
