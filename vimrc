@@ -1,7 +1,7 @@
 " plug settings
 if empty(glob("~/.vim/autoload/plug.vim"))
-	silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-	autocmd VimEnter * PlugInstall | source $MYVIMRC
+    silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+    autocmd VimEnter * PlugInstall | source $MYVIMRC
 endif
 call plug#begin()
 Plug 'vim-airline/vim-airline'
@@ -27,7 +27,7 @@ Plug 'johngrib/vim-game-code-break'
 call plug#end()
 
 if empty(glob("~/.vim/colors/jellybeans.vim"))
-	silent !curl -fLo ~/.vim/colors/jellybeans.vim --create-dirs https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
+    silent !curl -fLo ~/.vim/colors/jellybeans.vim --create-dirs https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
 endif
 syntax on
 colorscheme jellybeans
@@ -89,9 +89,9 @@ set wmnu
 set list
 
 if has('macunix')
-	set listchars=tab:⇥\ ,trail:·,precedes:«,extends:»,eol:¶
+    set listchars=tab:⇥\ ,trail:·,precedes:«,extends:»,eol:¶
 else
-	set listchars=tab:-\ ,trail:_,precedes:<,extends:>,eol:$
+    set listchars=tab:-\ ,trail:_,precedes:<,extends:>,eol:$
 endif
 
 " search settings
@@ -106,7 +106,7 @@ set mps+=<:>
 set statusline=\ %<%l:%v\ [%P]%=%a\ %h%m%r\ %F\
 
 if has('mouse')
-	set mouse=a
+    set mouse=a
 endif
 
 " airline settings
@@ -122,7 +122,7 @@ nnoremap <C-l> :bnext<Return>
 nnoremap <C-q> :bp <BAR> bd #<Return>
 
 " keymap
-noremap <silent> <SPACE> :nohlsearch<Return>
+nnoremap <silent> <SPACE> :nohl<Return>
 nnoremap <silent> <leader>af :Autoformat<Return>
-nnoremap <C-w>m :split 
-nnoremap <C-w>l :vsplit 
+nnoremap <C-w>m :split
+nnoremap <C-w>l :vsplit
