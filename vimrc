@@ -40,7 +40,7 @@ let NERDTreeWinPos = "left"
 let NERDTreeIgnore = ['\.pyc$', '\.swp$', '\.git$']
 let NERDTreeShowLineNumbers = 1
 
-" Tag settings
+" Tagbar settings
 map <F10> :TagbarToggle <Return>
 
 " autoformat settings
