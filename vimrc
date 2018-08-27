@@ -5,7 +5,6 @@ if empty(glob("~/.vim/autoload/plug.vim"))
 endif
 call plug#begin()
 Plug 'vim-airline/vim-airline'
-" Plug 'vim-airline/vim-airline-themes'
 
 Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
 Plug 'tpope/vim-fugitive'
@@ -63,8 +62,6 @@ set softtabstop=4
 autocmd FileType c retab
 autocmd FileType cpp retab
 autocmd FileType py retab
-autocmd FileType java retab
-autocmd FileType clojure retab
 
 " general settings
 set wrap
@@ -111,7 +108,7 @@ endif
 
 " airline settings
 let g:airline#extensions#tabline#enabled = 1
-let g:airline#extensions#tabline#left_sep =''
+let g:airline#extensions#tabline#left_sep = ''
 let g:airline#extensions#tabline#right_sep = ''
 let g:airline#extensions#tabline#fnamemod = ':t'
 let g:airline#extensions#tabline#buffer_nr_show = 1
