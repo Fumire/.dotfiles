@@ -84,6 +84,7 @@ set wildignore+=*.swp,*.pyc,*.zip,venv,.git
 set backspace=indent,eol,start
 set wmnu
 set list
+set noswapfile
 
 if has('macunix')
     set listchars=tab:⇥\ ,trail:·,precedes:«,extends:»,eol:¶
