@@ -66,7 +66,7 @@ autocmd FileType py retab
 " general settings
 set wrap
 set linebreak
-set showbreak=···
+set showbreak=·····
 set ruler
 set cursorline
 set laststatus=2
