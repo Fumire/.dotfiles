@@ -103,6 +103,9 @@ set mps+=<:>
 " status line settings
 set statusline=\ %<%l:%v\ [%P]%=%a\ %h%m%r\ %F\
 
+" use OS clipboard
+set clipboard=unnamed
+
 if has('mouse')
     set mouse=a
 endif
