@@ -86,11 +86,7 @@ set wmnu
 set list
 set noswapfile
 
-if has('macunix')
-    set listchars=tab:⇥\ ,trail:·,precedes:«,extends:»,eol:¶
-else
-    set listchars=tab:-\ ,trail:_,precedes:<,extends:>,eol:$
-endif
+set listchars=tab:⇥\ ,trail:·,precedes:«,extends:»,eol:¶
 
 " search settings
 set ignorecase
