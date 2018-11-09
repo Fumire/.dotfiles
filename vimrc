@@ -21,7 +21,7 @@ Plug 'majutsushi/tagbar' " Replace right below
 " Plug 'int3/vim-taglist-plus'
 
 Plug 'vim-scripts/AutoComplPop'
-Plug 'StanAngeloff/php.vim'
+Plug 'StanAngeloff/php.vim', {'for': 'php'}
 Plug 'johngrib/vim-game-code-break'
 call plug#end()
 
@@ -48,6 +48,7 @@ let g:formatters_java = ['astyle']
 let g:formatters_cpp = ['astyle']
 let g:formatters_c = ['astyle']
 let g:formatters_python = ['autopep8']
+let g:syntastic_python_flake8_args = "--ignore=E501"
 
 " indent and tab settings
 filetype indent plugin on
