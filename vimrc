@@ -16,6 +16,8 @@ Plug 'vim-syntastic/syntastic'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-repeat'
+Plug 'mbbill/undotree'
+Plug 'Yggdroot/indentLine'
 
 Plug 'majutsushi/tagbar' " Replace right below
 " Plug 'int3/vim-taglist-plus'
@@ -23,12 +25,16 @@ Plug 'majutsushi/tagbar' " Replace right below
 Plug 'vim-scripts/AutoComplPop'
 Plug 'StanAngeloff/php.vim', {'for': 'php'}
 Plug 'johngrib/vim-game-code-break'
+
+Plug 'tikhomirov/vim-glsl', {'for': 'vert, geom, frag'}
 call plug#end()
 
 if empty(glob("~/.vim/colors/jellybeans.vim"))
     silent !curl -fLo ~/.vim/colors/jellybeans.vim --create-dirs https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
 endif
-syntax on
+if has('syntax')
+    syntax on
+endif
 colorscheme jellybeans
 
 " Nerdtree settings
@@ -86,6 +92,7 @@ set backspace=indent,eol,start
 set wmnu
 set list
 set noswapfile
+set paste
 
 set listchars=tab:⇥\ ,trail:·,precedes:«,extends:»,eol:¶
 
@@ -117,7 +124,7 @@ let g:airline#extensions#tabline#buffer_nr_format = '%s:'
 nnoremap <C-t> :enew<Return>
 nnoremap <C-h> :bprevious<Return>
 nnoremap <C-l> :bnext<Return>
-nnoremap <C-q> :bp <BAR> bd #<Return>
+nnoremap <C-q> :bprevious <BAR> bdelete #<Return>
 
 " keymap
 nnoremap <silent> <SPACE> :nohl<Return>
