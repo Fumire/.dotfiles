@@ -92,7 +92,6 @@ set backspace=indent,eol,start
 set wmnu
 set list
 set noswapfile
-set paste
 
 set listchars=tab:⇥\ ,trail:·,precedes:«,extends:»,eol:¶
 
