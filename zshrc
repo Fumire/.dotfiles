@@ -54,3 +54,5 @@ alias pip2Update="pip2 freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs 
 alias claer='clear'
 alias clera='clear'
 alias celar='clear'
+# prevent accident
+alias rm='rm -i'
