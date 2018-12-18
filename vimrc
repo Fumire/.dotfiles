@@ -25,8 +25,6 @@ Plug 'majutsushi/tagbar' " Replace right below
 Plug 'vim-scripts/AutoComplPop'
 Plug 'StanAngeloff/php.vim', {'for': 'php'}
 Plug 'johngrib/vim-game-code-break'
-
-Plug 'tikhomirov/vim-glsl', {'for': 'vert, geom, frag'}
 call plug#end()
 
 if empty(glob("~/.vim/colors/jellybeans.vim"))
