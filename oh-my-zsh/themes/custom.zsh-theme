@@ -354,6 +354,10 @@ prompt_end() {
 # to be shown
 # ------------------------------------------------------------------------------
 
+if [ ! -n "${BULLETTRAIN_EXEC_TIME_FG+1}" ]; then
+  BULLETTRAIN_IS_SSH_CLIENT=true
+fi
+
 # Context: user@hostname (who am I and where am I)
 context() {
   local user="$(whoami)"
