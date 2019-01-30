@@ -291,7 +291,7 @@ fi
 
 # SCREEN
 if [ ! -n "${BULLETTRAIN_SCREEN_BG+1}" ]; then
-  BULLETTRAIN_SCREEN_BG=white
+  BULLETTRAIN_SCREEN_BG=green
 fi
 if [ ! -n "${BULLETTRAIN_SCREEN_FG+1}" ]; then
   BULLETTRAIN_SCREEN_FG=black
