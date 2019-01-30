@@ -15,19 +15,22 @@
 
 VIRTUAL_ENV_DISABLE_PROMPT=true
 BULLETTRAIN_CONTEXT_DEFAULT_USER=Feb30th
+if [[ -n "${SSH_CONNECTION}+1" ]]; then
+    BULLETTRAIN_IS_SSH_CLIENT=true;
+else
+    BULLETTRAIN_IS_SSH_CLIENT=false;
+fi
 
 # Define order and content of prompt
 if [ ! -n "${BULLETTRAIN_PROMPT_ORDER+1}" ]; then
   BULLETTRAIN_PROMPT_ORDER=(
     time
+    context
     status
-    custom
     dir
     screen
-    virtualenv
     git
     cmd_exec_time
-    context
   )
 fi
 
@@ -222,7 +225,7 @@ if [ ! -n "${BULLETTRAIN_CONTEXT_FG+1}" ]; then
   BULLETTRAIN_CONTEXT_FG=black
 fi
 if [ ! -n "${BULLETTRAIN_CONTEXT_HOSTNAME+1}" ]; then
-  BULLETTRAIN_CONTEXT_HOSTNAME=%m
+  BULLETTRAIN_CONTEXT_HOSTNAME=%M
 fi
 
 # GIT PROMPT
@@ -363,7 +366,7 @@ fi
 # Context: user@hostname (who am I and where am I)
 context() {
   local user="$(whoami)"
-  [[ "$user" != "$BULLETTRAIN_CONTEXT_DEFAULT_USER" || -n "$BULLETTRAIN_IS_SSH_CLIENT" ]] && echo -n "${user}@$BULLETTRAIN_CONTEXT_HOSTNAME"
+  [[ "$user" != "$BULLETTRAIN_CONTEXT_DEFAULT_USER" && -n "$BULLETTRAIN_IS_SSH_CLIENT" ]] && echo -n "${user}@$BULLETTRAIN_CONTEXT_HOSTNAME"
 }
 
 prompt_context() {
