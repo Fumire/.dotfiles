@@ -16,12 +16,8 @@ git vi-mode sudo
 
 source $ZSH/oh-my-zsh.sh
 
-# Preferred editor for local and remote sessions
-if [[ -n $SSH_CONNECTION ]]; then
-    export EDITOR='vim'
-else
-    export EDITOR='mvim'
-fi
+export TERM='screen-256color'
+export EDITOR='vim'
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -32,16 +28,6 @@ export SSH_KEY_PATH="~/.ssh/rsa_id"
 PATH=~/.dotfiles/bin:$PATH
 
 stty -ixon
-
-#if command -v tmux>/dev/null; then
-#    if [[ ! $TERM =~ screen ]] && [ -z $TMUX ]; then
-#        if tmux ls&>/dev/null; then
-#            exec tmux attach-session -t $(tmux ls | tail -n 1 | awk '{ print $1 }')
-#        else
-#            exec tmux
-#        fi
-#    fi
-#fi
 
 # Python3
 alias py='python3'
@@ -54,8 +40,14 @@ alias pip2Update="pip2 freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs 
 alias claer='clear'
 alias clera='clear'
 alias celar='clear'
-#
+
 # prevent accident
 alias rm='rm -i'
 alias mv='mv -i'
 alias cp='cp -i'
+
+# multiple line command
+autoload -U edit-command-line
+zle -N edit-command-line
+bindkey '^xe' edit-command-line
+bindkey '^x^e' edit-command-line

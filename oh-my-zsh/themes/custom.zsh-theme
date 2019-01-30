@@ -14,6 +14,7 @@
 # ------------------------------------------------------------------------------
 
 VIRTUAL_ENV_DISABLE_PROMPT=true
+BULLETTRAIN_CONTEXT_DEFAULT_USER=Feb30th
 
 # Define order and content of prompt
 if [ ! -n "${BULLETTRAIN_PROMPT_ORDER+1}" ]; then
@@ -26,6 +27,7 @@ if [ ! -n "${BULLETTRAIN_PROMPT_ORDER+1}" ]; then
     virtualenv
     git
     cmd_exec_time
+    context
   )
 fi
 
@@ -214,10 +216,10 @@ fi
 
 # CONTEXT
 if [ ! -n "${BULLETTRAIN_CONTEXT_BG+1}" ]; then
-  BULLETTRAIN_CONTEXT_BG=black
+  BULLETTRAIN_CONTEXT_BG=yellow
 fi
 if [ ! -n "${BULLETTRAIN_CONTEXT_FG+1}" ]; then
-  BULLETTRAIN_CONTEXT_FG=default
+  BULLETTRAIN_CONTEXT_FG=black
 fi
 if [ ! -n "${BULLETTRAIN_CONTEXT_HOSTNAME+1}" ]; then
   BULLETTRAIN_CONTEXT_HOSTNAME=%m
