@@ -26,7 +26,6 @@ Plug 'mtth/scratch.vim'
 Plug 'chrisbra/csv.vim'
 Plug 'tmux-plugins/vim-tmux'
 
-Plug 'vim-scripts/AutoComplPop'
 Plug 'Valloric/YouCompleteMe'
 Plug 'vim-syntastic/syntastic'
 Plug 'StanAngeloff/php.vim', {'for': 'php'}
@@ -41,6 +40,9 @@ if has('syntax')
     syntax on
 endif
 colorscheme jellybeans
+
+" CSV settings
+map <C-d> :NewDelimiter 
 
 " syntastic settings
 let g:syntastic_html_tidy_ignore_errors=['proprietary attribute "ng-', 'proprietary attribute "chart-', 'proprietary attribute "pdk-']
@@ -69,6 +71,8 @@ highlight link SyntasticStyleWarningSign SignColumn
 " YouCompleteMe settings
 let g:ycm_min_num_of_chars_for_completion = 1
 let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py'
+let g:ycm_key_list_stop_completion = ['<C-y>', '<Return>']
+let g:ycm_collect_identifiers_from_tags_files = 1
 
 " SingleCompile settings
 map <F12> :SingleCompile <Return>
