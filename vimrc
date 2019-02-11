@@ -27,7 +27,6 @@ Plug 'chrisbra/csv.vim'
 Plug 'tmux-plugins/vim-tmux'
 
 Plug 'Valloric/YouCompleteMe'
-Plug 'vim-syntastic/syntastic'
 Plug 'StanAngeloff/php.vim', {'for': 'php'}
 
 Plug 'johngrib/vim-game-code-break'
@@ -43,30 +42,6 @@ colorscheme jellybeans
 
 " CSV settings
 map <C-d> :NewDelimiter 
-
-" syntastic settings
-let g:syntastic_html_tidy_ignore_errors=['proprietary attribute "ng-', 'proprietary attribute "chart-', 'proprietary attribute "pdk-']
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_check_on_wq = 0
-let g:syntastic_loc_list_height = 5
-let g:syntastic_javascript_checkers = ['eslint']
-let g:syntastic_java_checkers = ['javac', 'checkstyle']
-let g:syntastic_json_checkers = ['jsonlint']
-let g:syntastic_python_checkers = ['flake8']
-let g:syntastic_css_checkers = ['csslint']
-let g:syntastic_c_checkers = ['clang_check']
-let g:syntastic_html_checkers = ['jshint']
-let g:syntastic_typescript_checkers = ['tsuquyomi'] " You shouldn't use 'tsc' checker.
-let g:syntastic_error_symbol = '❌ '
-let g:syntastic_warning_symbol = '✗ '
-let g:syntastic_style_error_symbol = '❓'
-let g:syntastic_style_warning_symbol = '❔'
-let g:syntastic_java_checkstyle_classpath = '~/checkstyle-7.6-all.jar'
-let g:syntastic_java_checkstyle_conf_file = '~/sun_checks.xml'
-highlight link SyntasticErrorSign SignColumn
-highlight link SyntasticWarningSign SignColumn
-highlight link SyntasticStyleErrorSign SignColumn
-highlight link SyntasticStyleWarningSign SignColumn
 
 " YouCompleteMe settings
 let g:ycm_min_num_of_chars_for_completion = 1
