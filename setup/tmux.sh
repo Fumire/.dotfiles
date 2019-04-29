@@ -4,3 +4,9 @@ if [ -e ~/.tmux.conf ]; then
     echo "move tmux.conf"
 fi
 ln -s ~/.dotfiles/tmux.conf ~/.tmux.conf
+
+if [ -e ~/.tmux.conf.local ]; then
+    mv -f ~/.tmux.conf.local ~/.dotfiles/_old/tmux.conf.local
+    echo "move tmux.conf.local"
+fi
+ln -s ~/.dotfiles/tmux.conf.local ~/.tmux.conf.local
