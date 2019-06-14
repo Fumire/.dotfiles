@@ -5,7 +5,6 @@ if empty(glob("~/.vim/autoload/plug.vim"))
 endif
 call plug#begin()
 Plug 'vim-airline/vim-airline'
-
 Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
 Plug 'tpope/vim-fugitive'
 Plug 'bling/vim-bufferline'
@@ -24,10 +23,13 @@ Plug 'xuhdev/SingleCompile'
 
 Plug 'mtth/scratch.vim'
 Plug 'chrisbra/csv.vim'
-Plug 'tmux-plugins/vim-tmux'
 
 Plug 'Valloric/YouCompleteMe'
+Plug 'tmux-plugins/vim-tmux'
 Plug 'StanAngeloff/php.vim', {'for': 'php'}
+Plug 'jalvesaq/Nvim-R', {'for': ['r', 'R']}
+Plug 'plasticboy/vim-markdown', {'for': ['md', 'markdown']}
+Plug 'pangloss/vim-javascript', {'for': 'js'}
 
 Plug 'johngrib/vim-game-code-break'
 call plug#end()
@@ -39,6 +41,9 @@ if has('syntax')
     syntax on
 endif
 colorscheme jellybeans
+
+" Autoformat settings
+nnoremap <silent> <leader>af :Autoformat<Return>
 
 " CSV settings
 map <C-d> :NewDelimiter 
@@ -57,7 +62,7 @@ let g:scratch_persistence_file = '/tmp/scratch_persistence_file.txt'
 let g:scratch_autohide = 0
 
 " Nerdtree settings
-map <F9> :NERDTreeToggle <Return>
+map <silent> <F9> :NERDTreeToggle <Return>
 let NERDTreeQuitOnOpen = 1
 let NERDTreeShowHidden = 1
 let NERDTreeWinPos = "left"
@@ -65,7 +70,7 @@ let NERDTreeIgnore = ['\.pyc$', '\.swp$', '\.git$']
 let NERDTreeShowLineNumbers = 1
 
 " Tagbar settings
-map <F10> :TagbarToggle <Return>
+map <silent> <F10> :TagbarToggle <Return>
 
 " autoformat settings
 let g:formatdef_astyle = '"astyle -A2SLYMpHjoxC200"'
@@ -78,8 +83,6 @@ let g:syntastic_python_flake8_args = "--ignore=E501"
 " indent and tab settings
 filetype indent plugin on
 set autoindent
-set smartindent
-set shiftwidth=4
 set expandtab
 set tabstop=4
 set softtabstop=4
@@ -98,6 +101,7 @@ set cursorline
 set laststatus=2
 set showcmd
 set showmatch
+set matchtime=3
 set autoread
 set scrolloff=3
 set wildmenu
@@ -110,6 +114,11 @@ set wildignore+=*.swp,*.pyc,*.zip,venv,.git
 set backspace=indent,eol,start
 set wmnu
 set list
+set background=dark
+
+" bakcup settings
+set nobackup
+set nowritebackup
 set noswapfile
 
 set listchars=tab:⇥\ ,trail:·,precedes:«,extends:»,eol:¶
@@ -139,13 +148,12 @@ let g:airline#extensions#tabline#right_sep = ''
 let g:airline#extensions#tabline#fnamemod = ':t'
 let g:airline#extensions#tabline#buffer_nr_show = 1
 let g:airline#extensions#tabline#buffer_nr_format = '%s:'
-nnoremap <C-t> :enew<Return>
-nnoremap <C-h> :bprevious<Return>
-nnoremap <C-l> :bnext<Return>
-nnoremap <C-q> :bprevious <BAR> bdelete #<Return>
+nnoremap <C-t> :enew <Return>
+nnoremap <silent> <C-h> :bprevious <Return>
+nnoremap <silent> <C-l> :bnext <Return>
+nnoremap <silent> <C-q> :bprevious <BAR> bdelete #<Return>
 
 " keymap
-nnoremap <silent> <SPACE> :nohl<Return>
-nnoremap <silent> <leader>af :Autoformat<Return>
-nnoremap <C-w>m :split
-nnoremap <C-w>l :vsplit
+nnoremap <silent> <SPACE> :nohl <Return>
+nnoremap <C-w>m :split 
+nnoremap <C-w>l :vsplit 
