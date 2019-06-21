@@ -42,9 +42,6 @@ if has('syntax')
 endif
 colorscheme jellybeans
 
-" Autoformat settings
-nnoremap <silent> <leader>af :Autoformat<Return>
-
 " CSV settings
 map <C-d> :NewDelimiter 
 
@@ -73,16 +70,21 @@ let NERDTreeShowLineNumbers = 1
 map <silent> <F10> :TagbarToggle <Return>
 
 " autoformat settings
-let g:formatdef_astyle = '"astyle -A2SLYMpHjoxC200"'
-let g:formatters_java = ['astyle']
-let g:formatters_cpp = ['astyle']
-let g:formatters_c = ['astyle']
+nnoremap <silent> <leader>af :Autoformat <Return>
+let g:formatdef_my_astyle = '"astyle --style=bsd --indent=spaces=4 --indent-preproc-block --indent-preproc-define --indent-col1-comments --pad-oper --pad-comma --pad-paren --break-closing-braces --add-braces --attach-return-type --align-pointer=type --delete-empty-lines --add-one-line-braces --align=reference=type --break-blocks"'
+let g:formatters_java = ['my_astyle']
+let g:formatters_cpp = ['my_astyle']
+let g:formatters_c = ['my_astyle']
 let g:formatters_python = ['autopep8']
 let g:syntastic_python_flake8_args = "--ignore=E501"
+let g:formatters_per = ['perltidy']
+autocmd FileType vim,tex let g:autoformat_autoindent=0
 
 " indent and tab settings
 filetype indent plugin on
 set autoindent
+set smartindent
+set shiftwidth=4
 set expandtab
 set tabstop=4
 set softtabstop=4
@@ -112,7 +114,6 @@ set number
 set hidden
 set wildignore+=*.swp,*.pyc,*.zip,venv,.git
 set backspace=indent,eol,start
-set wmnu
 set list
 set background=dark
 
