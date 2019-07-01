@@ -24,7 +24,11 @@ Plug 'xuhdev/SingleCompile'
 Plug 'mtth/scratch.vim'
 Plug 'chrisbra/csv.vim'
 
-Plug 'Valloric/YouCompleteMe'
+if v:version < 705
+    Plug 'vim-scripts/AutoComplPop'
+else
+    Plug 'Valloric/YouCompleteMe'
+endif
 Plug 'tmux-plugins/vim-tmux'
 Plug 'StanAngeloff/php.vim', {'for': 'php'}
 Plug 'jalvesaq/Nvim-R', {'for': ['r', 'R']}
@@ -35,7 +39,7 @@ Plug 'johngrib/vim-game-code-break'
 call plug#end()
 
 if empty(glob("~/.vim/colors/jellybeans.vim"))
-    silent !curl -fLo ~/.vim/colors/jellybeans.vim --create-dirs https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
+    silent !curl --form --location --output ~/.vim/colors/jellybeans.vim --create-dirs https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
 endif
 if has('syntax')
     syntax on
@@ -43,7 +47,7 @@ endif
 colorscheme jellybeans
 
 " CSV settings
-map <C-d> :NewDelimiter 
+map <C-d> :NewDelimiter
 
 " YouCompleteMe settings
 let g:ycm_min_num_of_chars_for_completion = 1
@@ -71,13 +75,14 @@ map <silent> <F10> :TagbarToggle <Return>
 
 " autoformat settings
 nnoremap <silent> <leader>af :Autoformat <Return>
-let g:formatdef_my_astyle = '"astyle --style=bsd --indent=spaces=4 --indent-preproc-block --indent-preproc-define --indent-col1-comments --pad-oper --pad-comma --pad-paren --break-closing-braces --add-braces --attach-return-type --align-pointer=type --delete-empty-lines --add-one-line-braces --align=reference=type --break-blocks"'
+let g:formatdef_my_astyle = '"astyle --style=bsd --indent=spaces=4 --indent-preproc-block --indent-preproc-define --indent-col1-comments --pad-oper --pad-comma --unpad-paren --break-closing-braces --add-braces --attach-return-type --align-pointer=type --delete-empty-lines --add-one-line-braces --align-reference=type --break-blocks"'
 let g:formatters_java = ['my_astyle']
 let g:formatters_cpp = ['my_astyle']
 let g:formatters_c = ['my_astyle']
-let g:formatters_python = ['autopep8']
+let g:formatdef_my_autopep8 = '"autopep8 --ignore E501"'
+let g:formatters_python = ['my_autopep8']
 let g:syntastic_python_flake8_args = "--ignore=E501"
-let g:formatters_per = ['perltidy']
+let g:formatters_perl = ['perltidy']
 autocmd FileType vim,tex let g:autoformat_autoindent=0
 
 " indent and tab settings
@@ -116,6 +121,7 @@ set wildignore+=*.swp,*.pyc,*.zip,venv,.git
 set backspace=indent,eol,start
 set list
 set background=dark
+set title
 
 " bakcup settings
 set nobackup
