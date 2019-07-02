@@ -24,6 +24,7 @@ source $ZSH/oh-my-zsh.sh
 
 export TERM='xterm-256color'
 export EDITOR='vim'
+export SGE_ROOT="/opt/Gridengine"
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
