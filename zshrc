@@ -40,8 +40,7 @@ stty -ixon
 alias py='python3'
 
 # PIP update
-alias pip3Update="pip3 freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip3 install -U"
-alias pip2Update="pip2 freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip2 install -U"
+alias pipUpdate="pip3 freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs -n1 pip3 install -U"
 
 # common typos
 alias claer='clear'
