@@ -1,6 +1,6 @@
 #!/bin/sh
-if [ ! -e ~/.dotfiles/_old/ ]; then
-    mkdir ~/.dotfiles/_old
+if [ ! -e $HOME/.dotfiles/_old/ ]; then
+    mkdir $HOME/.dotfiles/_old
 fi
 . setup/vim.sh
 . setup/zsh.sh
