@@ -28,6 +28,7 @@ if v:version < 705
     Plug 'vim-scripts/AutoComplPop'
 else
     Plug 'Valloric/YouCompleteMe'
+    Plug 'zxqfl/tabnine-vim'
 endif
 
 Plug 'tmux-plugins/vim-tmux'
@@ -41,6 +42,7 @@ Plug 'pangloss/vim-javascript', {'for': 'js'}
 Plug 'johngrib/vim-game-code-break'
 call plug#end()
 
+" Color scheme
 if empty(glob("~/.vim/colors/jellybeans.vim"))
     silent !curl --fail --location --create-dir --output ~/.vim/colors/jellybeans.vim --create-dirs https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
 endif

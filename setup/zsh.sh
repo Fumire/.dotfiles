@@ -1,6 +1,6 @@
 #!/bin/sh
 if [ -e /bin/zsh ]; then
-    if [ "${echo $SHELL}" != "${which zsh}" ]; then
+    if [ "$(echo $SHELL)" != "$(which zsh)" ]; then
         chsh -s `which zsh`
         echo "change SHELL to zsh"
     fi
@@ -27,7 +27,7 @@ if [ -e ~/.zshrc ]; then
     mv -f ~/.zshrc ~/.dotfiles/_old/zshrc
     echo "move zshrc"
 fi
-ln -s -f ~/.dotfiles/zshrc ~/.zshrc
+ln -s -f ~/.dotfiles/zsh/zshrc ~/.zshrc
 
 if [ -e ~/.oh-my-zsh/themes/local.zsh-theme ]; then
     mv -f ~/.oh-my-zsh/themes/local.zsh-theme ~/.dotfiles/_old/local.zsh-theme
