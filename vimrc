@@ -1,7 +1,7 @@
 " plug settings
 if empty(glob("~/.vim/autoload/plug.vim"))
     silent !curl --fail --location --create-dir --output ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-    autocmd VimEnter * PlugInstall | source $MYVIMRC
+    autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
 endif
 call plug#begin()
 Plug 'vim-airline/vim-airline'
@@ -32,7 +32,9 @@ endif
 
 Plug 'tmux-plugins/vim-tmux'
 Plug 'StanAngeloff/php.vim', {'for': 'php'}
-Plug 'jalvesaq/Nvim-R', {'for': ['r', 'R']}
+if v:version > 800
+    Plug 'jalvesaq/Nvim-R', {'for': ['r', 'R']}
+endif
 Plug 'plasticboy/vim-markdown', {'for': ['md', 'markdown']}
 Plug 'pangloss/vim-javascript', {'for': 'js'}
 
