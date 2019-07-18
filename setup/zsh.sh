@@ -10,11 +10,11 @@ elif [ -d /usr/local/bin/zsh ]; then
 else
     if [ ! -d ~/bin/zsh ]; then
         curl --output ~/zsh.tar.xz https://sourceforge.net/projects/zsh/files/latest/download
-        cd ~ && mkdir zsh && unxz zsh.tar.xz && tar -xvf zsh.tar -C zsh --strip-components 1
+        cd ~ && tar -xfJ zsh.tar.xz
         cd ~/zsh && ./configure --prefix $HOME && make && make install
     fi
     echo "export SHELL=~/bin/zsh\nexec ~/bin/zsh -l" >> ~/.bash_profile
-    source ~/bash_profile
+    source ~/.bash_profile
 fi
 
 if [ ! -d ~/.oh-my-zsh ]; then
