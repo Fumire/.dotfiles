@@ -2,7 +2,8 @@
 if [ -d /bin/zsh ]; then
     if [ "${echo $SHELL}" != "${which zsh}" ]; then
         chsh -s `which zsh`
-    echo "change SHELL to zsh"
+        echo "change SHELL to zsh"
+    fi
 elif [ -d /usr/local/bin/zsh ]; then
     echo "export SHELL=/usr/local/bin/zsh\nexec /usr/local/bin/zsh -l" >> ~/.bash_profile
     source ~/.bash_profile
@@ -38,3 +39,4 @@ if [ -e ~/.oh-my-zsh/themes/remote.zsh-theme ]; then
     echo "move local theme"
 fi
 ln -s -f ~/.dotfiles/oh-my-zsh/themes/remote.zsh-theme ~/.oh-my-zsh/themes/remote.zsh-theme
+
