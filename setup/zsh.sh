@@ -1,19 +1,20 @@
 #!/bin/sh
-if [ -d /bin/zsh ]; then
+if [ -e /bin/zsh ]; then
     if [ "${echo $SHELL}" != "${which zsh}" ]; then
         chsh -s `which zsh`
         echo "change SHELL to zsh"
     fi
-elif [ -d /usr/local/bin/zsh ]; then
+elif [ -e /usr/local/bin/zsh ]; then
     echo "export SHELL=/usr/local/bin/zsh\nexec /usr/local/bin/zsh -l" >> ~/.bash_profile
     source ~/.bash_profile
 else
-    if [ ! -d ~/bin/zsh ]; then
-        curl --output ~/zsh.tar.xz https://sourceforge.net/projects/zsh/files/latest/download
-        cd ~ && tar -xfJ zsh.tar.xz
+    if [ ! -e ~/bin/zsh ]; then
+        curl --output ~/zsh.tar.xz -L https://sourceforge.net/projects/zsh/files/latest/download
+        cd ~ && mkdir zsh && unxz zsh.tar.xz && tar -xvf zsh.tar -C zsh --strip-components 1
         cd ~/zsh && ./configure --prefix $HOME && make && make install
     fi
-    echo "export SHELL=~/bin/zsh\nexec ~/bin/zsh -l" >> ~/.bash_profile
+    echo "export SHELL=~/bin/zsh" >> ~/.bash_profile
+    echo "[ -z \"\$ZSH_VERSION\" ] && exec \"\$SHELL\" -l" >> ~/.bash_profile
     source ~/.bash_profile
 fi
 
