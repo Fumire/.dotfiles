@@ -1,12 +1,24 @@
 #!/bin/sh
-if [ "$(echo $SHELL)" != "$(which zsh)" ]; then
-    chsh -s `which zsh`
+if [ -d /bin/zsh ]; then
+    if [ "${echo $SHELL}" != "${which zsh}" ]; then
+        chsh -s `which zsh`
     echo "change SHELL to zsh"
+elif [ -d /usr/local/bin/zsh ]; then
+    echo "export SHELL=/usr/local/bin/zsh\nexec /usr/local/bin/zsh -l" >> ~/.bash_profile
+    source ~/.bash_profile
+else
+    if [ ! -d ~/bin/zsh ]; then
+        curl --output ~/zsh.tar.xz https://sourceforge.net/projects/zsh/files/latest/download
+        mkdir zsh && unxz zsh.tar.xz && tar -xvf zsh.tar -C zsh --strip-components 1
+        cd zsh && ./configure --prefix $HOME && make && make install
+    fi
+    echo "export SHELL=~/bin/zsh\nexec ~/bin/zsh -l" >> ~/.bash_profile
+    source ~/bash_profile
 fi
 
 if [ ! -d ~/.oh-my-zsh ]; then
     echo "download oh-my-zsh"
-    sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+    sh -c "${curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh}"
 fi
 
 if [ -e ~/.zshrc ]; then
