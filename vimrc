@@ -29,6 +29,7 @@ if v:version < 705
 else
     Plug 'Valloric/YouCompleteMe'
 endif
+
 Plug 'tmux-plugins/vim-tmux'
 Plug 'StanAngeloff/php.vim', {'for': 'php'}
 Plug 'jalvesaq/Nvim-R', {'for': ['r', 'R']}
@@ -39,7 +40,7 @@ Plug 'johngrib/vim-game-code-break'
 call plug#end()
 
 if empty(glob("~/.vim/colors/jellybeans.vim"))
-    silent !curl --form --location --output ~/.vim/colors/jellybeans.vim --create-dirs https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
+    silent !curl --fail --location --create-dir --output ~/.vim/colors/jellybeans.vim --create-dirs https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
 endif
 if has('syntax')
     syntax on
@@ -50,10 +51,12 @@ colorscheme jellybeans
 map <C-d> :NewDelimiter
 
 " YouCompleteMe settings
-let g:ycm_min_num_of_chars_for_completion = 1
-let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py'
-let g:ycm_key_list_stop_completion = ['<C-y>', '<Return>']
-let g:ycm_collect_identifiers_from_tags_files = 1
+if v:version >= 705
+    let g:ycm_min_num_of_chars_for_completion = 1
+    let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py'
+    let g:ycm_key_list_stop_completion = ['<C-y>', '<Return>']
+    let g:ycm_collect_identifiers_from_tags_files = 1
+endif
 
 " SingleCompile settings
 map <F12> :SingleCompile <Return>
