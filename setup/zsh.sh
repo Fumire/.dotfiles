@@ -43,7 +43,7 @@ ln -s -f $HOME/.dotfiles/oh-my-zsh/themes/local.zsh-theme $HOME/.oh-my-zsh/theme
 
 if [ -e $HOME/.oh-my-zsh/themes/remote.zsh-theme ]; then
     mv -f $HOME/.oh-my-zsh/themes/remote.zsh-theme $HOME/.dotfiles/_old/remote.zsh-theme
-    echo "move local theme"
+    echo "move remote theme"
 fi
 ln -s -f $HOME/.dotfiles/oh-my-zsh/themes/remote.zsh-theme $HOME/.oh-my-zsh/themes/remote.zsh-theme
 
