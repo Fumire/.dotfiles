@@ -27,7 +27,7 @@ Plug 'chrisbra/csv.vim'
 if v:version < 705
     Plug 'vim-scripts/AutoComplPop'
 else
-    Plug 'Valloric/YouCompleteMe'
+"    Plug 'Valloric/YouCompleteMe'
     Plug 'zxqfl/tabnine-vim'
 endif
 
