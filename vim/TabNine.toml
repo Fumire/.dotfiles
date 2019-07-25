@@ -6,7 +6,7 @@ install = [
 ]
 
 [language.javascript]
-command = "flow"
+command = "/usr/local/bin/flow"
 args = ["lsp"]
 install = [["npm", "install", "-g", "flow-bin"]]
 
