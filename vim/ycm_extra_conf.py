@@ -1,4 +1,4 @@
-import os.path
+import os
 import subprocess
 import ycm_core
 
@@ -45,6 +45,23 @@ def MakeRelativePathsInFlagsAbsolute(flags, working_directory):
         if new_flag:
             new_flags.append(new_flag)
     return new_flags
+
+
+def IsHeaderFile(filename):
+    return os.path.splitext(filename)[1] in [".h", ".hxx", ".hpp", ".hh"]
+
+
+def GetCompilationInfoForFile(filename):
+    if IsHeaderFile(filename):
+        basename = os.path.splitext(filename)[0]
+        for extension in SOURCE_EXTENSIONS:
+            replacement_file = basename + extension
+            if os.path.exists(replacement_file):
+                compilation_info = database.GetCompilationInfoForFile(replacement_file)
+                if compilation_info.compiler_flags_:
+                    return compilation_info
+        return None
+    return database.GetCompilationInfoForFile(filename)
 
 
 def DirectoryOfThisScript():
