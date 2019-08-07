@@ -86,9 +86,8 @@ let g:formatdef_my_astyle = '"astyle --style=bsd --indent=spaces=4 --indent-prep
 let g:formatters_java = ['my_astyle']
 let g:formatters_cpp = ['my_astyle']
 let g:formatters_c = ['my_astyle']
-let g:formatdef_my_autopep8 = '"autopep8 --ignore E501"'
-let g:formatters_python = ['my_autopep8']
 let g:syntastic_python_flake8_args = "--ignore=E501"
+let g:formatters_python = ['yapf']
 let g:formatters_perl = ['perltidy']
 autocmd FileType vim,tex let g:autoformat_autoindent=0
 
