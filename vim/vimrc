@@ -172,5 +172,5 @@ nnoremap <silent> <C-q> :bprevious <BAR> bdelete #<Return>
 nnoremap <silent> <SPACE> :nohl <Return>
 nnoremap <C-w>m :split 
 nnoremap <C-w>l :vsplit 
-nnoremap <C-n> "=strftime("%Y-%m-%d")<Return>P
-nnoremap <C-m> "=strftime("%FT%T%z")<Return>P
+nnoremap <C-n> "=strftime("%Y-%m-%d")<Return>p
+nnoremap <C-m> "=strftime("%FT%T%z")<Return>p
