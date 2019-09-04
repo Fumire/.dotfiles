@@ -32,7 +32,8 @@ export SGE_ROOT="/opt/Gridengine"
 # ssh
 export SSH_KEY_PATH="$HOME/.ssh/rsa_id"
 
-PATH=$HOME/.dotfiles/bin:$PATH
+# locale setting
+export LC_ALL=en_US.UTF-8
 
 stty -ixon
 
