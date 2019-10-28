@@ -169,7 +169,7 @@ nnoremap <silent> <C-l> :bnext <Return>
 nnoremap <silent> <C-q> :bprevious <BAR> bdelete #<Return>
 
 " keymap
-nnoremap <silent> <SPACE> :nohl <Return>
+nnoremap <silent> <SPACE> :set hlsearch! <Return>
 nnoremap <C-w>m :split 
 nnoremap <C-w>l :vsplit 
 nnoremap <C-n> "=strftime("%Y-%m-%d")<Return>p
