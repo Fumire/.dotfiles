@@ -35,6 +35,10 @@ cask "vlc"
 cask "firefox"
 cask "mactex"
 cask "texstudio"
+cask "bibdesk"
+cask "firefox-nightly"
+cask "bartender"
+cask "discord"
 
 # mas install
 mas "RunCat", id: 1429033973
@@ -58,3 +62,4 @@ mas "Tweetbot", id: 1384080005
 mas "PiPifier", id: 1160374471
 mas "Microsoft Word", id: 462054704
 mas "GoodNotes", id: 1480793815
+mas "FileZilla Pro - FTP and Cloud", id: 1298486723
