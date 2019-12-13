@@ -1,5 +1,9 @@
-all: vim zsh tmux git
+all: vim_run zsh_run tmux_run git_run
 .PHONY += all
+
+mac_run:
+	$(MAKE) -C mac bundle
+.PHONY += mac_run
 
 update:
 	git fetch --all
@@ -7,50 +11,22 @@ update:
 	. $(HOME)/.zshrc
 .PHONY += update
 
-vim: $(HOME)/.vimrc $(HOME)/.ycm_extra_conf.py $(HOME)/.style.yapf
-.PHONY += vim
+vim_run:
+	$(MAKE) -C vim
+.PHONY += vim_run
 
-$(HOME)/.vimrc: $(HOME)/.dotfiles/vim/vimrc
-	ln -sf $< $@
+zsh_run:
+	$(MAKE) -C zsh
+.PHONY += zsh_run
 
-$(HOME)/.ycm_extra_conf.py: $(HOME)/.dotfiles/vim/ycm_extra_conf.py
-	ln -sf $< $@
+oh-my-zsh_run:
+	$(MAKE) -C $@
+.PHONY += oh-my-zsh_run
 
-$(HOME)/.style.yapf: $(HOME)/.dotfiles/vim/style.yapf
+tmux_run:
+	$(MAKE) -C tmux
+.PHONY += tmux_run
 
-zsh: $(HOME)/.zshrc $(HOME)/.alias.zsh $(HOME)/.oh-my-zsh/themes/local.zsh-theme
-.PHONY += zsh
-
-$(HOME)/.oh-my-zsh:
-	sh -c "${curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh}"
-
-$(HOME)/.zshrc: $(HOME)/.dotfiles/zsh/zshrc
-	ln -sf $< $@
-
-$(HOME)/.alias.zsh: $(HOME)/.dotfiles/zsh/alias.zsh
-	ln -sf $< $@
-
-$(HOME)/.oh-my-zsh/themes/local.zsh-theme: $(HOME)/.dotfiles/oh-my-zsh/themes/local.zsh-theme $(HOME)/.oh-my-zsh
-	ln -sf $< $@
-
-$(HOME)/.oh-my-zsh/themes/remote.zsh-theme: $(HOME)/.dotfiles/oh-my-zsh/themes/remote.zsh-theme $(HOME)/.oh-my-zsh
-	ln -sf $< $@
-
-tmux: $(HOME)/.tmux.conf $(HOME)/.tmux.conf.local
-.PHONY += tmux
-
-$(HOME)/.tmux.conf: $(HOME)/.dotfiles/tmux/tmux.conf
-	ln -sf $< $@
-
-$(HOME)/.tmux.conf.local: $(HOME)/.dotfiles/tmux/tmux.conf.local
-	ln -sf $< $@
-
-git: $(HOME)/.gitignore_global $(HOME)/.gitconfig
-	git config --global core.excludesfile $<
-.PHONY += git
-
-$(HOME)/.gitconfig: $(HOME)/.dotfiles/git/gitconfig
-	ln -sf $< $@
-
-$(HOME)/.gitignore_global: $(HOME)/.dotfiles/git/gitignore_global
-	ln -sf $< $@
+git_run:
+	$(MAKE) -C git
+.PHONY += git_run
