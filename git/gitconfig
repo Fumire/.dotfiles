@@ -3,7 +3,7 @@
 	name = Jaewoong Lee
 [core]
     editor = vim
-	excludesfile = /Users/Feb30th/.gitignore_global
+	excludesfile = $HOME/.gitignore_global
 [push]
     default = simple
 [pull]
@@ -13,12 +13,6 @@
     ff = false
 [fetch]
     prune = true
-[difftool "sourcetree"]
-	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-	path = 
-[mergetool "sourcetree"]
-	cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
-	trustExitCode = true
 [commit]
 	template = $HOME/.stCommitMsg
 [filter "lfs"]
