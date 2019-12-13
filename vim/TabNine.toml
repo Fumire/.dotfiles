@@ -25,8 +25,13 @@ command = "pyls"
 install = [["pip3", "install", "python-language-server"]]
 
 [language.cpp]
-command = "cquery"
-args = ["--init={\"cacheDirectory\": \"${project_root}/.cquery_cache\"}"]
+command = "ccls"
+install = [
+    ["git", "clone", "--depth=1", "--recursive", "https://github.com/MaskRay/ccls"],
+    ["cd", "ccls"],
+    ["cmake", "-H.", "-BRelease", "-DCMAKE_BUILD_TYPE=Release"],
+    ["cmake", "--build", "Release"]
+]
 
 [language.haskell]
 command = "hie"
