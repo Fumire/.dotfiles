@@ -7,6 +7,7 @@ tap "homebrew/bundle"
 tap "homebrew/cask"
 tap "homebrew/core"
 tap "homebrew/services"
+tap "homebrew/cask-fonts"
 
 # brew install
 brew "astyle"
@@ -16,11 +17,14 @@ brew "cmake"
 brew "ctags"
 brew "docker"
 brew "gcc"
+brew "git"
+brew "git-lfs"
 brew "vim"
 brew "tmux"
 brew "tree"
 brew "wget"
 brew "zsh"
+brew "zsh-completions"
 brew "zsh-syntax-highlighting"
 
 # cask install
@@ -40,6 +44,7 @@ cask "bibdesk"
 cask "firefox-nightly"
 cask "bartender"
 cask "discord"
+cask "font-source-code-pro"
 
 # mas install
 mas "RunCat", id: 1429033973
