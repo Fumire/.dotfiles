@@ -10,20 +10,22 @@ else
   ZSH_THEME="local"
 fi
 
-
 # Set name of the theme to load. Optionally, if you set this to "random"
-# it'll load a random theme each time that oh-my-zsh is loaded.
+# it willll load a random theme each time that oh-my-zsh is loaded.
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
 # ZSH_THEME="robbyrussell"
 
 plugins=(
-git vi-mode sudo
+git
+vi-mode
+sudo
+zsh-syntax-highlighting
 )
 
 source $ZSH/oh-my-zsh.sh
 
-export TERM='xterm-256color'
-export EDITOR='vim'
+export TERM="xterm-256color"
+export EDITOR="vim"
 export SGE_ROOT="/opt/Gridengine"
 
 # Compilation flags
@@ -43,8 +45,8 @@ source $HOME/.alias.zsh
 # multiple line command
 autoload -U edit-command-line
 zle -N edit-command-line
-bindkey '^xe' edit-command-line
-bindkey '^x^e' edit-command-line
+bindkey "^xe" edit-command-line
+bindkey "^x^e" edit-command-line
 
 # pyenv settings
 export PYENV_ROOT="$HOME/.pyenv"
