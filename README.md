@@ -11,7 +11,7 @@
 
 ## Usage
 
-`setup.sh` 파일을 실행하세요. 이미 실행한 경우 에러가 발생할 수도 있습니다.
+Execute Makefile with `make` command
 
 ## Acknowledgement
 
