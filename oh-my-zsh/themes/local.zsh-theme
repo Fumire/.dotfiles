@@ -14,7 +14,7 @@
 # ------------------------------------------------------------------------------
 
 VIRTUAL_ENV_DISABLE_PROMPT=true
-BULLETTRAIN_CONTEXT_DEFAULT_USER=Fumire
+BULLETTRAIN_CONTEXT_DEFAULT_USER=fumire
 
 # Define order and content of prompt
 if [ ! -n "${BULLETTRAIN_PROMPT_ORDER+1}" ]; then
