@@ -8,7 +8,9 @@ $(HOME)/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting:
 	git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $@
 
 $(HOME)/.oh-my-zsh/themes/local.zsh-theme: $(HOME)/.dotfiles/oh-my-zsh/themes/local.zsh-theme $(HOME)/.oh-my-zsh
-	ln -sf $< $@
+	mkdir -p $(dir $@)
+	ln -sf $(abspath $<) $@
 
 $(HOME)/.oh-my-zsh/themes/remote.zsh-theme: $(HOME)/.dotfiles/oh-my-zsh/themes/remote.zsh-theme $(HOME)/.oh-my-zsh
-	ln -sf $< $@
+	mkdir -p $(dir $@)
+	ln -sf $(abspath $<) $@
