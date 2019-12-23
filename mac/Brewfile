@@ -42,11 +42,11 @@ cask "mactex"
 cask "texstudio"
 cask "tex-live-utility"
 cask "bibdesk"
-cask "firefox-nightly"
 cask "bartender"
 cask "discord"
 cask "font-source-code-pro"
 cask "macvim"
+cask "bitbar"
 
 # mas install
 mas "RunCat", id: 1429033973
