@@ -17,11 +17,10 @@ vim_run:
 
 zsh_run:
 	$(MAKE) -C zsh
-	$(MAKE) -C oh-my-zsh
 .PHONY += zsh_run
 
 oh-my-zsh_run:
-	$(MAKE) -C $@
+	$(MAKE) -C oh-my-zsh
 .PHONY += oh-my-zsh_run
 
 tmux_run:
