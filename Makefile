@@ -8,7 +8,6 @@ mac_run:
 update:
 	git fetch --all
 	git reset --hard origin/master
-	. $(HOME)/.zshrc
 .PHONY += update
 
 vim_run:
