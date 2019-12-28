@@ -47,6 +47,7 @@ cask "discord"
 cask "font-source-code-pro"
 cask "macvim"
 cask "bitbar"
+cask "xquartz"
 
 # mas install
 mas "RunCat", id: 1429033973
