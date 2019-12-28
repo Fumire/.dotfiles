@@ -43,4 +43,13 @@ defaults write com.apple.Safari "com.apple.Safari.ContentPageGroupIdentifier.Web
 # Do not prompt for confirmation before downloading
 defaults write org.m0k.transmission DownloadAsk -bool false
 
+# Use 24 Hour instead 12 Hour
+defaults write -globaldomain AppleICUForce24HourTime 1
+
+# Use "Submarine" warning sounds
+defaults write -globaldomain com.apple.sound.beep.sound "/System/Library/Sounds/Submarine.aiff"
+
+# Set the Dock size as the smallest
+defaults write com.apple.dock tilesize 16
+
 killall Finder
