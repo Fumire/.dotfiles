@@ -6,6 +6,8 @@ start: starting.sh
 
 bundle: Brewfile
 	brew bundle --file=$(abspath $<)
+	brew bundle check --file=$(abspath $<)
+
 .PHONY += bundle
 
 /usr/local/bin/brew:
