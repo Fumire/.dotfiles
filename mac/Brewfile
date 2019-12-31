@@ -27,6 +27,7 @@ brew "wget"
 brew "zsh"
 brew "zsh-completions"
 brew "zsh-syntax-highlighting"
+brew "gpg2"
 
 # cask install
 cask "alfred"
