@@ -44,12 +44,15 @@ defaults write com.apple.Safari "com.apple.Safari.ContentPageGroupIdentifier.Web
 defaults write org.m0k.transmission DownloadAsk -bool false
 
 # Use 24 Hour instead 12 Hour
-defaults write -globaldomain AppleICUForce24HourTime 1
+defaults write -globaldomain AppleICUForce24HourTime -int 1
 
 # Use "Submarine" warning sounds
-defaults write -globaldomain com.apple.sound.beep.sound "/System/Library/Sounds/Submarine.aiff"
+defaults write -globaldomain com.apple.sound.beep.sound -string "/System/Library/Sounds/Submarine.aiff"
 
 # Set the Dock size as the smallest
-defaults write com.apple.dock tilesize 16
+defaults write com.apple.dock tilesize -int 16
+
+# Remove every icon on the Desktop
+defaults write com.apple.finder CreateDesktop -bool false
 
 killall Finder
