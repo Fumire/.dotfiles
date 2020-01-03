@@ -53,6 +53,7 @@ cask "bitbar"
 cask "xquartz"
 cask "gpg-suite"
 cask "github"
+cask "appcleaner"
 
 # mas install
 mas "RunCat", id: 1429033973
