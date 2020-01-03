@@ -54,6 +54,7 @@ cask "xquartz"
 cask "gpg-suite"
 cask "github"
 cask "appcleaner"
+cask "teamviewer"
 
 # mas install
 mas "RunCat", id: 1429033973
