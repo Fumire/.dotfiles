@@ -1,4 +1,4 @@
-all: vim_run zsh_run tmux_run git_run
+all: zsh_run oh-my-zsh_run vim_run
 .PHONY += all
 
 mac_run:
