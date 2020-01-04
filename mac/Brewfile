@@ -30,6 +30,7 @@ brew "zsh-syntax-highlighting"
 brew "gpg2"
 brew "gnupg"
 brew "pinentry-mac"
+brew "neofetch"
 
 # cask install
 cask "alfred"
