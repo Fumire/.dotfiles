@@ -12,12 +12,9 @@ Plug 'airblade/vim-gitgutter'
 Plug 'Chiel92/vim-autoformat'
 Plug 'ctrlpvim/ctrlp.vim'
 Plug 'vim-syntastic/syntastic'
-Plug 'tpope/vim-surround'
 Plug 'tpope/vim-commentary'
-Plug 'tpope/vim-repeat'
 Plug 'mbbill/undotree'
 Plug 'Yggdroot/indentLine'
-Plug 'scrooloose/nerdcommenter'
 Plug 'majutsushi/tagbar'
 Plug 'xuhdev/SingleCompile'
 
@@ -31,12 +28,10 @@ else
     Plug 'zxqfl/tabnine-vim'
 endif
 
-Plug 'tmux-plugins/vim-tmux'
 Plug 'StanAngeloff/php.vim', {'for': 'php'}
 if v:version > 800
     Plug 'jalvesaq/Nvim-R', {'for': ['r', 'R']}
 endif
-Plug 'plasticboy/vim-markdown', {'for': ['md', 'markdown']}
 Plug 'pangloss/vim-javascript', {'for': 'js'}
 
 Plug 'johngrib/vim-game-code-break'
@@ -64,6 +59,9 @@ endif
 
 " SingleCompile settings
 map <F12> :SingleCompile <Return>
+
+" Undotree settings
+nnoremap <F11> :UndotreeToggle <Return>
 
 " scratch settings
 let g:scratch_persistence_file = '/tmp/scratch_persistence_file.txt'
@@ -170,7 +168,7 @@ nnoremap <silent> <C-q> :bprevious <BAR> bdelete #<Return>
 
 " keymap
 nnoremap <silent> <SPACE> :set hlsearch! <Return>
-nnoremap <C-w>m :split 
-nnoremap <C-w>l :vsplit 
+nnoremap <C-w>m :split <Return>
+nnoremap <C-w>l :vsplit <Return>
 nnoremap <C-n> "=strftime("%Y-%m-%d")<Return>p
 nnoremap <C-m> "=strftime("%FT%T%z")<Return>p
