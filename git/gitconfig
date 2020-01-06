@@ -1,7 +1,7 @@
 [user]
 	email = 230@fumire.moe
 	name = Jaewoong Lee
-	signingKey = B7CB3330
+    signingKey = 487FC3F6
 [core]
     editor = vim
 	excludesfile = ~/.gitignore_global
@@ -22,3 +22,5 @@
 	process = git-lfs filter-process
 	required = true
 	clean = git-lfs clean -- %f
+[gpg]
+	program = gpg
