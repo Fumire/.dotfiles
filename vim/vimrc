@@ -61,7 +61,7 @@ endif
 map <F12> :SingleCompile <Return>
 
 " Undotree settings
-nnoremap <F11> :UndotreeToggle <Return>
+nnoremap <F8> :UndotreeToggle <Return>
 
 " scratch settings
 let g:scratch_persistence_file = '/tmp/scratch_persistence_file.txt'
