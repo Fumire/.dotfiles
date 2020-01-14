@@ -9,6 +9,6 @@ add_key: id_rsa.pub $(HOME)/.ssh/authorized_keys
 
 $(HOME)/.ssh/%: $(HOME)/Documents/PrivateKeys/%.asc
 	gpg --decrypt $< > $@
-	chmod 600 $@
+	chmod 400 $@
 
 decrypt_key: $(HOME)/.ssh/id_rsa $(HOME)/.ssh/id_dsa
