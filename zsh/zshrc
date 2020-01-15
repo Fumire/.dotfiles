@@ -46,6 +46,3 @@ export PATH="$HOME/.pyenv/shims:$PATH"
 
 # hombrew settings
 export PATH="/usr/local/sbin:$PATH"
-
-# Language setting
-export LC_ALL=ko_KR.UTF-8
