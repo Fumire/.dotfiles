@@ -8,7 +8,7 @@ fi
 
 # plugins
 plugins=(
-    tmux
+    git
     vi-mode
     zsh-syntax-highlighting
 )
