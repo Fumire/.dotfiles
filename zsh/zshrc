@@ -46,6 +46,9 @@ export PATH="$HOME/.pyenv/shims:$PATH"
 # hombrew settings
 export PATH="/usr/local/sbin:$PATH"
 
+# gpg settings
+export GPG_TTY=$(tty)
+
 # Do not save command history
 HISTFILE=/dev/null
 HISTSIZE=0
