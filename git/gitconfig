@@ -1,10 +1,10 @@
 [user]
-	email = 230@fumire.moe
-	name = Jaewoong Lee
+    email = 230@fumire.moe
+    name = Jaewoong Lee
     signingKey = 487FC3F6
 [core]
     editor = vim
-	excludesfile = ~/.gitignore_global
+    excludesfile = ~/.gitignore_global
 [push]
     default = simple
 [pull]
@@ -15,12 +15,17 @@
 [fetch]
     prune = true
 [commit]
-	template = ~/.stCommitMsg
-	gpgsign = true
+    template = ~/.stCommitMsg
+    gpgsign = true
 [filter "lfs"]
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
-	clean = git-lfs clean -- %f
+    smudge = git-lfs smudge -- %f
+    process = git-lfs filter-process
+    required = true
+    clean = git-lfs clean -- %f
 [gpg]
-	program = gpg
+    program = gpg
+[color]
+    status = auto
+    branch = auto
+    interactive = auto
+    diff = auto
