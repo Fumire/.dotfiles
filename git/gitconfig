@@ -5,17 +5,21 @@
 [core]
     editor = vim
     excludesfile = ~/.gitignore_global
+    compression = 9
+[blame]
+    coloring = repeatedLines
 [push]
     default = simple
+    gpgSign = if-asked
 [pull]
     rebase = true
 [merge]
-    conflictstyle = diff3
     ff = false
+    renames = true
+    guitool = vimdiff
 [fetch]
     prune = true
 [commit]
-    template = ~/.stCommitMsg
     gpgsign = true
 [filter "lfs"]
     smudge = git-lfs smudge -- %f
@@ -29,3 +33,12 @@
     branch = auto
     interactive = auto
     diff = auto
+[diff]
+    tool = vimdiff
+    algorithm = minimal
+[pack]
+    compression = 9
+[sendmail]
+    from = 230@fumire.moe
+[ssh]
+    variant = ssh
