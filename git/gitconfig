@@ -42,3 +42,5 @@
     from = 230@fumire.moe
 [ssh]
     variant = ssh
+[credential]
+	helper = osxkeychain
