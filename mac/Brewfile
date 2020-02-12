@@ -8,6 +8,7 @@ tap "homebrew/cask"
 tap "homebrew/core"
 tap "homebrew/services"
 tap "homebrew/cask-fonts"
+tap "prbinu/touch2sudo"
 
 # brew install
 brew "astyle"
@@ -31,6 +32,7 @@ brew "gpg2"
 brew "gnupg"
 brew "pinentry-mac"
 brew "neofetch"
+brew "touch2sudo"
 
 # cask install
 cask "alfred"
