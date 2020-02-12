@@ -1,4 +1,4 @@
-all: zsh_run oh-my-zsh_run vim_run
+all: zsh_run oh-my-zsh_run vim_run gnupg_run
 .PHONY += all
 
 mac_run:
@@ -29,3 +29,7 @@ tmux_run:
 git_run:
 	$(MAKE) -C git
 .PHONY += git_run
+
+gnupg_run:
+	$(MAKE) -C gnupg
+.PHONY += gnupg_run

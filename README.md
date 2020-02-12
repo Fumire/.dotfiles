@@ -8,6 +8,7 @@
 * oh-my-zsh
 * vim
 * tmux
+* gnupg
 
 ## Usage
 
