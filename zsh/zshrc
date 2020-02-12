@@ -24,6 +24,10 @@ export SGE_ROOT="/opt/Gridengine"
 
 # ssh
 export SSH_KEY_PATH="$HOME/.ssh/rsa_id"
+if [[ `uname` == "Darwin" ]]; then
+    export SSH_ASKPASS=touch2sudo
+    export DISPLAY=0
+fi
 
 # locale setting
 export LC_ALL=en_US.UTF-8
