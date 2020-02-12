@@ -1,5 +1,4 @@
 all:
-	ssh-add -c
 
 $(HOME)/.ssh/authorized_keys:
 	if [ ! -d $(dir $@) ]; then mkdir -p $(dir $@); fi;

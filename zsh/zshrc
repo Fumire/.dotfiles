@@ -24,9 +24,10 @@ export SGE_ROOT="/opt/Gridengine"
 
 # ssh
 export SSH_KEY_PATH="$HOME/.ssh/rsa_id"
+eval "$(ssh-agent)"
 if [[ `uname` == "Darwin" ]]; then
+    ssh-add -t 3600 -c $HOME/.ssh/id_rsa
     export SSH_ASKPASS=touch2sudo
-    export DISPLAY=0
 fi
 
 # locale setting
@@ -51,7 +52,10 @@ export PATH="$HOME/.pyenv/shims:$PATH"
 export PATH="/usr/local/sbin:$PATH"
 
 # gpg settings
-export GPG_TTY=`tty`
+export GPG_TTY=$(tty)
+if [[ `uname` == "Darwin" ]]; then
+    eval "$(gpg-agent --daemon)"
+fi
 
 # Do not save command history
 HISTFILE=/dev/null
