@@ -124,6 +124,7 @@ set hidden
 set wildignore+=*.swp,*.pyc,*.zip,venv,.git
 set backspace=indent,eol,start
 set list
+set listchars=tab:⇥\ ,trail:·,precedes:«,extends:»,eol:¶
 set background=dark
 set title
 
@@ -132,7 +133,6 @@ set nobackup
 set nowritebackup
 set noswapfile
 
-set listchars=tab:⇥\ ,trail:·,precedes:«,extends:»,eol:¶
 
 " search settings
 set ignorecase
@@ -140,7 +140,7 @@ set smartcase
 set hlsearch
 set incsearch
 set showcmd
-set mps+=<:>
+set matchpairs+=<:>
 
 " status line settings
 set statusline=\ %<%l:%v\ [%P]%=%a\ %h%m%r\ %F\
