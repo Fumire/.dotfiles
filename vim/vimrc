@@ -133,7 +133,6 @@ set nobackup
 set nowritebackup
 set noswapfile
 
-
 " search settings
 set ignorecase
 set smartcase
