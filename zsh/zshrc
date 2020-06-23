@@ -52,9 +52,6 @@ export PATH="$HOME/.pyenv/shims:$PATH"
 # hombrew settings
 export PATH="/usr/local/sbin:$PATH"
 
-# Java settting
-export JAVA_HOME="/Library/Java/JavaVirtualMachines/openjdk-14.jdk/Contents/Home"
-
 # gpg settings
 export GPG_TTY=$(tty)
 if [[ `uname` == "Darwin" ]]; then
