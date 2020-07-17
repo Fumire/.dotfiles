@@ -44,7 +44,6 @@ cask "google-chrome"
 cask "opera"
 cask "duet"
 cask "vlc"
-cask "firefox"
 cask "mactex"
 cask "texstudio"
 cask "tex-live-utility"
@@ -57,7 +56,8 @@ cask "xquartz"
 cask "gpg-suite"
 cask "github"
 cask "appcleaner"
-cask "teamviewer"
+cask "firefox"
+cask "chrome-remote-desktop-host"
 
 # mas install
 mas "RunCat", id: 1429033973
@@ -79,7 +79,7 @@ mas "Slack", id: 803453959
 mas "Tweetbot", id: 1384080005
 mas "PiPifier", id: 1160374471
 mas "Microsoft Word", id: 462054704
-mas "GoodNotes", id: 1480793815
+mas "GoodNotes", id: 1444383602
 mas "FileZilla Pro - FTP and Cloud", id: 1298486723
 mas "Xcode", id: 497799835
 mas "Twitter", id: 409789998
