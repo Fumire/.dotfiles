@@ -45,6 +45,6 @@ else
     adduser --home /BiO/Live/${ID} --shell /bin/bash -uid ${newUID} -gid ${newGID} ${ID}
 fi
 
-Original="`cat /etc/group | grep compbio`"
-sed -i "s/${Original}/${Original},${ID}/g" /etc/group
+gpasswd -a ${ID} compbio
 
+echo "Done!!"
