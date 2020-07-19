@@ -34,6 +34,7 @@ brew "pinentry-mac"
 brew "neofetch"
 brew "touch2sudo"
 brew "macvim"
+brew "youtube-dl"
 
 # cask install
 cask "alfred"
