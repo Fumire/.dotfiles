@@ -59,6 +59,7 @@ cask "github"
 cask "appcleaner"
 cask "firefox"
 cask "chrome-remote-desktop-host"
+cask "skype"
 
 # mas install
 mas "RunCat", id: 1429033973
