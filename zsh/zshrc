@@ -33,6 +33,7 @@ fi
 
 # locale setting
 export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
 
 stty -ixon
 
@@ -45,10 +46,6 @@ zle -N edit-command-line
 bindkey "^xe" edit-command-line
 bindkey "^x^e" edit-command-line
 
-# pyenv settings
-export PATH="$HOME/.pyenv/bin:$PATH"
-export PATH="$HOME/.pyenv/shims:$PATH"
-
 # hombrew settings
 export PATH="/usr/local/sbin:$PATH"
 
@@ -59,6 +56,6 @@ if [[ `uname` == "Darwin" ]]; then
 fi
 
 # Do not save command history
-HISTFILE=/dev/null
-HISTSIZE=0
-SAVEHIST=0
+export HISTFILE=/dev/null
+export HISTSIZE=0
+export SAVEHIST=0
