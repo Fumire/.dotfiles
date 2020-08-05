@@ -1,4 +1,4 @@
-all: zsh_run oh-my-zsh_run vim_run gnupg_run
+all: zsh_run oh-my-zsh_run vim_run
 .PHONY += all
 
 mac_run:
