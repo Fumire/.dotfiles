@@ -1,4 +1,5 @@
 #!/bin/bash
+date
 
 IDLE_CPU=`top -b -n 1 | grep "\%Cpu(s)" | awk '{ print $8}' | cut -d "." -f 1`
 
