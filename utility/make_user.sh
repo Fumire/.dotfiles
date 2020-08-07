@@ -1,5 +1,6 @@
-#! /bin/ bash
+#!/bin/bash
 # Maintainer: jwlee230@unist.ac.kr
+# Last modified: 2020-08-07
 
 read -p "Input User ID: " ID
 if [ -n "${ID}" ]
@@ -46,5 +47,6 @@ else
 fi
 
 gpasswd -a ${ID} compbio
+gpasswd -a ${ID} docker
 
 echo "Done!!"

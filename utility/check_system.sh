@@ -1,4 +1,7 @@
 #!/bin/bash
+# Maintainer: jwlee230@unist.ac.kr
+# Last modified: 2020-08-07
+
 date
 
 IDLE_CPU=`top -b -n 1 | grep "\%Cpu(s)" | awk '{ print $8}' | cut -d "." -f 1`
