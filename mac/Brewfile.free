@@ -1,0 +1,76 @@
+# Last modified: 2020-01-03
+
+cask_args appdir: "/Applications"
+
+# tap brew
+tap "homebrew/bundle"
+tap "homebrew/cask"
+tap "homebrew/core"
+tap "homebrew/services"
+tap "homebrew/cask-fonts"
+tap "prbinu/touch2sudo"
+
+# brew install
+brew "astyle"
+brew "dnscrypt-proxy"
+brew "python"
+brew "cmake"
+brew "ctags"
+brew "ccls"
+brew "docker"
+brew "gcc"
+brew "git"
+brew "git-lfs"
+brew "node"
+brew "tmux"
+brew "tree"
+brew "wget"
+brew "zsh"
+brew "zsh-completions"
+brew "zsh-syntax-highlighting"
+brew "gpg2"
+brew "gnupg"
+brew "pinentry-mac"
+brew "neofetch"
+brew "touch2sudo"
+brew "macvim"
+brew "youtube-dl"
+
+# cask install
+cask "alfred"
+cask "istat-menus"
+cask "steam"
+cask "mendeley-desktop"
+cask "google-chrome"
+cask "opera"
+cask "duet"
+cask "vlc"
+cask "mactex"
+cask "texstudio"
+cask "tex-live-utility"
+cask "bibdesk"
+cask "bartender"
+cask "discord"
+cask "font-source-code-pro"
+cask "xquartz"
+cask "gpg-suite"
+cask "appcleaner"
+cask "firefox"
+cask "chrome-remote-desktop-host"
+cask "skype"
+
+# mas install
+mas "RunCat", id: 1429033973
+mas "Keynote", id: 409183694
+mas "Microsoft OneNote", id: 784801555
+mas "OneDrive", id: 823766827
+mas "Microsoft Excel", id: 462058435
+mas "KakaoTalk", id: 869223134
+mas "Microsoft PowerPoint", id: 462062816
+mas "Microsoft Outlook", id: 985367838
+mas "Pages", id: 409201541
+mas "Slack", id: 803453959
+mas "PiPifier", id: 1160374471
+mas "Microsoft Word", id: 462054704
+mas "Xcode", id: 497799835
+mas "Twitter", id: 409789998
