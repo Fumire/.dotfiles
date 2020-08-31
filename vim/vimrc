@@ -92,8 +92,9 @@ let g:formatters_perl = ['perltidy']
 autocmd FileType vim,tex let g:autoformat_autoindent=0
 
 " syntastic settings
-let g:syntastic_python_checkers=['flake8']
-let g:syntastic_python_flake8_args = "--ignore=E501"
+let g:syntastic_python_checkers = ['flake8', 'mypy']
+let g:syntastic_python_flake8_args = '--ignore=E501'
+let g:syntastic_python_mypy_args = '--ignore-missing-imports'
 
 " indent and tab settings
 filetype indent plugin on
