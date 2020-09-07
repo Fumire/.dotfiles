@@ -35,6 +35,7 @@ brew "neofetch"
 brew "touch2sudo"
 brew "macvim"
 brew "youtube-dl"
+brew "r"
 
 # cask install
 cask "alfred"
