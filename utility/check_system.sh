@@ -33,3 +33,16 @@ elif (( $IDLE_MEM < 20 )); then
 else
     echo "MEM is Okay:" $IDLE_MEM
 fi
+
+TEMPERATURE=$(cat /sys/class/thermal/thermal_zone0/temp)
+TEMPERATURE="$(echo "$TEMPERATURE / 1000" | bc -l | xargs printf "%1.0f")"
+
+if [[ $TEMPERATURE -gt 80 ]]; then
+    mail -s "[ERROR] TEMPERATURE is to high" "230@fumire.moe"
+    echo "TEMPERATURE Error" $TEMPERATURE
+elif [[ $TEMPERATURE -gt 50 && $TEMPERATURE -le 80 ]]; then
+    mail -s "[Warning] TEMPERATURE is to high" "230@fumire.moe"
+    echo "TEMPERATURE Warning:" $TEMPERATURE
+else
+    echo "TEMPERATURE is Okay:" $TEMPERATURE
+fi
