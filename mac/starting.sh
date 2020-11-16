@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/sh
 xcode-select --install
 
 # Allow text selection in Quick Look
