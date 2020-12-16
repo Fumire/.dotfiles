@@ -4,7 +4,7 @@
 
 date
 
-IDLE_CPU=`top -b -n 1 | grep "\%Cpu(s)" | awk '{ print $8}' | cut -d "." -f 1`
+IDLE_CPU=`top -b -n 1 | grep "\%Cpu(s)" | awk -F ',' '{ print $4}' | awk '{ print $1}' | cut -d "." -f 1`
 
 if (( $IDLE_CPU < 10 )); then
     sar | mail -s "[Error] CPU Usage is too high" "230@fumire.moe"
