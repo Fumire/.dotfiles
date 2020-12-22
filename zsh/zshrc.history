@@ -44,8 +44,9 @@ zle -N edit-command-line
 bindkey "^xe" edit-command-line
 bindkey "^x^e" edit-command-line
 
-# hombrew settings
+# PATH settings
 export PATH="/usr/local/sbin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 # gpg settings
 export GPG_TTY=$(tty)
