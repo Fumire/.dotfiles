@@ -1,6 +1,6 @@
 #!/bin/bash
 # Maintainer: jwlee230@unist.ac.kr
-# Last modified: 2020-08-07
+# Last modified: 2020-12-27
 
 read -p "Input User ID: " ID
 if [ -n "${ID}" ]
