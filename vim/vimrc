@@ -11,7 +11,7 @@ Plug 'bling/vim-bufferline'
 Plug 'airblade/vim-gitgutter'
 Plug 'Chiel92/vim-autoformat'
 Plug 'ctrlpvim/ctrlp.vim'
-Plug 'vim-syntastic/syntastic'
+Plug 'dense-analysis/ale'
 Plug 'tpope/vim-commentary'
 Plug 'mbbill/undotree'
 Plug 'Yggdroot/indentLine'
@@ -91,10 +91,10 @@ let g:formatters_python = ['myautopep8']
 let g:formatters_perl = ['perltidy']
 autocmd FileType vim,tex let g:autoformat_autoindent=0
 
-" syntastic settings
-let g:syntastic_python_checkers = ['flake8', 'mypy']
-let g:syntastic_python_flake8_args = '--ignore=E501'
-let g:syntastic_python_mypy_args = '--ignore-missing-imports'
+" ALE settings
+let g:ale_fixers = {'python': ['flake8', 'mypy']}
+let g:ale_python_flake8_options = '--ignore=E501'
+let g:ale_python_mypy_options = '--ignore-missing-imports'
 
 " indent and tab settings
 filetype indent plugin on
