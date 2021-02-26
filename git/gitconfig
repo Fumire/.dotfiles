@@ -1,7 +1,7 @@
 [user]
     email = 230@fumire.moe
     name = Jaewoong Lee
-    signingKey = 487FC3F6
+    signingKey = 68129DE2
 [core]
     editor = vim
     excludesfile = ~/.gitignore_global
