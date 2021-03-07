@@ -37,6 +37,7 @@ brew "macvim"
 brew "youtube-dl"
 brew "r"
 brew "java"
+brew "languagetool"
 
 # cask install
 cask "alfred"
