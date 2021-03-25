@@ -203,7 +203,7 @@ tmux_conf_theme_right_separator_sub=''  #   PowerlineSymbols.otf font
 #     - #{uptime_s}
 #     - #{username}
 #     - #{username_ssh}
-tmux_conf_theme_status_left=" ❐ #S | ↑#{?uptime_d, #{uptime_d}d,}#{?uptime_h, #{uptime_h}h,}#{?uptime_m, #{uptime_m}m,} | #{loadavg} | #{online}"
+tmux_conf_theme_status_left=" ❐ #S | ↑ #{uptime_d}d #{uptime_h}h #{uptime_m}m | #{loadavg} | #{online}"
 tmux_conf_theme_status_right=" #{prefix}#{mouse}#{pairing}#{synchronized}#{?battery_status,#{battery_status},}#{?battery_bar, #{battery_bar},}#{?battery_percentage, #{battery_percentage},} , %R , %d %b | #{username}#{root} | #{hostname} "
 
 # status left style
@@ -346,9 +346,9 @@ tmux_conf_update_plugins_on_reload=true
 #set -g @continuum-restore 'on'
 
 set -g @plugin 'tmux-plugins/tmux-resurrect'
-
-set -g @plugin 'tmux-plugins/tmux-continuum'
-set -g @continuum-boot 'on'
+set -g @resurrect-save 'S'
+set -g @resurrect-restore 'R'
+set -g @resurrect-capture-pane-contents 'on'
 
 # -- custom variables ----------------------------------------------------------
 
