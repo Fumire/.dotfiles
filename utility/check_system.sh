@@ -1,6 +1,8 @@
 #!/bin/bash
 # Maintainer: jwlee230@unist.ac.kr
-# Last modified: 2021-02-11
+# Last modified: 2021-03-30
+set -euo pipefail
+IFS=$'\n\t'
 
 IDLE_CPU=`top -b -n 1 | grep "\%Cpu(s)" | awk -F ',' '{ print $4}' | awk '{ print $1}' | cut -d "." -f 1`
 

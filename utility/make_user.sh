@@ -1,6 +1,8 @@
 #!/bin/bash
 # Maintainer: jwlee230@unist.ac.kr
-# Last modified: 2020-12-27
+# Last modified: 2021-03-30
+set -euo pipefail
+IFS=$'\n\t'
 
 read -p "Input User ID: " ID
 if [ -n "${ID}" ]
