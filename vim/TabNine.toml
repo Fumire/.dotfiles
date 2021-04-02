@@ -27,7 +27,7 @@ install = [["pip3", "install", "python-language-server"]]
 [language.cpp]
 command = "ccls"
 install = [
-    ["git", "clone", "--depth=1", "--recursive", "https://github.com/MaskRay/ccls"],
+    ["git", "clone", "--depth=1", "--recursive", "https://github.com/MaskRay/ccls.git"],
     ["cd", "ccls"],
     ["cmake", "-H.", "-BRelease", "-DCMAKE_BUILD_TYPE=Release"],
     ["cmake", "--build", "Release"]
