@@ -38,6 +38,7 @@ brew "youtube-dl"
 brew "r"
 brew "java"
 brew "languagetool"
+brew "reattach-to-user-namespace"
 
 # cask install
 cask "alfred"
@@ -60,6 +61,7 @@ cask "appcleaner"
 cask "firefox"
 cask "chrome-remote-desktop-host"
 cask "skype"
+cask "inkscape"
 
 # mas install
 mas "RunCat", id: 1429033973
