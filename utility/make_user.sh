@@ -51,4 +51,6 @@ fi
 gpasswd -a ${ID} compbio
 gpasswd -a ${ID} docker
 
+passwd -e ${ID}
+
 echo "Done!!"
