@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 IFS=$'\n\t'
-for h in 'darwin' 'wallace' 'compbio' 'huxley' 'kimura' 'fisher'; do
+for h in 'host1' 'host2'; do
     scp -c aes256-cbc -P 3030 jwlee230@$h.kogic.kr:/var/log/sysstat/sa$(date +%d) $h
 done
-for h in 'darwin' 'wallace' 'compbio' 'huxley' 'kimura' 'fisher'; do
+for h in 'host1' 'host2'; do
     if [[ "$h" != "compbio" ]]; then
         sadf -c $h 1> $h.new 2> /dev/null
         rm $h
