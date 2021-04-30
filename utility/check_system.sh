@@ -1,16 +1,15 @@
 #!/bin/bash
 # Maintainer: jwlee230@unist.ac.kr
-# Last modified: 2021-03-30
 set -euo pipefail
 IFS=$'\n\t'
 
 IDLE_CPU=`top -b -n 1 | grep "\%Cpu(s)" | awk -F ',' '{ print $4}' | awk '{ print $1}' | cut -d "." -f 1`
 
 if (( $IDLE_CPU < 10 )); then
-    sar | mail -s "[Error] CPU Usage is too high in $(hostname)" "230@fumire.moe"
+    sar | mail -s "[Error] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "CPU Error:" $IDLE_CPU
 elif (( $IDLE_CPU < 15 )); then
-    sar | mail -s "[Warning] CPU Usage is too high in $(hostname)" "230@fumire.moe"
+    sar | mail -s "[Warning] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "CPU Warning:" $IDLE_CPU
 else
     echo "CPU is Okay:" $IDLE_CPU
@@ -25,10 +24,10 @@ fi
 IDLE_MEM=`echo "$ACTUAL_MEM * 100 / $TOTAL_MEM" | bc`
 
 if (( $IDLE_MEM < 10 )); then
-    free -mh | mail -s "[Error] MEM Usage is too high in $(hostname)" "230@fumire.moe"
+    free -mh | mail -s "[Error] MEM Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "MEM Error:" $IDLE_MEM
 elif (( $IDLE_MEM < 15 )); then
-    free -mh | mail -s "[Warning] MEM Usage is too high in $(hostname)" "230@fumire.moe"
+    free -mh | mail -s "[Warning] MEM Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "MEM Warning:" $IDLE_MEM
 else
     echo "MEM is Okay:" $IDLE_MEM
@@ -38,10 +37,10 @@ TEMPERATURE=$(cat /sys/class/thermal/thermal_zone0/temp)
 TEMPERATURE="$(echo "$TEMPERATURE / 1000" | bc -l | xargs printf "%1.0f")"
 
 if [[ $TEMPERATURE -gt 80 ]]; then
-    echo "TEMPERATURE Error: $TEMPERATURE" | mail -s "[ERROR] TEMPERATURE is too high in $(hostname)" "230@fumire.moe"
+    echo "TEMPERATURE Error: $TEMPERATURE" | mail -s "[ERROR] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "TEMPERATURE Error" $TEMPERATURE
 elif [[ $TEMPERATURE -gt 70 && $TEMPERATURE -le 80 ]]; then
-    echo "TEMPERATURE Warning: $TEMPERATURE" | mail -s "[Warning] TEMPERATURE is too high in $(hostname)" "230@fumire.moe"
+    echo "TEMPERATURE Warning: $TEMPERATURE" | mail -s "[Warning] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "TEMPERATURE Warning:" $TEMPERATURE
 else
     echo "TEMPERATURE is Okay:" $TEMPERATURE
