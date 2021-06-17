@@ -178,3 +178,4 @@ nnoremap <C-w>m :split <Return>
 nnoremap <C-w>l :vsplit <Return>
 nnoremap <C-n> "=strftime("%Y-%m-%d")<Return>p
 nnoremap <C-m> "=strftime("%FT%T%z")<Return>p
+command! GetPDF hardcopy > %.ps | !ps2pdf %.ps && rm %.ps && echo 'Created: %.pdf'
