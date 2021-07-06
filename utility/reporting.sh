@@ -2,7 +2,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 for h in 'host1' 'host2'; do
-    scp -c aes256-cbc -P 3030 jwlee230@$h.kogic.kr:/var/log/sysstat/sa$(date +%d) $h
+    scp -c aes256-cbc -P $PORT jwlee230@$h.kogic.kr:/var/log/sysstat/sa$(date +%d) $h
 done
 for h in 'host1' 'host2'; do
     if [[ "$h" != "compbio" ]]; then
