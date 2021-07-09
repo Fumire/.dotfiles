@@ -20,7 +20,6 @@ export TERM="xterm-256color"
 export EDITOR="vim"
 export SGE_ROOT="/opt/Gridengine"
 
-
 # ssh
 export SSH_KEY_PATH="$HOME/.ssh/id_rsa"
 zstyle :omz:plugins:ssh-agent identities id_rsa
