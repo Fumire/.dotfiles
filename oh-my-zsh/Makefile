@@ -1,5 +1,5 @@
 all: $(HOME)/.oh-my-zsh $(HOME)/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting $(HOME)/.oh-my-zsh/themes/local.zsh-theme $(HOME)/.oh-my-zsh/themes/remote.zsh-theme
-.PHONY += all
+.PHONY: all
 
 $(HOME)/.oh-my-zsh:
 	curl -fsSL "https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh" | sh

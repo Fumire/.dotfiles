@@ -1,5 +1,5 @@
 all: $(HOME)/.zshrc $(HOME)/.alias.zsh
-.PHONY += all
+.PHONY: all
 
 $(HOME)/.zshrc: zshrc.history
 	which $$SHELL | grep "zsh" || chsh -s `which zsh`

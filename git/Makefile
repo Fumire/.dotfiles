@@ -1,5 +1,5 @@
 all: $(HOME)/.gitignore_global $(HOME)/.gitconfig
-.PHONY += git
+.PHONY: all
 
 $(HOME)/.gitconfig: gitconfig
 	ln -sf $(abspath $<) $@

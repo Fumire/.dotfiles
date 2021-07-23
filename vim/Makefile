@@ -1,5 +1,5 @@
 all: $(HOME)/.vimrc $(HOME)/.ycm_extra_conf.py $(HOME)/.style.yapf $(HOME)/Library/Preferences/TabNine/TabNine.toml
-.PHONY += all
+.PHONY: all
 
 $(HOME)/.vimrc: vimrc
 	ln -sf $(abspath $<) $@
