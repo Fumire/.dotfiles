@@ -24,8 +24,7 @@ Plug 'chrisbra/csv.vim'
 if v:version < 705
     Plug 'vim-scripts/AutoComplPop'
 else
-"    Plug 'Valloric/YouCompleteMe'
-    Plug 'zxqfl/tabnine-vim'
+    Plug 'tabnine/YouCompleteMe', {'do': './install.py --all'}
 endif
 
 Plug 'StanAngeloff/php.vim', {'for': 'php'}
