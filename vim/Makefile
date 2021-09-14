@@ -1,4 +1,4 @@
-all: $(HOME)/.vimrc $(HOME)/.ycm_extra_conf.py $(HOME)/.style.yapf $(HOME)/Library/Preferences/TabNine/TabNine.toml
+all: $(HOME)/.vimrc $(HOME)/.style.yapf $(HOME)/Library/Preferences/TabNine/TabNine.toml
 .PHONY: all
 
 $(HOME)/.vimrc: vimrc
