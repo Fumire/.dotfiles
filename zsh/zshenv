@@ -1,0 +1,3 @@
+if [[ ( "$SHLVL" -eq 1 && ! -o LOGIN ) && -s "${ZDOTDIR:-$HOME}/.zshrc" ]]; then
+    source "${ZDOTDIR:-$HOME}/.zshrc"
+fi
