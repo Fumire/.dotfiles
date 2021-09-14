@@ -1,4 +1,4 @@
-all: $(HOME)/.zshenv $(HOME)/.zshrc $(HOME)/.zlogout $(HOME)/.alias.zsh
+all: $(HOME)/.zshenv $(HOME)/.zshrc $(HOME)/.alias.zsh
 .PHONY: all
 
 $(HOME)/.zshenv: | zshenv
