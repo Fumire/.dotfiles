@@ -1,0 +1,5 @@
+Host *
+    Ciphers aes256-cbc
+    Compression yes
+    ControlMaster yes
+    HashKnownHosts yes

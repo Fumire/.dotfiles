@@ -9,7 +9,11 @@ add_key: id_rsa.pub $(HOME)/.ssh/authorized_keys
 	cat $(word 1,$^) >> $(word 2,$^)
 .PHONY: add_key
 
-$(HOME)/.ssh/%: $(HOME)/Documents/PrivateKeys/%.asc
+$(HOME)/.ssh/config: | config
+	ln -sf $(abspath $|) $@
+	chmod 600 $@
+
+$(HOME)/.ssh/id_%: $(HOME)/Documents/PrivateKeys/id_%.asc
 	gpg --decrypt $< > $@
 	chmod 400 $@
 
