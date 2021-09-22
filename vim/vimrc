@@ -5,7 +5,7 @@ if empty(glob("$HOME/.vim/autoload/plug.vim"))
 endif
 call plug#begin()
 Plug 'vim-airline/vim-airline'
-Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
+Plug 'scrooloose/nerdtree', {'on': 'NERDTreeToggle'}
 Plug 'tpope/vim-fugitive'
 Plug 'bling/vim-bufferline'
 Plug 'airblade/vim-gitgutter'
@@ -38,7 +38,7 @@ call plug#end()
 
 " Color scheme
 if empty(glob("$HOME/.vim/colors/jellybeans.vim"))
-    silent !curl --fail --location --create-dir --output $HOME/.vim/colors/jellybeans.vim --create-dirs https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
+    silent !curl --fail --location --output $HOME/.vim/colors/jellybeans.vim --create-dirs https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
 endif
 if has('syntax')
     syntax on
@@ -51,7 +51,6 @@ map <C-d> :NewDelimiter
 " YouCompleteMe settings
 if v:version >= 705
     let g:ycm_min_num_of_chars_for_completion = 1
-    let g:ycm_global_ycm_extra_conf = '$HOME/.ycm_extra_conf.py'
     let g:ycm_key_list_stop_completion = ['<C-y>', '<Return>']
     let g:ycm_collect_identifiers_from_tags_files = 1
 endif
@@ -127,14 +126,14 @@ set noshowmode
 set relativenumber
 set number
 set hidden
-set wildignore+=*.swp,*.pyc,*.zip,venv,.git
+set wildignore+=*.swp,*.pyc,*.zip,venv,.git,.DS_Store
 set backspace=indent,eol,start
 set list
 set listchars=tab:⇥\ ,trail:·,precedes:«,extends:»,eol:¶
 set background=dark
 set title
 
-" bakcup settings
+" backup settings
 set nobackup
 set nowritebackup
 set noswapfile
@@ -153,6 +152,7 @@ set statusline=\ %<%l:%v\ [%P]%=%a\ %h%m%r\ %F\
 " use OS clipboard
 set clipboard=unnamed
 
+" use mouse
 if has('mouse')
     set mouse=a
 endif
