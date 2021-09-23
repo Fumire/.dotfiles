@@ -1,5 +1,3 @@
-# Last modified: 2020-01-03
-
 cask_args appdir: "/Applications"
 
 # tap brew
@@ -70,7 +68,6 @@ mas "Microsoft OneNote", id: 784801555
 mas "OneDrive", id: 823766827
 mas "Magnet", id: 441258766
 mas "Microsoft Excel", id: 462058435
-mas "PixelScheduler", id: 976996075
 mas "KakaoTalk", id: 869223134
 mas "Microsoft PowerPoint", id: 462062816
 mas "Unicorn Blocker", id: 1231935892
