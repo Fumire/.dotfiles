@@ -58,6 +58,3 @@ export PATH="${ZDOTDIR:-$HOME}/.local/bin:${PATH}"
 
 # gpg settings
 export GPG_TTY=$(tty)
-if [[ `uname` == "Darwin" ]]; then
-    eval "$(gpg-agent)" > /dev/null
-fi
