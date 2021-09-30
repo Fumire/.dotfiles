@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-20.04
 
     steps:
@@ -16,9 +15,12 @@ jobs:
 
     - name: check ZSH
       run: make zsh_run
+      shell: zsh {0}
       
     - name: check oh-my-zsh
       run: make oh-my-zsh_run
+      shell: zsh {0}
       
     - name: check VIM
       run: make vim_run
+      shell: zsh {0}
