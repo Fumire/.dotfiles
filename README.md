@@ -12,7 +12,13 @@
 
 ## Usage
 
-Execute Makefile with `make` command
+Execute Makefile with `make` command.
+
+I tested on Ubuntu 20.04:
+[![Ubuntu CI](https://github.com/Fumire/.dotfiles/actions/workflows/ubuntu.yml/badge.svg?branch=master)](https://github.com/Fumire/.dotfiles/actions/workflows/ubuntu.yml)
+
+Also, on macOS Big sur:
+[![macOS CI](https://github.com/Fumire/.dotfiles/actions/workflows/mac.yml/badge.svg)](https://github.com/Fumire/.dotfiles/actions/workflows/mac.yml)
 
 ## Acknowledgement
 
