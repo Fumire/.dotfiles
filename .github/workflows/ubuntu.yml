@@ -12,6 +12,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    
+    - name: install ZSH
+      run: sudo apt-get update && sudo apt-get install zsh -y
 
     - name: check ZSH
       run: make zsh_run
