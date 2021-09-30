@@ -14,6 +14,6 @@ else
         curl --silent --output $HOME/zsh.tar.xz --location https://sourceforge.net/projects/zsh/files/latest/download
         cd $HOME && mkdir zsh && unxz zsh.tar.xz && tar -xf zsh.tar -C zsh --strip-components 1
         cd $HOME/zsh && ./configure --without-tcsetpgrp --prefix $HOME && make -j && make -j install
-        chsh -s $HOME/zsh
+        chsh -s $HOME/bin/zsh
     fi
 fi
