@@ -1,0 +1,24 @@
+name: Ubuntu CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: check ZSH
+      run: make zsh_run
+      
+    - name: check oh-my-zsh
+      run: make oh-my-zsh_run
+      
+    - name: check VIM
+      run: make vim_run
