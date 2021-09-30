@@ -1,4 +1,4 @@
-all: /usr/local/bin/brew free
+all: /usr/local/bin/brew no_mas
 .PHONY: all
 
 start: starting.sh
@@ -17,3 +17,8 @@ free: Brewfile.free | /usr/local/bin/brew
 	brew bundle --file=$(abspath $<) --verbose
 	brew bundle check --file=$(abspath $<) --verbose
 .PHONY: free
+
+no_mas: Brewfile.no_mas | /usr/local/bin/brew
+	brew bundle --file=$(abspath $<) --verbose
+	brew bundle check --file=$(abspath $<) --verbose
+.PHONY: no_mas

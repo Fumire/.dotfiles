@@ -39,17 +39,3 @@ cask "font-source-code-pro"
 cask "appcleaner"
 cask "chrome-remote-desktop-host"
 cask "skype"
-
-# mas install
-mas "Keynote", id: 409183694
-mas "Microsoft OneNote", id: 784801555
-mas "OneDrive", id: 823766827
-mas "Microsoft Excel", id: 462058435
-mas "KakaoTalk", id: 869223134
-mas "Microsoft PowerPoint", id: 462062816
-mas "Microsoft Outlook", id: 985367838
-mas "Pages", id: 409201541
-mas "Slack", id: 803453959
-mas "PiPifier", id: 1160374471
-mas "Microsoft Word", id: 462054704
-mas "Xcode", id: 497799835
