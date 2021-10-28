@@ -126,7 +126,7 @@ set noshowmode
 set relativenumber
 set number
 set hidden
-set wildignore+=*.swp,*.pyc,*.zip,venv,.git,.DS_Store
+set wildignore+=*.swp,*.pyc,.mypy_cache,.git,.DS_Store
 set backspace=indent,eol,start
 set list
 set listchars=tab:⇥\ ,trail:·,precedes:«,extends:»,eol:¶
@@ -144,7 +144,6 @@ set smartcase
 set hlsearch
 set incsearch
 set showcmd
-set matchpairs+=<:>
 
 " status line settings
 set statusline=\ %<%l:%v\ [%P]%=%a\ %h%m%r\ %F\
