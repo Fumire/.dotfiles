@@ -70,7 +70,7 @@ map <silent> <F9> :NERDTreeToggle <Return>
 let NERDTreeQuitOnOpen = 1
 let NERDTreeShowHidden = 1
 let NERDTreeWinPos = "left"
-let NERDTreeIgnore = ['\.pyc$', '\.swp$', '\.git$', '\.DS_Store$']
+let NERDTreeIgnore = ['\.pyc$', '\.swp$', '\.git$', '\.DS_Store$', '\.mypy_cache$']
 let NERDTreeShowLineNumbers = 1
 
 " Tagbar settings
