@@ -2,7 +2,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 if [ $(which zsh > /dev/null; echo $?) = 0 ]; then
-    which $SHELL | grep "zsh" > /dev/null || chsh -s $(which zsh)
+    which $SHELL | grep "zsh" > /dev/null || sudo chsh -s $(which zsh) $(whoami)
 else
     if [ $(uname) = "Darwin" ]; then
         brew install zsh
