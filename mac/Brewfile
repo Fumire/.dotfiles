@@ -30,11 +30,11 @@ brew "gnupg"
 brew "pinentry-mac"
 brew "neofetch"
 brew "macvim"
-brew "youtube-dl"
 brew "r"
 brew "java"
 brew "languagetool"
 brew "reattach-to-user-namespace"
+brew "yt-dlp/taps/yt-dlp"
 
 # cask install
 cask "alfred"
