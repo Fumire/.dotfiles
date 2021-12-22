@@ -28,7 +28,7 @@ export SGE_ROOT="/opt/Gridengine"
 # ssh
 export SSH_KEY_PATH="${ZDOTDIR:-$HOME}/.ssh/id_rsa"
 zstyle :omz:plugins:ssh-agent identities id_rsa
-zstyle :omz:plugins:ssh-agent lifetime 1h
+zstyle :omz:plugins:ssh-agent lifetime 1d
 if [[ $(uname) == "Darwin" ]]; then
     export SSH_ASKPASS=touch2sudo
 fi
