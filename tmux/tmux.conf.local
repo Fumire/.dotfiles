@@ -350,6 +350,8 @@ set -g @resurrect-save 'S'
 set -g @resurrect-restore 'R'
 set -g @resurrect-capture-pane-contents 'on'
 
+set -g @plugin 'tmux-plugins/tmux-continuum'
+
 # -- custom variables ----------------------------------------------------------
 
 # to define a custom #{foo} variable, define a POSIX shell function between the
