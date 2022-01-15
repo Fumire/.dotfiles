@@ -1,6 +1,4 @@
 stty -ixon
-export ZSH=${ZDOTDIR:-$HOME}/.oh-my-zsh
-source ${ZSH}/oh-my-zsh.sh
 
 # choose theme
 if [[ -n "$SSH_CONNECTION" ]]; then
@@ -8,6 +6,10 @@ if [[ -n "$SSH_CONNECTION" ]]; then
 else
   ZSH_THEME="local"
 fi
+
+# Soure oh-my-zsh *after* THEME
+export ZSH=${ZDOTDIR:-$HOME}/.oh-my-zsh
+source ${ZSH}/oh-my-zsh.sh
 
 # plugins
 plugins=(
