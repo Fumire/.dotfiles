@@ -1,7 +1,7 @@
 [user]
     email = 230@fumire.moe
     name = Jaewoong Lee
-    signingKey = 88C07132
+    signingKey = 317C76D5
 [core]
     editor = vim
     excludesfile = ~/.gitignore_global
@@ -45,4 +45,4 @@
 [ssh]
     variant = ssh
 [credential]
-	helper = osxkeychain
+    helper = osxkeychain
