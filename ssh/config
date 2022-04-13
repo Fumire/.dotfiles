@@ -1,6 +1,5 @@
 Host *
     Ciphers aes256-cbc,aes256-ctr
-    PreferredAuthentications publickey
     Compression yes
     ControlMaster yes
     HashKnownHosts yes
