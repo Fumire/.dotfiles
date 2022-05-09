@@ -6,6 +6,7 @@
     editor = vim
     excludesfile = ~/.gitignore_global
     compression = 9
+    pager = less -F -X
 [init]
     defaultBranch = main
 [blame]
@@ -46,3 +47,5 @@
     variant = ssh
 [credential]
     helper = osxkeychain
+[pager]
+    status = true
