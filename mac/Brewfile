@@ -36,6 +36,7 @@ brew "languagetool"
 brew "reattach-to-user-namespace"
 brew "yt-dlp/taps/yt-dlp"
 brew "go"
+brew "ccls"
 
 # cask install
 cask "alfred"
