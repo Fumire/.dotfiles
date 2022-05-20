@@ -64,6 +64,8 @@ cask "mendeley"
 cask "mendeley-reference-manager"
 cask "intel-power-gadget"
 cask "unity-hub"
+cask "ifunbox"
+cask "endnote"
 
 # mas install
 mas "RunCat", id: 1429033973
