@@ -42,8 +42,6 @@ cask "alfred"
 cask "istat-menus"
 cask "steam"
 cask "google-chrome"
-cask "opera"
-cask "duet"
 cask "vlc"
 cask "mactex"
 cask "texstudio"
@@ -55,11 +53,16 @@ cask "font-source-code-pro"
 cask "xquartz"
 cask "gpg-suite"
 cask "appcleaner"
-cask "firefox"
 cask "chrome-remote-desktop-host"
 cask "skype"
 cask "gqrx"
 cask "android-studio"
+cask "adobe-creative-cloud"
+cask "zoom"
+cask "mendeley"
+cask "mendeley-reference-manager"
+cask "intel-power-gadget"
+cask "unity-hub"
 
 # mas install
 mas "RunCat", id: 1429033973
@@ -75,7 +78,7 @@ mas "Microsoft Outlook", id: 985367838
 mas "Bandizip", id: 1265704574
 mas "Pages", id: 409201541
 mas "Redacted", id: 984968384
-mas "Notability", id:   360593530
+mas "Notability", id: 360593530
 mas "Slack", id: 803453959
 mas "Tweetbot", id: 1384080005
 mas "PiPifier", id: 1160374471
@@ -84,3 +87,4 @@ mas "GoodNotes", id: 1444383602
 mas "FileZilla Pro - FTP and Cloud", id: 1298486723
 mas "Xcode", id: 497799835
 mas "Reeder 5.", id: 1529448980
+mas "cinebench", id: 1438772273
