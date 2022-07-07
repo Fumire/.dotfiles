@@ -54,7 +54,7 @@ cask "gqrx", args: { appdir: "/Applications" }
 cask "ifunbox", args: { appdir: "/Applications" }
 cask "intel-power-gadget", args: { appdir: "/Applications" }
 cask "istat-menus", args: { appdir: "/Applications" }
-cask "mactex"
+cask "mactex", args: { appdir: "/Applications" }
 cask "mendeley", args: { appdir: "/Applications" }
 cask "mendeley-reference-manager", args: { appdir: "/Applications" }
 cask "skype", args: { appdir: "/Applications" }
