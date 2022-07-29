@@ -69,7 +69,6 @@ cask "zoom", args: { appdir: "/Applications" }
 mas "Bandizip", id: 1265704574
 mas "Cinebench", id: 1438772273
 mas "Color Picker", id: 641027709
-mas "FileZilla Pro", id: 1298486723
 mas "GoodNotes", id: 1444383602
 mas "KakaoTalk", id: 869223134
 mas "Keynote", id: 409183694
