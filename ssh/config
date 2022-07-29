@@ -1,6 +1,5 @@
 Host *
     Ciphers aes256-cbc,aes256-ctr
-    Compression yes
-    ControlMaster yes
     HashKnownHosts yes
+    Compression yes
     SendEnv LC_*
