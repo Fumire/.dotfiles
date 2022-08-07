@@ -1,19 +1,22 @@
+tap "cloudflare/cloudflare"
 tap "homebrew/bundle"
 tap "homebrew/cask"
 tap "homebrew/cask-fonts"
 tap "homebrew/core"
 tap "homebrew/services"
 tap "yt-dlp/taps"
-
 brew "astyle"
+brew "sqlite"
 brew "python@3.9"
 brew "python@3.10", link: true
 brew "ccls"
 brew "cmake"
 brew "coreutils"
 brew "ctags"
+brew "curl"
 brew "dnscrypt-proxy"
 brew "docker"
+brew "ffmpeg"
 brew "gcc"
 brew "git"
 brew "git-lfs"
@@ -26,6 +29,7 @@ brew "mas"
 brew "neofetch"
 brew "node"
 brew "openjdk"
+brew "php"
 brew "pinentry-mac"
 brew "r"
 brew "reattach-to-user-namespace"
@@ -36,8 +40,8 @@ brew "wget"
 brew "zsh"
 brew "zsh-completions"
 brew "zsh-syntax-highlighting"
+brew "cloudflare/cloudflare/cloudflared"
 brew "yt-dlp/taps/yt-dlp"
-
 cask "adobe-creative-cloud", args: { appdir: "/Applications" }
 cask "alfred", args: { appdir: "/Applications" }
 cask "android-studio", args: { appdir: "/Applications" }
@@ -65,7 +69,6 @@ cask "unity-hub", args: { appdir: "/Applications" }
 cask "vlc", args: { appdir: "/Applications" }
 cask "xquartz", args: { appdir: "/Applications" }
 cask "zoom", args: { appdir: "/Applications" }
-
 mas "Bandizip", id: 1265704574
 mas "Cinebench", id: 1438772273
 mas "Color Picker", id: 641027709
@@ -73,12 +76,14 @@ mas "GoodNotes", id: 1444383602
 mas "KakaoTalk", id: 869223134
 mas "Keynote", id: 409183694
 mas "Magnet", id: 441258766
+mas "Mendeley Web Importer", id: 1577516695
 mas "Microsoft Excel", id: 462058435
 mas "Microsoft OneNote", id: 784801555
 mas "Microsoft Outlook", id: 985367838
 mas "Microsoft PowerPoint", id: 462062816
 mas "Microsoft Word", id: 462054704
 mas "Notability", id: 360593530
+mas "Numbers", id: 409203825
 mas "OneDrive", id: 823766827
 mas "Pages", id: 409201541
 mas "PiPifier", id: 1160374471
@@ -86,6 +91,7 @@ mas "Redacted", id: 984968384
 mas "Reeder", id: 1529448980
 mas "RunCat", id: 1429033973
 mas "Slack", id: 803453959
+mas "Telegram", id: 747648890
 mas "Termius", id: 1176074088
 mas "Tweetbot", id: 1384080005
 mas "Unicorn Blocker", id: 1231935892
