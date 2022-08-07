@@ -1,0 +1,7 @@
+proxy-dns: true
+proxy-dns-upstream:
+  - https://cloudflare-dns.com/dns-query
+  - https://one.one.one.one/dns-query
+  - https://1.1.1.1/dns-query
+  - https://1.0.0.1/dns-query
+

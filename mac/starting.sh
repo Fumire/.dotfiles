@@ -10,7 +10,7 @@ defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
 # Check for software updates daily, not weekly
 defaults write com.apple.SoftwareUpdate ScheduleFrequency -int 1
 
-# Showing all filename extenstion in Finder 
+# Showing all filename extenstion in Finder
 defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 
 # Use column view in all Finder tabs by default
@@ -54,5 +54,11 @@ defaults write com.apple.dock tilesize -int 16
 
 # Remove every icon on the Desktop
 defaults write com.apple.finder CreateDesktop -bool false
+
+# No .DS_Store creation on external disk
+defaults write com.apple.desktopservices DSDontWriteNetworkStores true
+
+# Cloudflared DNS
+sudo cloudflared service install
 
 killall Finder
