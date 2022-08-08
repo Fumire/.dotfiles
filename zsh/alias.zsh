@@ -19,8 +19,8 @@ if [[ $(uname) == "Darwin" ]]; then
     alias copyssh="pbcopy < $HOME/.ssh/id_rsa.pub"
 fi
 
-function weather() { curl https://wttr.in/${1:-seoul}?m ;}
+function weather() { curl "https://wttr.in/${@:-seoul}?m" ;}
 
-function gi() { curl -sL https://www.gitignore.io/api/$@ ;}
+function gi() { curl -sL "https://www.gitignore.io/api/$@" ;}
 
-function cheat() { curl https://cheat.sh/$@ ;}
+function cheat() { curl "https://cheat.sh/$@" ;}
