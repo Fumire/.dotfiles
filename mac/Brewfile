@@ -69,6 +69,7 @@ cask "unity-hub", args: { appdir: "/Applications" }
 cask "vlc", args: { appdir: "/Applications" }
 cask "xquartz", args: { appdir: "/Applications" }
 cask "zoom", args: { appdir: "/Applications" }
+cask "zotero", args: { appdir: "/Applications" }
 mas "Bandizip", id: 1265704574
 mas "Cinebench", id: 1438772273
 mas "Color Picker", id: 641027709
