@@ -51,7 +51,6 @@ cask "bibdesk", args: { appdir: "/Applications" }
 cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
 cask "discord", args: { appdir: "/Applications" }
 cask "endnote", args: { appdir: "/Applications" }
-cask "font-source-code-pro", args: { appdir: "/Applications" }
 cask "google-chrome", args: { appdir: "/Applications" }
 cask "gpg-suite", args: { appdir: "/Applications" }
 cask "gqrx", args: { appdir: "/Applications" }
