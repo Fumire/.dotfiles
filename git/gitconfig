@@ -49,3 +49,5 @@
     helper = osxkeychain
 [pager]
     status = true
+[oh-my-zsh]
+    hide-dirty = 1

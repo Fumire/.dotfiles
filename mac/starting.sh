@@ -58,7 +58,4 @@ defaults write com.apple.finder CreateDesktop -bool false
 # No .DS_Store creation on external disk
 defaults write com.apple.desktopservices DSDontWriteNetworkStores true
 
-# Cloudflared DNS
-sudo cloudflared service install
-
 killall Finder

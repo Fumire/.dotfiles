@@ -59,10 +59,12 @@ cask "istat-menus", args: { appdir: "/Applications" }
 cask "mactex", args: { appdir: "/Applications" }
 cask "mendeley", args: { appdir: "/Applications" }
 cask "mendeley-reference-manager", args: { appdir: "/Applications" }
+cask "notion", args: { appdir: "/Applications" }
 cask "skype", args: { appdir: "/Applications" }
 cask "steam", args: { appdir: "/Applications" }
 cask "tex-live-utility", args: { appdir: "/Applications" }
 cask "texstudio", args: { appdir: "/Applications" }
+cask "tunnelblick", args: { appdir: "/Applications" }
 cask "unity-hub", args: { appdir: "/Applications" }
 cask "vlc", args: { appdir: "/Applications" }
 cask "xquartz", args: { appdir: "/Applications" }
