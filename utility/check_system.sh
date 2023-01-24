@@ -6,10 +6,10 @@ IFS=$'\n\t'
 IDLE_CPU=`top -b -n 1 | grep "\%Cpu(s)" | awk -F ',' '{ print $4}' | awk '{ print $1}' | cut -d "." -f 1`
 
 if (( $IDLE_CPU < 10 )); then
-    sar | mail -s "[Error] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
+    sar | tail -n 300 | mail -s "[Error] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "CPU Error:" $IDLE_CPU
 elif (( $IDLE_CPU < 15 )); then
-    sar | mail -s "[Warning] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
+    sar | tail -n 300 | mail -s "[Warning] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "CPU Warning:" $IDLE_CPU
 else
     echo "CPU is Okay:" $IDLE_CPU
