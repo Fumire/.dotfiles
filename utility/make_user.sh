@@ -1,6 +1,6 @@
 #!/bin/bash
 # Maintainer: jwlee230@unist.ac.kr
-# Last modified: 2021-03-30
+# Last modified: 2023-03-23
 set -euo pipefail
 IFS=$'\n\t'
 
@@ -50,7 +50,5 @@ fi
 
 gpasswd -a ${ID} compbio
 gpasswd -a ${ID} docker
-
-passwd -e ${ID}
 
 echo "Done!!"
