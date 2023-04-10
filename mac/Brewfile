@@ -60,6 +60,7 @@ cask "mactex", args: { appdir: "/Applications" }
 cask "mendeley", args: { appdir: "/Applications" }
 cask "mendeley-reference-manager", args: { appdir: "/Applications" }
 cask "notion", args: { appdir: "/Applications" }
+cask "sengi", args: { appdir: "/Applications" }
 cask "skype", args: { appdir: "/Applications" }
 cask "steam", args: { appdir: "/Applications" }
 cask "tex-live-utility", args: { appdir: "/Applications" }
@@ -94,7 +95,6 @@ mas "RunCat", id: 1429033973
 mas "Slack", id: 803453959
 mas "Telegram", id: 747648890
 mas "Termius", id: 1176074088
-mas "Tweetbot", id: 1384080005
 mas "Unicorn Blocker", id: 1231935892
 mas "Unicorn HTTPS", id: 1475628500
 mas "Xcode", id: 497799835
