@@ -51,9 +51,11 @@ cask "endnote", args: { appdir: "/Applications" }
 cask "google-chrome", args: { appdir: "/Applications" }
 cask "gpg-suite", args: { appdir: "/Applications" }
 cask "gqrx", args: { appdir: "/Applications" }
+cask "ifunbox", args: { appdir: "/Applications" }
 cask "intel-power-gadget", args: { appdir: "/Applications" }
 cask "istat-menus", args: { appdir: "/Applications" }
 cask "mactex", args: { appdir: "/Applications" }
+cask "microsoft-teams", args: { appdir: "/Applications" }
 cask "notion", args: { appdir: "/Applications" }
 cask "sengi", args: { appdir: "/Applications" }
 cask "skype", args: { appdir: "/Applications" }
@@ -80,7 +82,6 @@ mas "Microsoft PowerPoint", id: 462062816
 mas "Microsoft Word", id: 462054704
 mas "Notability", id: 360593530
 mas "Numbers", id: 409203825
-mas "OneDrive", id: 823766827
 mas "Pages", id: 409201541
 mas "PiPifier", id: 1160374471
 mas "Redacted", id: 984968384
