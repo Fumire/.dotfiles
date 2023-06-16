@@ -6,7 +6,6 @@ endif
 call plug#begin()
 Plug 'vim-airline/vim-airline'
 Plug 'scrooloose/nerdtree', {'on': 'NERDTreeToggle'}
-Plug 'tpope/vim-fugitive'
 Plug 'bling/vim-bufferline'
 Plug 'airblade/vim-gitgutter'
 Plug 'Chiel92/vim-autoformat'
@@ -18,13 +17,12 @@ Plug 'Yggdroot/indentLine'
 Plug 'majutsushi/tagbar'
 Plug 'xuhdev/SingleCompile'
 
-Plug 'mtth/scratch.vim'
 Plug 'chrisbra/csv.vim'
 
 if v:version < 705
     Plug 'vim-scripts/AutoComplPop'
 else
-    Plug 'tabnine/YouCompleteMe', {'do': './install.py --all --verbose'}
+    Plug 'codota/tabnine-nvim', {'do': './dl_binaries.sh'}
 endif
 
 Plug 'StanAngeloff/php.vim', {'for': 'php'}
@@ -48,22 +46,11 @@ colorscheme jellybeans
 " CSV settings
 map <C-d> :NewDelimiter
 
-" YouCompleteMe settings
-if v:version >= 705
-    let g:ycm_min_num_of_chars_for_completion = 1
-    let g:ycm_key_list_stop_completion = ['<C-y>', '<Return>']
-    let g:ycm_collect_identifiers_from_tags_files = 1
-endif
-
 " SingleCompile settings
 map <F12> :SingleCompile <Return>
 
 " Undotree settings
 nnoremap <F8> :UndotreeToggle <Return>
-
-" scratch settings
-let g:scratch_persistence_file = '/tmp/scratch_persistence_file.txt'
-let g:scratch_autohide = 0
 
 " Nerdtree settings
 map <silent> <F9> :NERDTreeToggle <Return>
