@@ -1,54 +1,58 @@
-cask_args appdir: "/Applications"
-
-# tap brew
+tap "cloudflare/cloudflare"
 tap "homebrew/bundle"
 tap "homebrew/cask"
+tap "homebrew/cask-fonts"
 tap "homebrew/core"
 tap "homebrew/services"
-tap "homebrew/cask-fonts"
-
-# brew install
+tap "yt-dlp/taps"
 brew "astyle"
-brew "dnscrypt-proxy"
-brew "python"
-brew "cmake"
-brew "ctags"
+brew "sqlite"
+brew "python@3.11", link: true
 brew "ccls"
+brew "cmake"
+brew "coreutils"
+brew "ctags"
+brew "curl"
 brew "docker"
 brew "gcc"
 brew "git"
-brew "git-lfs"
+brew "gnupg"
+brew "go"
+brew "languagetool"
+brew "mackup"
+brew "neofetch"
+brew "neovim"
 brew "node"
+brew "openjdk"
+brew "php"
+brew "pinentry-mac"
+brew "r"
+brew "reattach-to-user-namespace"
+brew "subversion"
 brew "tmux"
 brew "tree"
 brew "wget"
 brew "zsh"
 brew "zsh-completions"
 brew "zsh-syntax-highlighting"
-brew "macvim"
 brew "yt-dlp/taps/yt-dlp"
-brew "reattach-to-user-namespace"
-
-# cask install
-cask "alfred"
-cask "istat-menus"
-cask "google-chrome"
-cask "vlc"
-cask "bartender"
-cask "appcleaner"
-cask "chrome-remote-desktop-host"
-cask "skype"
-
-# mas install
-mas "Keynote", id: 409183694
-mas "Microsoft OneNote", id: 784801555
-mas "OneDrive", id: 823766827
-mas "Microsoft Excel", id: 462058435
-mas "KakaoTalk", id: 869223134
-mas "Microsoft PowerPoint", id: 462062816
-mas "Microsoft Outlook", id: 985367838
-mas "Pages", id: 409201541
-mas "Slack", id: 803453959
-mas "PiPifier", id: 1160374471
-mas "Microsoft Word", id: 462054704
-mas "Xcode", id: 497799835
+cask "adobe-creative-cloud", args: { appdir: "/Applications" }
+cask "android-studio", args: { appdir: "/Applications" }
+cask "appcleaner", args: { appdir: "/Applications" }
+cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
+cask "discord", args: { appdir: "/Applications" }
+cask "google-chrome", args: { appdir: "/Applications" }
+cask "intel-power-gadget", args: { appdir: "/Applications" }
+cask "mactex", args: { appdir: "/Applications" }
+cask "microsoft-teams", args: { appdir: "/Applications" }
+cask "notion", args: { appdir: "/Applications" }
+cask "skype", args: { appdir: "/Applications" }
+cask "steam", args: { appdir: "/Applications" }
+cask "tex-live-utility", args: { appdir: "/Applications" }
+cask "texstudio", args: { appdir: "/Applications" }
+cask "tunnelblick", args: { appdir: "/Applications" }
+cask "unity-hub", args: { appdir: "/Applications" }
+cask "vlc", args: { appdir: "/Applications" }
+cask "xquartz", args: { appdir: "/Applications" }
+cask "zoom", args: { appdir: "/Applications" }
+cask "zotero", args: { appdir: "/Applications" }
