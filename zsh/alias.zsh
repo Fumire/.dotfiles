@@ -19,9 +19,6 @@ if [[ $(uname) == "Darwin" ]]; then
     alias vim="nvim"
     alias vi="nvim"
     alias vimdiff="nvim -d"
-    export EDITOR=$(which nvim)
-else
-    export EDITOR=$(which vi)
 fi
 
 # Shortcuts

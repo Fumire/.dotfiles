@@ -22,7 +22,11 @@ Plug 'chrisbra/csv.vim'
 if v:version < 705
     Plug 'vim-scripts/AutoComplPop'
 else
-    Plug 'codota/tabnine-nvim', {'do': './dl_binaries.sh'}
+    if has('nvim')
+        Plug 'codota/tabnine-nvim', {'do': './dl_binaries.sh'}
+    else
+        Plug 'codota/tabnine-vim', {'do': './install.py --all --verbose'}
+    endif
 endif
 
 Plug 'StanAngeloff/php.vim', {'for': 'php'}

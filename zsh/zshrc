@@ -20,9 +20,14 @@ plugins=(
 )
 
 # editors
-export EDITOR="vim"
-export VISUAL="vim"
-export PAGER="less"
+if [[ $(uname) == "Darwin" ]]; then
+    export EDITOR=$(which vim)
+    export VISUAL=$(which vim)
+else
+    export EDITOR=$(which nvim)
+    export VISUAL=$(which nvim)
+fi
+export PAGER=$(which less)
 
 export TERM="xterm-256color"
 
