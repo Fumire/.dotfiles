@@ -1,4 +1,3 @@
-tap "cloudflare/cloudflare"
 tap "homebrew/bundle"
 tap "homebrew/cask"
 tap "homebrew/cask-fonts"
@@ -36,23 +35,12 @@ brew "zsh"
 brew "zsh-completions"
 brew "zsh-syntax-highlighting"
 brew "yt-dlp/taps/yt-dlp"
-cask "adobe-creative-cloud", args: { appdir: "/Applications" }
-cask "android-studio", args: { appdir: "/Applications" }
 cask "appcleaner", args: { appdir: "/Applications" }
 cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
 cask "discord", args: { appdir: "/Applications" }
 cask "google-chrome", args: { appdir: "/Applications" }
 cask "intel-power-gadget", args: { appdir: "/Applications" }
-cask "mactex", args: { appdir: "/Applications" }
-cask "microsoft-teams", args: { appdir: "/Applications" }
 cask "notion", args: { appdir: "/Applications" }
-cask "skype", args: { appdir: "/Applications" }
-cask "steam", args: { appdir: "/Applications" }
-cask "tex-live-utility", args: { appdir: "/Applications" }
-cask "texstudio", args: { appdir: "/Applications" }
-cask "tunnelblick", args: { appdir: "/Applications" }
-cask "unity-hub", args: { appdir: "/Applications" }
 cask "vlc", args: { appdir: "/Applications" }
 cask "xquartz", args: { appdir: "/Applications" }
 cask "zoom", args: { appdir: "/Applications" }
-cask "zotero", args: { appdir: "/Applications" }

@@ -2,7 +2,7 @@ all: zsh_run oh-my-zsh_run vim_run
 .PHONY: all
 
 mac_run:
-	$(MAKE) -C mac no_mas
+	$(MAKE) -C mac free
 .PHONY: mac_run
 
 update:
