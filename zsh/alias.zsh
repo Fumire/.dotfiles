@@ -1,24 +1,28 @@
 # common typos
-alias claer='clear'
-alias clera='clear'
-alias celar='clear'
+alias claer="clear"
+alias clera="clear"
+alias celar="clear"
 
 # prevent accident
-alias rm='rm -i'
-alias mv='mv -i'
-alias cp='cp -i'
+alias rm="rm -i"
+alias mv="mv -i"
+alias cp="cp -i"
 
 # Python3
-alias py='python3'
+alias py="python3"
 
 # PIP update
-alias pipUpdate="pip3 install -U pip wheel && pip3 freeze --local | grep -v '^\-e' | cut -d = -f 1 | xargs -n1 pip3 install -U"
+alias pipUpdate="pip3 install -U pip wheel && pip3 freeze --local | grep -v "^\-e" | cut -d = -f 1 | xargs -n1 pip3 install -U"
 
 # Neovim
-alias vim="nvim"
-alias vi="nvim"
-alias vimdiff="nvim -d"
-export EDITOR=/usr/local/bin/nvim
+if [[ $(uname) == "Darwin" ]]; then
+    alias vim="nvim"
+    alias vi="nvim"
+    alias vimdiff="nvim -d"
+    export EDITOR=$(which nvim)
+else
+    export EDITOR=$(which vi)
+fi
 
 # Shortcuts
 if [[ $(uname) == "Darwin" ]]; then
