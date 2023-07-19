@@ -156,6 +156,10 @@ let g:airline#extensions#tabline#fnamemod = ':t'
 let g:airline#extensions#tabline#buffer_nr_show = 1
 let g:airline#extensions#tabline#buffer_nr_format = '%s:'
 
+" jedi (Python autocompletion) settings
+let g:pymode_rope = 0
+autocmd FileType python setlocal completeopt-=preview
+
 " Tab settings
 nnoremap <C-t> :enew <Return>
 nnoremap <silent> <C-h> :bprevious <Return>
