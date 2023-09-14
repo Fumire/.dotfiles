@@ -21,11 +21,11 @@ plugins=(
 
 # editors
 if [[ $(uname) == "Darwin" ]]; then
-    export EDITOR=$(which vim)
-    export VISUAL=$(which vim)
-else
     export EDITOR=$(which nvim)
     export VISUAL=$(which nvim)
+else
+    export EDITOR=$(which vim)
+    export VISUAL=$(which vim)
 fi
 export PAGER=$(which less)
 
