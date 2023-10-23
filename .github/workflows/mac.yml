@@ -13,14 +13,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-    - name: check brew
-      run: make mac_run
+      - name: check brew
+        run: make mac_run
 
-    - name: check ZSH
-      run: make zsh_run
+      - name: check ZSH
+        run: make zsh_run
 
-    - name: check oh-my-zsh
-      run: make oh-my-zsh_run
+      - name: check oh-my-zsh
+        run: make oh-my-zsh_run
 
-    - name: check VIM
-      run: make vim_run
+      - name: check VIM
+        run: make vim_run
