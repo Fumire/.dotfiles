@@ -17,7 +17,7 @@ jobs:
         run: brew update && brew upgrade || brew link --overwrite node@18
 
       - name: check brew
-        run: make mac_run || brew link --overwrite go
+        run: make mac_run || brew link --overwrite go python
 
       - name: check ZSH
         run: make zsh_run
@@ -27,3 +27,6 @@ jobs:
 
       - name: check VIM
         run: make vim_run
+
+      - name: check starting
+        run: bash mac/starting.sh
