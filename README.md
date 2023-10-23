@@ -1,25 +1,23 @@
 # .dotfiles
-
-여러 가지 설정 파일 모음
+Configuration files (dotfiles)
 
 ## Required
 * make
-* zsh
-* vim
+* zsh & oh-my-zsh
+* (neo)vim
 
 ## Usage
 ### Ubuntu
-I tested on Ubuntu 20.04:
+I tested on Ubuntu (latest):
 [![Ubuntu CI](https://github.com/Fumire/.dotfiles/actions/workflows/ubuntu.yml/badge.svg?branch=master)](https://github.com/Fumire/.dotfiles/actions/workflows/ubuntu.yml)
 
 In Ubuntu, you can start my .dotfiles with `make` command.
 
 ### macOS
-Also, on macOS Big sur:
+Also, on macOS (latest):
 [![macOS CI](https://github.com/Fumire/.dotfiles/actions/workflows/mac.yml/badge.svg)](https://github.com/Fumire/.dotfiles/actions/workflows/mac.yml)
 
 In macOS, you can start my .dotfiles with `make mac_run` command.
 
 ## Acknowledgement
-
-[Kojandy/.dotfiles](https://github.com/kojandy/.dotfiles) 를 참고했습니다. 
+[Kojandy/.dotfiles](https://github.com/kojandy/.dotfiles)
