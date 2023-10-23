@@ -13,6 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: check permission
+        run: sudo chmod -R g+w /usr/local
+
       - name: check brew
         run: make mac_run
 
