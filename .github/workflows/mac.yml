@@ -13,8 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: brew linking
-        run: brew link --overwrite node@18 && brew link --overwrite go
+      - name: brew linking and update
+        run: brew link --overwrite --force node@18 && brew update && brew upgrade
 
       - name: check brew
         run: make mac_run
