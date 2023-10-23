@@ -8,19 +8,19 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    
+      - uses: actions/checkout@v4
+
     - name: install ZSH
       run: sudo apt-get update && sudo apt-get install zsh -y && sudo chsh -s $(which zsh) $(whoami)
 
     - name: check ZSH
       run: make zsh_run
-      
+
     - name: check oh-my-zsh
       run: make oh-my-zsh_run
-      
+
     - name: check VIM
       run: make vim_run
