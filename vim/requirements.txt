@@ -2,6 +2,7 @@ flake8
 mypy
 autopep8
 matplotlib
+neovim
 numpy
 pandas
 python-language-server
