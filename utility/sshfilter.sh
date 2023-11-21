@@ -1,4 +1,6 @@
 #!/bin/bash
+# Maintainer: jwlee230@unist.ac.kr
+# Last modified: 2023-11-21
 # Original from: https://shutcoding.tistory.com/24
 # UPPERCASE space-separated country codes to ACCEPT
 ALLOW_COUNTRIES="KR"

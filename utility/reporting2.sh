@@ -1,4 +1,6 @@
 #!/bin/bash
+# Maintainer: jwlee230@unist.ac.kr
+# Last modified: 2023-11-21
 set -euo pipefail
 IFS=$'\n\t'
 # sadf -g -O autoscale,showinfo,packed,height=700 -T -- -r -u /var/log/sysstat/sa$(date +%d) > $(hostname).svg

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Maintainer: jwlee230@unist.ac.kr
-# Last modified: 2023-03-23
+# Last modified: 2023-11-21
 set -euo pipefail
 IFS=$'\n\t'
 
@@ -40,12 +40,12 @@ then
     adduser --home /BiO/Live/${ID} --shell /bin/bash ${ID}
 elif [ -n "${newUID}" ]
 then
-    adduser --home /BiO/Live/${ID} --shell /bin/bash -uid ${newUID} ${ID}
+    adduser --home /BiO/Live/${ID} --shell /bin/bash --uid ${newUID} ${ID}
 elif [ -n "${newGID}" ]
 then
-    adduser --home /BiO/Live/${ID} --shell /bin/bash -gid ${newGID} ${ID}
+    adduser --home /BiO/Live/${ID} --shell /bin/bash --gid ${newGID} ${ID}
 else
-    adduser --home /BiO/Live/${ID} --shell /bin/bash -uid ${newUID} -gid ${newGID} ${ID}
+    adduser --home /BiO/Live/${ID} --shell /bin/bash --uid ${newUID} --gid ${newGID} ${ID}
 fi
 
 gpasswd -a ${ID} compbio

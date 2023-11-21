@@ -1,5 +1,6 @@
 #!/bin/bash
 # Maintainer: jwlee230@unist.ac.kr
+# Last modified: 2023-11-21
 set -euo pipefail
 IFS=$'\n\t'
 

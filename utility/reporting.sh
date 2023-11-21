@@ -1,4 +1,6 @@
 #!/bin/bash
+# Maintainer: jwlee230@unist.ac.kr
+# Last modified: 2023-11-21
 set -euo pipefail
 IFS=$'\n\t'
 for h in 'host1' 'host2'; do
