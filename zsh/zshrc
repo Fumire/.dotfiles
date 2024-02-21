@@ -60,6 +60,7 @@ bindkey "^x^e" edit-command-line
 # PATH settings
 export PATH="/usr/local/sbin:${PATH}"
 export PATH="${ZDOTDIR:-$HOME}/.local/bin:${PATH}"
+export PATH="${ZDOTDIR:-$HOME}/go/bin:${PATH}"
 
 # gpg settings
 export GPG_TTY=$(tty)

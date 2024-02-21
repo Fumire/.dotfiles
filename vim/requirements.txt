@@ -1,6 +1,7 @@
 flake8
 mypy
 autopep8
+ruff
 matplotlib
 neovim
 numpy
@@ -10,3 +11,4 @@ scikit-learn
 scipy
 seaborn
 tqdm
+vim-vint

@@ -1,7 +1,8 @@
+scriptencoding utf-8
 " plug settings
-if empty(glob("$HOME/.vim/autoload/plug.vim"))
+if empty(glob('$HOME/.vim/autoload/plug.vim'))
     silent !curl --fail --location --output $HOME/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-    autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+    augroup VimEnter * PlugInstall --sync | source $MYVIMRC
 endif
 call plug#begin()
 Plug 'vim-airline/vim-airline'
@@ -10,7 +11,7 @@ Plug 'bling/vim-bufferline'
 Plug 'airblade/vim-gitgutter'
 Plug 'Chiel92/vim-autoformat'
 Plug 'ctrlpvim/ctrlp.vim'
-Plug 'vim-syntastic/syntastic'
+Plug 'dense-analysis/ale'
 Plug 'tpope/vim-commentary'
 Plug 'mbbill/undotree'
 Plug 'Yggdroot/indentLine'
@@ -40,7 +41,7 @@ Plug 'johngrib/vim-game-code-break'
 call plug#end()
 
 " Color scheme
-if empty(glob("$HOME/.vim/colors/jellybeans.vim"))
+if empty(glob('$HOME/.vim/colors/jellybeans.vim'))
     silent !curl --fail --location --output $HOME/.vim/colors/jellybeans.vim --create-dirs https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
 endif
 if has('syntax')
@@ -61,7 +62,7 @@ nnoremap <F8> :UndotreeToggle <Return>
 map <silent> <F9> :NERDTreeToggle <Return>
 let NERDTreeQuitOnOpen = 1
 let NERDTreeShowHidden = 1
-let NERDTreeWinPos = "left"
+let NERDTreeWinPos = 'left'
 let NERDTreeIgnore = ['\.pyc$', '\.swp$', '\.git$', '\.DS_Store$', '\.mypy_cache$']
 let NERDTreeShowLineNumbers = 1
 
@@ -82,9 +83,9 @@ let g:formatters_perl = ['perltidy']
 autocmd FileType vim,tex let g:autoformat_autoindent=0
 
 " syntastic settings
-let g:syntastic_python_checkers = ['flake8', 'mypy']
-let g:syntastic_python_flake8_args = '--ignore=E501'
-let g:syntastic_python_mypy_args = '--ignore-missing-imports'
+let g:ale_linters = {'make': ['checkmake'], 'python': ['ruff', 'mypy'], 'R': ['lintr'], 'vim': ['vint']}
+let g:ale_python_ruff_options = '--select E,F,W,N --ignore E501'
+let g:ale_python_mypy_options = '--ignore-missing-imports --install-types --non-interactive'
 
 " indent and tab settings
 filetype indent plugin on
