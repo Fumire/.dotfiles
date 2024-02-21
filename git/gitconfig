@@ -22,6 +22,7 @@
     guitool = vimdiff
 [fetch]
     prune = true
+    fsckobjects = true
 [commit]
     gpgsign = true
 [filter "lfs"]
@@ -51,3 +52,11 @@
     status = true
 [oh-my-zsh]
     hide-dirty = 1
+[url "git@github.com:"]
+    insteadOf = "https://github.com/"
+[transfer]
+    fsckobjects = true
+[receive]
+    fsckobjects = true
+[log]
+    date = iso
