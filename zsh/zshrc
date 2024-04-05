@@ -8,7 +8,9 @@ else
 fi
 
 # Soure oh-my-zsh *after* THEME
-export ZSH=${ZDOTDIR:-$HOME}/.oh-my-zsh
+if [[ -f ${ZDOTDIR:-$HOME}/.oh-my-zsh ]]; then
+    export ZSH=${ZDOTDIR:-$HOME}/.oh-my-zsh
+fi
 source ${ZSH}/oh-my-zsh.sh
 
 # plugins
@@ -34,7 +36,9 @@ if [[ -z "$TERM" ]]; then
 fi
 
 # ssh
-export SSH_KEY_PATH="${ZDOTDIR:-$HOME}/.ssh/id_rsa"
+if [[ -f "${ZDOTDIR:-$HOME}/.ssh/id_rsa" ]]; then
+    export SSH_KEY_PATH="${ZDOTDIR:-$HOME}/.ssh/id_rsa"
+fi
 zstyle :omz:plugins:ssh-agent identities id_rsa
 zstyle :omz:plugins:ssh-agent lifetime 12h
 
