@@ -3,4 +3,4 @@ based_on_style = pep8
 blank_line_before_nested_class_or_def = True
 column_limit = 9999
 spaces_around_power_operator = True
-split_before_arithmetic_operator=True
+split_before_arithmetic_operator = True
