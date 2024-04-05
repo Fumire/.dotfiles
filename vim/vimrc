@@ -83,7 +83,7 @@ let g:formatters_perl = ['perltidy']
 autocmd FileType vim,tex let g:autoformat_autoindent=0
 
 " syntastic settings
-let g:ale_linters = {'make': ['checkmake'], 'python': ['ruff', 'mypy'], 'R': ['lintr'], 'vim': ['vint']}
+let g:ale_linters = {'make': ['checkmake'], 'python': ['ruff', 'mypy'], 'sh': ['language_server'], 'R': ['lintr'], 'vim': ['vint']}
 let g:ale_python_ruff_options = '--select E,F,W,N --ignore E501'
 let g:ale_python_mypy_options = '--ignore-missing-imports --install-types --non-interactive'
 
