@@ -8,10 +8,11 @@ else
 fi
 
 # Soure oh-my-zsh *after* THEME
+zstyle ':omz:alpha:lib:git' async-prompt no
 if [[ -d ${ZDOTDIR:-$HOME}/.oh-my-zsh ]]; then
     export ZSH=${ZDOTDIR:-$HOME}/.oh-my-zsh
+    source ${ZSH}/oh-my-zsh.sh
 fi
-source ${ZSH}/oh-my-zsh.sh
 
 # plugins
 plugins=(

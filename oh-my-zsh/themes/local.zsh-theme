@@ -197,7 +197,7 @@ if [ ! -n "${BULLETTRAIN_GIT_EXTENDED+1}" ]; then
   BULLETTRAIN_GIT_EXTENDED=true
 fi
 if [ ! -n "${BULLETTRAIN_GIT_PROMPT_CMD+1}" ]; then
-  BULLETTRAIN_GIT_PROMPT_CMD="\$(git_prompt_info)"
+  BULLETTRAIN_GIT_PROMPT_CMD="\$(_omz_git_prompt_info)"
 fi
 
 # PERL
