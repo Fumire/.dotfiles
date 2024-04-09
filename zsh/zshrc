@@ -8,7 +8,7 @@ else
 fi
 
 # Soure oh-my-zsh *after* THEME
-if [[ -f ${ZDOTDIR:-$HOME}/.oh-my-zsh ]]; then
+if [[ -d ${ZDOTDIR:-$HOME}/.oh-my-zsh ]]; then
     export ZSH=${ZDOTDIR:-$HOME}/.oh-my-zsh
 fi
 source ${ZSH}/oh-my-zsh.sh
