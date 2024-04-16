@@ -31,7 +31,6 @@ else
 endif
 
 Plug 'davidhalter/jedi-vim'
-Plug 'StanAngeloff/php.vim', {'for': 'php'}
 if v:version > 800
     Plug 'jalvesaq/Nvim-R', {'for': ['r', 'R']}
 endif
