@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 xcode-select --install
 
 # Allow text selection in Quick Look
@@ -58,4 +58,10 @@ defaults write com.apple.finder CreateDesktop -bool false
 # No .DS_Store creation on external disk
 defaults write com.apple.desktopservices DSDontWriteNetworkStores true
 
-killall Finder
+# Data format
+defaults write NSGlobalDomain AppleICUDateFormatStrings -dict-add 1 "yyMMdd"
+defaults write NSGlobalDomain AppleICUDateFormatStrings -dict-add 2 "yyyyMMdd"
+defaults write NSGlobalDomain AppleICUDateFormatStrings -dict-add 3 "yyyy-MM-dd"
+defaults write NSGlobalDomain AppleICUDateFormatStrings -dict-add 2 "yyyy-MM-dd, EEEE"
+
+# killall Finder
