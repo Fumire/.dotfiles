@@ -64,4 +64,4 @@ defaults write NSGlobalDomain AppleICUDateFormatStrings -dict-add 2 "yyyyMMdd"
 defaults write NSGlobalDomain AppleICUDateFormatStrings -dict-add 3 "yyyy-MM-dd"
 defaults write NSGlobalDomain AppleICUDateFormatStrings -dict-add 2 "yyyy-MM-dd, EEEE"
 
-# killall Finder
+killall Finder
