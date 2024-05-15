@@ -3,4 +3,4 @@
 set -euo pipefail
 IFS=$'\n\t'
 tree -ls | tee tree.txt 
-find -L -type f -exec md5sum '{}' \; | tee md5.txt
+find -L -type f ! -name 'tree.txt' -exec md5sum '{}' \; | tee md5.txt
