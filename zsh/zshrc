@@ -71,6 +71,40 @@ export PATH="${ZDOTDIR:-$HOME}/go/bin:${PATH}"
 export GPG_TTY=$(tty)
 
 # git status
-function __git_prompt_git () {
+__git_prompt_git () {
     GIT_OPTIONAL_LOCKS=0 command timeout 1.0s git "$@"
+}
+
+# Count files & directories
+count () {
+    printf '%s\n' "$#"
+}
+
+# Generate UUID
+uuid () {
+    C="89ab"
+
+    for ((N=0;N<16;++N)); do
+        B="$((RANDOM%256))"
+
+        case "$N" in
+            6)  printf '4%x' "$((B%16))" ;;
+            8)  printf '%c%x' "${C:$RANDOM%${#C}:1}" "$((B%16))" ;;
+
+            3|5|7|9)
+                printf '%02x-' "$B"
+            ;;
+
+            *)
+                printf '%02x' "$B"
+            ;;
+        esac
+    done
+
+    printf '\n'
+}
+
+# Background execute
+bkr () {
+    (nohup "$@" 1>uuid 2>&1 &)
 }
