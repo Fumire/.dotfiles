@@ -1,8 +1,3 @@
-# common typos
-alias claer="clear"
-alias clera="clear"
-alias celar="clear"
-
 # prevent accident
 alias rm="rm -i"
 alias mv="mv -i"
@@ -28,6 +23,11 @@ fi
 
 function weather() { curl "https://wttr.in/${@:-seoul}?m" ;}
 
+# Make .gitignore
 function gi() { curl -sL "https://www.gitignore.io/api/$@" ;}
 
-function cheat() { curl "https://cheat.sh/$@" ;}
+# Background execute
+function bkr() { (nohup "$@" 1>"$(uuid)" 2>&1 &) ;}
+
+# Count files & directories
+function count() { printf '%s\n' "$#" ;}
