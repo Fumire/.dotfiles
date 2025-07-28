@@ -108,7 +108,9 @@ set wrap
 set linebreak
 set showbreak=·····
 set ruler
-set cursorline
+if has("gui_macvim")
+	set cursorline
+endif
 set laststatus=2
 set showcmd
 set showmatch
