@@ -10,3 +10,4 @@
 # Maintainer: jwlee230@unist.ac.kr
 number=$RANDOM
 du -s * > /BiO/Live/jwlee230/Report_${number}.txt
+mail -s "Storage report for $(hostname)" "root@compbio.unist.ac.kr" < /BiO/Live/jwlee230/Report_${number}.txt
