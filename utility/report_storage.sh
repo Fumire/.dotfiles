@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #SBATCH --chdir=.
 #SBATCH --job-name=Storage
 #SbATCH --mem=10G
@@ -10,4 +10,5 @@
 # Maintainer: jwlee230@unist.ac.kr
 number=$RANDOM
 du -s * > /BiO/Live/jwlee230/Report_${number}.txt
-mail -s "Storage report for $(hostname)" "root@compbio.unist.ac.kr" < /BiO/Live/jwlee230/Report_${number}.txt
+date | mail --attach /BiO/Live/jwlee230/Report_${number}.txt --subject "Storage report for $(hostname)" "root@compbio.unist.ac.kr"
+rm /BiO/Live/jwlee230/Report_${number}.txt
