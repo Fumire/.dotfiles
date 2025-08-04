@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --chdir=$(realpath .)
-#SBATCH --job-name=$(hostname)_$(basename $(realpath .))
+#SBATCH --chdir=.
+#SBATCH --job-name=Migration
 #SbATCH --mem=10G
 #SBATCH --cpus-per-task=1
 #SBATCH --mail-type=ALL
