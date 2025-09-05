@@ -14,3 +14,4 @@ wait
 for h in 'host1' 'host2'; do
     rm -fv $h*
 done
+date | mail --attach /var/www/html/image/top/*.jpg --subject "Server report on $(date +%Y%m%d)" -- "root@compbio.unist.ac.kr"
