@@ -1,6 +1,7 @@
 tap "homebrew/bundle"
 tap "homebrew/services"
 tap "yt-dlp/taps"
+
 brew "webp"
 brew "astyle"
 brew "ccache"
@@ -34,9 +35,7 @@ brew "pinentry-mac"
 brew "pipx"
 brew "pkgconf"
 brew "protobuf"
-brew "python@3.10"
 brew "python@3.11"
-brew "python@3.9"
 brew "r"
 brew "reattach-to-user-namespace"
 brew "rust"
@@ -45,11 +44,11 @@ brew "tmux"
 brew "tree"
 brew "uv"
 brew "wget"
-brew "whisper-cpp"
 brew "yt-dlp"
 brew "zsh"
 brew "zsh-completions"
 brew "zsh-syntax-highlighting"
+
 cask "adobe-creative-cloud", args: { appdir: "/Applications" }
 cask "alfred", args: { appdir: "/Applications" }
 cask "android-studio", args: { appdir: "/Applications" }
@@ -57,33 +56,26 @@ cask "appcleaner", args: { appdir: "/Applications" }
 cask "bartender", args: { appdir: "/Applications" }
 cask "bibdesk", args: { appdir: "/Applications" }
 cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
-cask "discord", args: { appdir: "/Applications" }
 cask "dropbox"
 cask "google-chrome", args: { appdir: "/Applications" }
 cask "gpg-suite", args: { appdir: "/Applications" }
-cask "gqrx", args: { appdir: "/Applications" }
 cask "ifunbox", args: { appdir: "/Applications" }
 cask "istat-menus", args: { appdir: "/Applications" }
 cask "mactex", args: { appdir: "/Applications" }
 cask "microsoft-auto-update"
-cask "microsoft-teams", args: { appdir: "/Applications" }
-cask "mounty"
 cask "notion", args: { appdir: "/Applications" }
 cask "ntfstool"
 cask "obsidian", args: { appdir: "/Applications" }
-cask "paragon-ntfs"
 cask "phantomjs"
-cask "sengi", args: { appdir: "/Applications" }
-cask "skype", args: { appdir: "/Applications" }
 cask "steam", args: { appdir: "/Applications" }
 cask "tex-live-utility", args: { appdir: "/Applications" }
 cask "texstudio", args: { appdir: "/Applications" }
-cask "tunnelblick", args: { appdir: "/Applications" }
 cask "unity-hub", args: { appdir: "/Applications" }
 cask "vlc", args: { appdir: "/Applications" }
 cask "xquartz", args: { appdir: "/Applications" }
 cask "zoom", args: { appdir: "/Applications" }
 cask "zotero", args: { appdir: "/Applications" }
+
 mas "Bandizip", id: 1265704574
 mas "Cinebench", id: 1438772273
 mas "Color Picker", id: 641027709
