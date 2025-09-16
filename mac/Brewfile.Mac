@@ -1,0 +1,105 @@
+tap "homebrew/bundle"
+tap "homebrew/services"
+tap "yt-dlp/taps"
+brew "webp"
+brew "astyle"
+brew "ccache"
+brew "sqlite"
+brew "ccls"
+brew "cmake"
+brew "coreutils"
+brew "ctags"
+brew "curl"
+brew "dnscrypt-proxy"
+brew "docker"
+brew "dos2unix"
+brew "ffmpeg"
+brew "gcc"
+brew "git"
+brew "gnupg"
+brew "go"
+brew "handbrake"
+brew "languagetool", restart_service: :changed
+brew "lua"
+brew "mackup"
+brew "mas"
+brew "neofetch"
+brew "utf8proc"
+brew "neovim"
+brew "node"
+brew "openjdk"
+brew "pandoc"
+brew "php"
+brew "pinentry-mac"
+brew "pipx"
+brew "pkgconf"
+brew "protobuf"
+brew "python@3.10"
+brew "python@3.11"
+brew "python@3.9"
+brew "r"
+brew "reattach-to-user-namespace"
+brew "rust"
+brew "subversion"
+brew "tmux"
+brew "tree"
+brew "uv"
+brew "wget"
+brew "whisper-cpp"
+brew "yt-dlp"
+brew "zsh"
+brew "zsh-completions"
+brew "zsh-syntax-highlighting"
+cask "adobe-creative-cloud", args: { appdir: "/Applications" }
+cask "alfred", args: { appdir: "/Applications" }
+cask "android-studio", args: { appdir: "/Applications" }
+cask "appcleaner", args: { appdir: "/Applications" }
+cask "bartender", args: { appdir: "/Applications" }
+cask "bibdesk", args: { appdir: "/Applications" }
+cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
+cask "discord", args: { appdir: "/Applications" }
+cask "dropbox"
+cask "google-chrome", args: { appdir: "/Applications" }
+cask "gpg-suite", args: { appdir: "/Applications" }
+cask "gqrx", args: { appdir: "/Applications" }
+cask "ifunbox", args: { appdir: "/Applications" }
+cask "istat-menus", args: { appdir: "/Applications" }
+cask "mactex", args: { appdir: "/Applications" }
+cask "microsoft-auto-update"
+cask "microsoft-teams", args: { appdir: "/Applications" }
+cask "mounty"
+cask "notion", args: { appdir: "/Applications" }
+cask "ntfstool"
+cask "obsidian", args: { appdir: "/Applications" }
+cask "paragon-ntfs"
+cask "phantomjs"
+cask "sengi", args: { appdir: "/Applications" }
+cask "skype", args: { appdir: "/Applications" }
+cask "steam", args: { appdir: "/Applications" }
+cask "tex-live-utility", args: { appdir: "/Applications" }
+cask "texstudio", args: { appdir: "/Applications" }
+cask "tunnelblick", args: { appdir: "/Applications" }
+cask "unity-hub", args: { appdir: "/Applications" }
+cask "vlc", args: { appdir: "/Applications" }
+cask "xquartz", args: { appdir: "/Applications" }
+cask "zoom", args: { appdir: "/Applications" }
+cask "zotero", args: { appdir: "/Applications" }
+mas "Bandizip", id: 1265704574
+mas "Cinebench", id: 1438772273
+mas "Color Picker", id: 641027709
+mas "Goodnotes", id: 1444383602
+mas "Keynote", id: 409183694
+mas "Magnet", id: 441258766
+mas "Microsoft Excel", id: 462058435
+mas "Microsoft Outlook", id: 985367838
+mas "Microsoft PowerPoint", id: 462062816
+mas "Microsoft Word", id: 462054704
+mas "nPlayer", id: 1451273814
+mas "PiPifier", id: 1160374471
+mas "PixelScheduler", id: 976996075
+mas "Redacted", id: 984968384
+mas "Reeder", id: 1529448980
+mas "RunCat", id: 1429033973
+mas "Slack", id: 803453959
+mas "Unicorn Blocker", id: 1231935892
+mas "Xcode", id: 497799835
