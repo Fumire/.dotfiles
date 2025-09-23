@@ -1,0 +1,36 @@
+shell -$SHELL
+
+# 256 color xterm
+term xterm-256color
+
+# Green text, time, and date; windows in blue:
+hardstatus alwayslastline '%{Yk}%=%{Yk}[%{W}%{Y}%H%{Y} Server] %{wk}%?%-Lw%?%{=b kR}(%{W}%n*%f %t%?(%u)%?%{=b kR})%{= kw}%?%+Lw%?%?%{w} %{G}%C%A'
+
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= #
+##    Some general options    ##
+
+# Turn off start message:
+startup_message off
+
+# Set messages timeout to one second:
+msgwait 1
+
+# Set scrollback buffer size:
+defscrollback 100000
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= #
+
+##    Keybindings    ##
+
+bindkey "^[[1;5C" next
+bindkey "^[[1;5D" prev
+
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= #
+
+defscrollback 5000
+
+termcapinfo xterm* ti@:te@
+
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= #
+
+vbell off
+bell_msg ""
