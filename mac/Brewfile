@@ -1,4 +1,5 @@
 tap "yt-dlp/taps"
+
 brew "astyle"
 brew "sqlite"
 brew "python@3.13"
@@ -24,6 +25,7 @@ brew "openjdk"
 brew "pandoc"
 brew "php"
 brew "pinentry-mac"
+brew "r"
 brew "reattach-to-user-namespace"
 brew "subversion"
 brew "tmux"
@@ -46,25 +48,47 @@ cask "google-chrome", args: { appdir: "/Applications" }
 cask "gpg-suite", args: { appdir: "/Applications" }
 cask "gqrx", args: { appdir: "/Applications" }
 cask "istat-menus", args: { appdir: "/Applications" }
+cask "mactex"
 cask "microsoft-auto-update"
+cask "microsoft-teams", args: { appdir: "/Applications" }
 cask "notion", args: { appdir: "/Applications" }
 cask "obsidian", args: { appdir: "/Applications" }
+cask "sengi", args: { appdir: "/Applications" }
 cask "steam", args: { appdir: "/Applications" }
 cask "tex-live-utility", args: { appdir: "/Applications" }
 cask "texstudio", args: { appdir: "/Applications" }
+cask "tunnelblick", args: { appdir: "/Applications" }
 cask "unity-hub", args: { appdir: "/Applications" }
 cask "vlc", args: { appdir: "/Applications" }
 cask "xquartz", args: { appdir: "/Applications" }
 cask "zoom", args: { appdir: "/Applications" }
 cask "zotero", args: { appdir: "/Applications" }
 
+mas "Bandizip", id: 1265704574
+mas "Cancer Finder", id: 6446483815
 mas "Cinebench", id: 1438772273
+mas "Color Picker", id: 641027709
+mas "Goodnotes", id: 1444383602
+mas "Ivory", id: 6444602274
+mas "KakaoTalk", id: 869223134
+mas "Keynote", id: 409183694
+mas "Magnet", id: 441258766
 mas "Microsoft Excel", id: 462058435
 mas "Microsoft Outlook", id: 985367838
 mas "Microsoft PowerPoint", id: 462062816
 mas "Microsoft Word", id: 462054704
 mas "Notability", id: 360593530
+mas "nPlayer", id: 1451273814
 mas "Numbers", id: 409203825
 mas "Pages", id: 409201541
+mas "PiPifier", id: 1160374471
+mas "PixelScheduler", id: 976996075
+mas "Redacted", id: 984968384
+mas "Reeder", id: 1529448980
+mas "RunCat", id: 1429033973
+mas "Slack", id: 803453959
+mas "Telegram", id: 747648890
 mas "Termius", id: 1176074088
+mas "Unicorn Blocker", id: 1231935892
 mas "Unicorn HTTPS", id: 1475628500
+mas "Xcode", id: 497799835
