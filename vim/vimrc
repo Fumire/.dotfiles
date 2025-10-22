@@ -19,19 +19,14 @@ Plug 'tpope/vim-commentary'
 Plug 'mbbill/undotree'
 Plug 'Yggdroot/indentLine'
 Plug 'majutsushi/tagbar'
-Plug 'xuhdev/SingleCompile'
-
 Plug 'chrisbra/csv.vim'
-
-if v:version < 705
-    Plug 'vim-scripts/AutoComplPop'
-else
-    if has('nvim')
-        Plug 'codota/tabnine-nvim', {'do': './dl_binaries.sh'}
-    else
-        Plug 'codota/tabnine-vim', {'do': './install.py --all --verbose'}
-    endif
-endif
+Plug 'hrsh7th/nvim-cmp'
+Plug 'hrsh7th/cmp-nvim-lsp'
+Plug 'hrsh7th/cmp-buffer'
+Plug 'hrsh7th/cmp-path'
+Plug 'L3MON4D3/LuaSnip'
+Plug 'saadparwaiz1/cmp_luasnip'
+Plug 'tzachar/cmp-tabnine', { 'do': './install.sh' }
 
 Plug 'davidhalter/jedi-vim'
 if v:version > 800
@@ -88,6 +83,8 @@ autocmd FileType vim,tex let g:autoformat_autoindent=0
 let g:ale_linters = {'make': ['checkmake'], 'python': ['ruff', 'mypy'], 'sh': ['language_server'], 'R': ['lintr'], 'vim': ['vint']}
 let g:ale_python_ruff_options = '--select E,F,W,N --ignore E501'
 let g:ale_python_mypy_options = '--ignore-missing-imports --install-types --non-interactive'
+let g:ale_disable_lsp = 1
+let g:ale_completion_enabled = 0
 
 " indent and tab settings
 filetype indent plugin on
@@ -178,3 +175,69 @@ nnoremap <silent> <SPACE> :set hlsearch! <Return>
 nnoremap <C-w>m :split <Return>
 nnoremap <C-w>l :vsplit <Return>
 command! GetPDF hardcopy > %.ps | !ps2pdf %.ps && rm %.ps && echo 'Created: %.pdf'
+
+lua << EOF
+local cmp = require('cmp')
+local luasnip = require('luasnip')
+
+local tabnine = require('cmp_tabnine.config')
+
+tabnine:setup({
+	max_lines = 1000,
+	max_num_results = 20,
+	sort = true,
+	run_on_every_keystroke = true,
+	snippet_placeholder = '..',
+	ignored_file_types = {
+		-- default is not to ignore
+		-- uncomment to ignore in lua:
+		-- lua = true
+	},
+	show_prediction_strength = false,
+	min_percent = 0
+})
+
+cmp.setup({
+  snippet = {
+    expand = function(args)
+      luasnip.lsp_expand(args.body)
+    end,
+  },
+
+  sources = cmp.config.sources({
+    { name = 'cmp_tabnine' },
+    { name = 'nvim_lsp' },
+    { name = 'luasnip' },
+    { name = 'buffer' },
+    { name = 'path' },
+  }),
+
+  mapping = cmp.mapping.preset.insert({
+    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+    ['<C-f>'] = cmp.mapping.scroll_docs(4),
+    ['<C-Space>'] = cmp.mapping.complete(),
+    ['<C-e>'] = cmp.mapping.abort(),
+    ['<CR>'] = cmp.mapping.confirm({ select = true }),
+
+    ['<Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_next_item()
+      elseif luasnip.expand_or_jumpable() then
+        luasnip.expand_or_jump()
+      else
+        fallback()
+      end
+    end, { 'i', 's' }),
+
+    ['<S-Tab>'] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      elseif luasnip.jumpable(-1) then
+        luasnip.jump(-1)
+      else
+        fallback()
+      end
+    end, { 'i', 's' }),
+  }),
+})
+EOF

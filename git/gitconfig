@@ -3,7 +3,7 @@
     name = Jaewoong Lee
     signingkey = 758B5945317C76D5
 [core]
-    editor = vi
+    editor = nvim
     excludesfile = ~/.gitignore_global
     compression = 9
     pager = less -F -X
