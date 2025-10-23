@@ -12,3 +12,10 @@ done
 
 git clone https://github.com/LazyVim/starter ~/.config/nvim
 rm -rf ~/.config/nvim/.git
+
+files=("$HOME/.config/nvim/stylua.toml" "$HOME/.config/nvim/lua/config/*.lua" "$HOME/.config/nvim/lua/plugins/plugin.lua")
+for file in ${files["$@"]}; do
+    rm -fv "${file}"
+done
+
+make all
