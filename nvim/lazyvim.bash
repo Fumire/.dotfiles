@@ -2,11 +2,13 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-mv -fv ~/.config/nvim ~/.config/nvim.bak
-mv -fv ~/.local/share/nvim ~/.local/share/nvim.bak
-mv -fv ~/.local/state/nvim ~/.local/state/nvim.bak
-mv -fv ~/.cache/nvim ~/.cache/nvim.bak
+folders=("$HOME/.config/nvim" "$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.cache/nvim")
+
+for folder in ${folders["$@"]}; do
+    if [[ -e ${folder} ]]; then
+        mv -fv "${folder}" "${folder}.bak"
+    fi
+done
 
 git clone https://github.com/LazyVim/starter ~/.config/nvim
 rm -rf ~/.config/nvim/.git
-
