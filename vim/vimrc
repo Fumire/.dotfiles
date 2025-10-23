@@ -20,19 +20,7 @@ Plug 'mbbill/undotree'
 Plug 'Yggdroot/indentLine'
 Plug 'majutsushi/tagbar'
 Plug 'chrisbra/csv.vim'
-Plug 'hrsh7th/nvim-cmp'
-Plug 'hrsh7th/cmp-nvim-lsp'
-Plug 'hrsh7th/cmp-buffer'
-Plug 'hrsh7th/cmp-path'
-Plug 'L3MON4D3/LuaSnip'
-Plug 'saadparwaiz1/cmp_luasnip'
-Plug 'tzachar/cmp-tabnine', { 'do': './install.sh' }
-
 Plug 'davidhalter/jedi-vim'
-if v:version > 800
-    Plug 'jalvesaq/Nvim-R', {'for': ['r', 'R']}
-endif
-Plug 'pangloss/vim-javascript', {'for': 'js'}
 
 Plug 'johngrib/vim-game-code-break'
 call plug#end()
@@ -175,69 +163,3 @@ nnoremap <silent> <SPACE> :set hlsearch! <Return>
 nnoremap <C-w>m :split <Return>
 nnoremap <C-w>l :vsplit <Return>
 command! GetPDF hardcopy > %.ps | !ps2pdf %.ps && rm %.ps && echo 'Created: %.pdf'
-
-lua << EOF
-local cmp = require('cmp')
-local luasnip = require('luasnip')
-
-local tabnine = require('cmp_tabnine.config')
-
-tabnine:setup({
-	max_lines = 1000,
-	max_num_results = 20,
-	sort = true,
-	run_on_every_keystroke = true,
-	snippet_placeholder = '..',
-	ignored_file_types = {
-		-- default is not to ignore
-		-- uncomment to ignore in lua:
-		-- lua = true
-	},
-	show_prediction_strength = false,
-	min_percent = 0
-})
-
-cmp.setup({
-  snippet = {
-    expand = function(args)
-      luasnip.lsp_expand(args.body)
-    end,
-  },
-
-  sources = cmp.config.sources({
-    { name = 'cmp_tabnine' },
-    { name = 'nvim_lsp' },
-    { name = 'luasnip' },
-    { name = 'buffer' },
-    { name = 'path' },
-  }),
-
-  mapping = cmp.mapping.preset.insert({
-    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-    ['<C-f>'] = cmp.mapping.scroll_docs(4),
-    ['<C-Space>'] = cmp.mapping.complete(),
-    ['<C-e>'] = cmp.mapping.abort(),
-    ['<CR>'] = cmp.mapping.confirm({ select = true }),
-
-    ['<Tab>'] = cmp.mapping(function(fallback)
-      if cmp.visible() then
-        cmp.select_next_item()
-      elseif luasnip.expand_or_jumpable() then
-        luasnip.expand_or_jump()
-      else
-        fallback()
-      end
-    end, { 'i', 's' }),
-
-    ['<S-Tab>'] = cmp.mapping(function(fallback)
-      if cmp.visible() then
-        cmp.select_prev_item()
-      elseif luasnip.jumpable(-1) then
-        luasnip.jump(-1)
-      else
-        fallback()
-      end
-    end, { 'i', 's' }),
-  }),
-})
-EOF
