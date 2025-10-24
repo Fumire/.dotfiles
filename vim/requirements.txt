@@ -12,3 +12,4 @@ scipy
 seaborn
 tqdm
 vim-vint
+curl_cffi
