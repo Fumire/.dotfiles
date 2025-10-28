@@ -6,7 +6,7 @@ local map = vim.keymap.set
 map("n", "<C-w>m", "<cmd>split<cr>", { desc = "Horizontal Split" })
 map("n", "<C-w>l", "<cmd>vsplit<cr>", { desc = "Vertical Split" })
 
-map("n", "<C-t>", "<cmd>enew<cr>")
+map("n", "<C-t>", "<cmd>enew<cr>", { desc = "New Buffer" })
 map("n", "<C-h>", "<cmd>bprevious<cr>", { desc = "Prev Buffer" })
 map("n", "<C-l>", "<cmd>bnext<cr>", { desc = "Next Buffer" })
 map("n", "<C-q>", function()

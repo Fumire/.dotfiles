@@ -2,34 +2,31 @@
 -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 -- Add any additional options here
 local keyset = vim.keymap.set
+local g = vim.g
 local opt = vim.opt
 
 -- Autoformat
-vim.g.autoformat = true
-vim.g.formatdef_my_astyle =
-    "'astyle --style=bsd --indent=spaces=4 --indent-preproc-block --indent-preproc-define --indent-col1-comments --pad-oper --pad-comma --unpad-paren --break-closing-braces --add-braces --attach-return-type --align-pointer=type --delete-empty-lines --add-one-line-braces --align-reference=type --break-blocks'"
-vim.g.formatters_java = { "my_astyle" }
-vim.g.formmaters_cpp = { "my_astyle" }
-vim.g.formatters_c = { "my_astyle" }
-vim.g.formatdef_my_js =
-    "'js-beautify --space-in-paren --space-after-anon-function --space-after-named-function --brace-style none';"
-vim.g.formatters_js = { "my_js" }
-vim.g.formatdef_my_autopep8 = "'autopep8 --ignore E501 --aggressive --aggressive -'"
-vim.g.formatters_python = { "my_autopep8" }
+g.autoformat = false
+g.formatdef_my_astyle = "'astyle --style=bsd --indent=spaces=4 --indent-preproc-block --indent-preproc-define --indent-col1-comments --pad-oper --pad-comma --unpad-paren --break-closing-braces --add-braces --attach-return-type --align-pointer=type --delete-empty-lines --add-one-line-braces --align-reference=type --break-blocks'"
+g.formatters_java = { "my_astyle" }
+g.formmaters_cpp = { "my_astyle" }
+g.formatters_c = { "my_astyle" }
+g.formatdef_my_js = "'js-beautify --space-in-paren --space-after-anon-function --space-after-named-function --brace-style none';"
+g.formatters_js = { "my_js" }
+g.formatdef_my_autopep8 = "'autopep8 --ignore E501 --aggressive --aggressive -'"
+g.formatters_python = { "my_autopep8" }
 
 -- IndentLine settings
-vim.g.indentLine_char_list = { "|", "¦", "┆", "┊" }
+g.indentLine_char_list = { "|", "¦", "┆", "┊" }
 
 -- COC settings
 local opts = { silent = true, noremap = true, expr = true, replace_keycodes = false }
 keyset("i", "<TAB>", 'coc#pum#visible() ? coc#pum#next(1) : v:lua.check_back_space() ? "<TAB>" : coc#refresh()', opts)
 keyset("i", "<S-TAB>", [[coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"]], opts)
 
--- ALE settings
-
 -- General settings
-vim.g.mapleader = " "
-vim.g.maplocalleader = "\\"
+g.mapleader = " "
+g.maplocalleader = "\\"
 opt.encoding = "utf-8"
 
 -- Clipboard
