@@ -1,7 +1,6 @@
 -- Options are automatically loaded before lazy.nvim startup
 -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 -- Add any additional options here
-local keyset = vim.keymap.set
 local g = vim.g
 local opt = vim.opt
 
@@ -18,11 +17,6 @@ g.formatters_python = { "my_autopep8" }
 
 -- IndentLine settings
 g.indentLine_char_list = { "|", "¦", "┆", "┊" }
-
--- COC settings
-local opts = { silent = true, noremap = true, expr = true, replace_keycodes = false }
-keyset("i", "<TAB>", 'coc#pum#visible() ? coc#pum#next(1) : v:lua.check_back_space() ? "<TAB>" : coc#refresh()', opts)
-keyset("i", "<S-TAB>", [[coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"]], opts)
 
 -- General settings
 g.mapleader = " "

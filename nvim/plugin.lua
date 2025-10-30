@@ -29,8 +29,6 @@ return {
     -- override nvim-cmp and add cmp-emoji
     {
         "hrsh7th/nvim-cmp",
-        dependencies = { "hrsh7th/cmp-emoji" },
-        ---@param opts cmp.ConfigSchema
         opts = function(_, opts)
             table.insert(opts.sources, { name = "emoji" })
         end,
@@ -40,13 +38,13 @@ return {
     {
         "nvim-telescope/telescope.nvim",
         keys = {
-      -- add a keymap to browse plugin files
-      -- stylua: ignore
-      {
-        "<leader>fp",
-        function() require("telescope.builtin").find_files({ cwd = require("lazy.core.config").options.root }) end,
-        desc = "Find Plugin File",
-      },
+            -- add a keymap to browse plugin files
+            -- stylua: ignore
+            {
+                "<leader>fp",
+                function() require("telescope.builtin").find_files({ cwd = require("lazy.core.config").options.root }) end,
+                desc = "Find Plugin File",
+            },
         },
         -- change some options
         opts = {
@@ -62,9 +60,7 @@ return {
     -- add pyright to lspconfig
     {
         "neovim/nvim-lspconfig",
-        ---@class PluginLspOpts
         opts = {
-            ---@type lspconfig.options
             servers = {
                 -- pyright will be automatically installed with mason and loaded with lspconfig
                 pyright = {},
@@ -195,6 +191,4 @@ return {
     { "chrisbra/csv.vim", keys = {
         { "<C-d>", "<cmd>NewDelimiter" },
     } },
-
-    { "johngrib/vim-game-code-break" },
 }
