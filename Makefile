@@ -15,7 +15,7 @@ vim_run:
 .PHONY: vim_run
 
 zsh_run:
-	$(MAKE) -C zsh
+	bash ./zsh/zsh.bash
 .PHONY: zsh_run
 
 oh-my-zsh_run:

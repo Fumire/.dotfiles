@@ -2,13 +2,13 @@ all: $(HOME)/.zshenv $(HOME)/.zshrc $(HOME)/.alias.zsh
 .PHONY: all
 
 $(HOME)/.zshenv: | zshenv
-	ln -sf $(abspath $|) $@
+	ln -svf $(abspath $|) $@
 
 $(HOME)/.zshrc: | zshrc
-	ln -sf $(abspath $|) $@
+	ln -svf $(abspath $|) $@
 
 $(HOME)/.zlogout: | zlogout
-	ln -sf $(abspath $|) $@
+	ln -svf $(abspath $|) $@
 
 $(HOME)/.alias.zsh: | alias.zsh
-	ln -sf $(abspath $|) $@
+	ln -svf $(abspath $|) $@
