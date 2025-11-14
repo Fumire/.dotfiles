@@ -8,7 +8,6 @@ brew "cmake"
 brew "coreutils"
 brew "ctags"
 brew "curl"
-brew "dnscrypt-proxy", restart_service: :changed
 brew "docker"
 brew "ffmpeg"
 brew "gcc"
@@ -20,11 +19,9 @@ brew "node"
 brew "openjdk"
 brew "pandoc"
 brew "php"
-brew "pinentry-mac"
 brew "r"
 brew "reattach-to-user-namespace"
 brew "subversion"
-brew "tmux"
 brew "tree"
 brew "wget"
 brew "yt-dlp"
@@ -35,23 +32,19 @@ brew "zsh-syntax-highlighting"
 cask "adobe-creative-cloud", args: { appdir: "/Applications" }
 cask "alfred", args: { appdir: "/Applications" }
 cask "appcleaner", args: { appdir: "/Applications" }
-cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
 cask "google-chrome", args: { appdir: "/Applications" }
 cask "microsoft-auto-update"
 cask "notion", args: { appdir: "/Applications" }
-cask "notion-calendar", args: { appdir: "/Applications" }
 cask "obsidian", args: { appdir: "/Applications" }
+cask "sublime-text", args: { appdir: "/Applications/"}
 cask "vlc", args: { appdir: "/Applications" }
 cask "visual-studio-code", args: { appdir: "/Applications" }
 cask "xquartz", args: { appdir: "/Applications" }
 cask "zoom", args: { appdir: "/Applications" }
 cask "zotero", args: { appdir: "/Applications" }
 
-mas "Color Picker", id: 641027709
-mas "KakaoTalk", id: 869223134
 mas "Microsoft Excel", id: 462058435
 mas "Microsoft Outlook", id: 985367838
 mas "Microsoft PowerPoint", id: 462062816
 mas "Microsoft Word", id: 462054704
-mas "Slack", id: 803453959
 mas "Xcode", id: 497799835
