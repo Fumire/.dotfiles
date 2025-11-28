@@ -1,5 +1,19 @@
+  Host darwin.kogic.kr
+    HostName darwin.kogic.kr
+    User jwlee230
+    Port 3030
+
+Host darwin.kogic.kr
+    HostName darwin.kogic.kr
+    User jwlee230
+    Port 3030
+
 Host *
-    Ciphers aes256-cbc,aes256-ctr
-    HashKnownHosts yes
+    CheckHostIP yes
+    Ciphers +aes256-cbc,aes256-ctr
     Compression yes
+    HashKnownHosts yes
+    ForwardX11 yes
+    ForwardX11Trusted yes
     SendEnv LC_*
+    ServerAliveInterval 60
