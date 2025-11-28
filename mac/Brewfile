@@ -2,7 +2,7 @@ tap "yt-dlp/taps"
 
 brew "astyle"
 brew "sqlite"
-brew "python@3"
+brew "python@3.14"
 brew "ccls"
 brew "cmake"
 brew "coreutils"
@@ -14,16 +14,19 @@ brew "dos2unix"
 brew "ffmpeg"
 brew "gcc"
 brew "git"
-brew "gnupg"
+brew "gnupg", link: false
 brew "go"
 brew "languagetool"
+brew "mackup"
 brew "mas"
+brew "neofetch"
 brew "neovim"
 brew "node"
 brew "openjdk"
 brew "pandoc"
 brew "php"
 brew "pinentry-mac"
+brew "python@3.13"
 brew "r"
 brew "reattach-to-user-namespace"
 brew "subversion"
@@ -43,18 +46,22 @@ cask "bartender", args: { appdir: "/Applications" }
 cask "bibdesk", args: { appdir: "/Applications" }
 cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
 cask "discord", args: { appdir: "/Applications" }
+cask "font-0xproto-nerd-font"
 cask "google-chrome", args: { appdir: "/Applications" }
 cask "gpg-suite", args: { appdir: "/Applications" }
 cask "gqrx", args: { appdir: "/Applications" }
+cask "grammarly-desktop"
 cask "istat-menus", args: { appdir: "/Applications" }
 cask "mactex"
 cask "microsoft-auto-update"
 cask "microsoft-teams", args: { appdir: "/Applications" }
 cask "notion", args: { appdir: "/Applications" }
 cask "obsidian", args: { appdir: "/Applications" }
+cask "sengi", args: { appdir: "/Applications" }
 cask "steam", args: { appdir: "/Applications" }
 cask "tex-live-utility", args: { appdir: "/Applications" }
 cask "texstudio", args: { appdir: "/Applications" }
+cask "tunnelblick", args: { appdir: "/Applications" }
 cask "unity-hub", args: { appdir: "/Applications" }
 cask "vlc", args: { appdir: "/Applications" }
 cask "xquartz", args: { appdir: "/Applications" }
@@ -65,6 +72,7 @@ mas "Bandizip", id: 1265704574
 mas "Cancer Finder", id: 6446483815
 mas "Cinebench", id: 1438772273
 mas "Color Picker", id: 641027709
+mas "FileZilla Pro", id: 1298486723
 mas "Goodnotes", id: 1444383602
 mas "Ivory", id: 6444602274
 mas "KakaoTalk", id: 869223134
@@ -89,3 +97,5 @@ mas "Termius", id: 1176074088
 mas "Unicorn Blocker", id: 1231935892
 mas "Unicorn HTTPS", id: 1475628500
 mas "Xcode", id: 497799835
+
+go "github.com/mrtazz/checkmake/cmd/checkmake"
