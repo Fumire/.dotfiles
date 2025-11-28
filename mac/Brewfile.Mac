@@ -1,8 +1,10 @@
 tap "yt-dlp/taps"
 
+brew "webp"
 brew "astyle"
 brew "ccache"
 brew "sqlite"
+brew "python@3"
 brew "ccls"
 brew "cmake"
 brew "coreutils"
@@ -11,17 +13,21 @@ brew "curl"
 brew "dnscrypt-proxy"
 brew "docker"
 brew "dos2unix"
+brew "fd"
 brew "ffmpeg"
+brew "fzf"
 brew "gcc"
+brew "ghidra"
 brew "git"
 brew "gnupg"
 brew "go"
 brew "handbrake"
 brew "languagetool", restart_service: :changed
+brew "lazygit"
 brew "lua"
 brew "mackup"
 brew "mas"
-brew "neofetch"
+brew "tree-sitter"
 brew "utf8proc"
 brew "neovim"
 brew "node"
@@ -32,15 +38,17 @@ brew "pinentry-mac"
 brew "pipx"
 brew "pkgconf"
 brew "protobuf"
-brew "python@3"
 brew "r"
 brew "reattach-to-user-namespace"
+brew "ripgrep"
 brew "rust"
 brew "subversion"
 brew "tmux"
 brew "tree"
+brew "tree-sitter-cli"
 brew "uv"
 brew "wget"
+brew "whisper-cpp"
 brew "yt-dlp"
 brew "zsh"
 brew "zsh-completions"
@@ -54,35 +62,43 @@ cask "bartender", args: { appdir: "/Applications" }
 cask "bibdesk", args: { appdir: "/Applications" }
 cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
 cask "dropbox"
+cask "font-0xproto-nerd-font"
 cask "google-chrome", args: { appdir: "/Applications" }
+cask "google-drive"
 cask "gpg-suite", args: { appdir: "/Applications" }
-cask "ifunbox", args: { appdir: "/Applications" }
+cask "grammarly-desktop"
 cask "istat-menus", args: { appdir: "/Applications" }
 cask "mactex", args: { appdir: "/Applications" }
 cask "microsoft-auto-update"
+cask "microsoft-teams", args: { appdir: "/Applications" }
 cask "notion", args: { appdir: "/Applications" }
-cask "ntfstool"
 cask "obsidian", args: { appdir: "/Applications" }
-cask "phantomjs"
 cask "steam", args: { appdir: "/Applications" }
 cask "tex-live-utility", args: { appdir: "/Applications" }
+cask "texifier"
 cask "texstudio", args: { appdir: "/Applications" }
 cask "unity-hub", args: { appdir: "/Applications" }
+cask "visual-studio-code"
 cask "vlc", args: { appdir: "/Applications" }
 cask "xquartz", args: { appdir: "/Applications" }
 cask "zoom", args: { appdir: "/Applications" }
 cask "zotero", args: { appdir: "/Applications" }
 
 mas "Bandizip", id: 1265704574
+mas "Cancer Finder", id: 6446483815
 mas "Cinebench", id: 1438772273
 mas "Color Picker", id: 641027709
+mas "Cyberduck", id: 409222199
+mas "FileZilla Pro", id: 1298486723
 mas "Goodnotes", id: 1444383602
+mas "HP", id: 1474276998
 mas "Keynote", id: 409183694
 mas "Magnet", id: 441258766
 mas "Microsoft Excel", id: 462058435
 mas "Microsoft Outlook", id: 985367838
 mas "Microsoft PowerPoint", id: 462062816
 mas "Microsoft Word", id: 462054704
+mas "Notability", id: 360593530
 mas "nPlayer", id: 1451273814
 mas "PiPifier", id: 1160374471
 mas "PixelScheduler", id: 976996075
@@ -92,3 +108,11 @@ mas "RunCat", id: 1429033973
 mas "Slack", id: 803453959
 mas "Unicorn Blocker", id: 1231935892
 mas "Xcode", id: 497799835
+
+vscode "ms-vscode-remote.remote-ssh"
+vscode "ms-vscode-remote.remote-ssh-edit"
+vscode "ms-vscode.makefile-tools"
+vscode "ms-vscode.remote-explorer"
+vscode "vscodevim.vim"
+
+go "github.com/mrtazz/checkmake/cmd/checkmake"

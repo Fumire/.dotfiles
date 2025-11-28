@@ -1,6 +1,8 @@
 tap "yt-dlp/taps"
 
+brew "webp"
 brew "astyle"
+brew "ccache"
 brew "sqlite"
 brew "python@3"
 brew "ccls"
@@ -9,19 +11,37 @@ brew "coreutils"
 brew "ctags"
 brew "curl"
 brew "docker"
+brew "dos2unix"
+brew "fd"
 brew "ffmpeg"
+brew "fzf"
 brew "gcc"
 brew "git"
+brew "gnupg"
 brew "go"
+brew "lazygit"
+brew "lua"
+brew "mackup"
+brew "tree-sitter"
+brew "utf8proc"
 brew "neovim"
 brew "node"
 brew "openjdk"
 brew "pandoc"
 brew "php"
+brew "pinentry-mac"
+brew "pipx"
+brew "pkgconf"
+brew "protobuf"
 brew "r"
 brew "reattach-to-user-namespace"
+brew "ripgrep"
+brew "rust"
 brew "subversion"
+brew "tmux"
 brew "tree"
+brew "tree-sitter-cli"
+brew "uv"
 brew "wget"
 brew "yt-dlp"
 brew "zsh"
@@ -31,13 +51,14 @@ brew "zsh-syntax-highlighting"
 cask "adobe-creative-cloud", args: { appdir: "/Applications" }
 cask "alfred", args: { appdir: "/Applications" }
 cask "appcleaner", args: { appdir: "/Applications" }
+cask "dropbox"
+cask "font-0xproto-nerd-font"
 cask "google-chrome", args: { appdir: "/Applications" }
 cask "microsoft-auto-update"
 cask "notion", args: { appdir: "/Applications" }
 cask "obsidian", args: { appdir: "/Applications" }
-cask "sublime-text", args: { appdir: "/Applications/"}
+cask "unity-hub", args: { appdir: "/Applications" }
 cask "vlc", args: { appdir: "/Applications" }
-cask "visual-studio-code", args: { appdir: "/Applications" }
 cask "xquartz", args: { appdir: "/Applications" }
 cask "zoom", args: { appdir: "/Applications" }
 cask "zotero", args: { appdir: "/Applications" }
