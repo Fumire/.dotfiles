@@ -37,7 +37,7 @@ TEMPERATURE=$(cat /sys/class/thermal/thermal_zone0/temp)
 TEMPERATURE="$(echo "$TEMPERATURE / 1000" | bc -l | xargs printf "%1.0f")"
 
 if [[ $TEMPERATURE -gt 80 ]]; then
-    echo "TEMPERATURE Error: ${TEMPERATURE}" | mail -s "[ERROR] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
+    echo "TEMPERATURE Error: ${TEMPERATURE}" | mail -s "[Error] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "TEMPERATURE Error" "${TEMPERATURE}"
 elif [[ $TEMPERATURE -gt 70 && $TEMPERATURE -le 80 ]]; then
     echo "TEMPERATURE Warning: $TEMPERATURE" | mail -s "[Warning] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
@@ -45,3 +45,5 @@ elif [[ $TEMPERATURE -gt 70 && $TEMPERATURE -le 80 ]]; then
 else
     echo "TEMPERATURE Error" "${TEMPERATURE}"
 fi
+
+exit 0

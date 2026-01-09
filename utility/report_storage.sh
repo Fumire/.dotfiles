@@ -7,8 +7,8 @@
 #SBATCH --mail-user='root@compbio.unist.ac.kr'
 #SBATCH --output=/root/%x_%A.txt
 #SBATCH --error=/root/%x_%A.txt
-# Maintainer: jwlee230@unist.ac.kr
+# Maintainer: jaewoong@unist.ac.kr
 number=$RANDOM
-du -s * > /BiO/Live/jwlee230/Report_${number}.tsv
+du -s ./* > /BiO/Live/jwlee230/Report_${number}.tsv
 pwd | mail --attach /BiO/Live/jwlee230/Report_${number}.tsv --subject "Storage report for $(hostname)" -- "root@compbio.unist.ac.kr"
 rm /BiO/Live/jwlee230/Report_${number}.tsv
