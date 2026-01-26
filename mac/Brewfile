@@ -14,42 +14,38 @@ brew "dos2unix"
 brew "ffmpeg"
 brew "gcc"
 brew "git"
-brew "gnupg", link: false
+brew "gnupg"
 brew "go"
 brew "languagetool"
 brew "mackup"
 brew "mas"
+brew "mole"
 brew "neofetch"
 brew "neovim"
 brew "node"
 brew "openjdk"
-brew "pandoc"
-brew "php"
 brew "pinentry-mac"
-brew "python@3.13"
+brew "python@3"
 brew "r"
 brew "reattach-to-user-namespace"
 brew "subversion"
 brew "tmux"
 brew "tree"
 brew "wget"
-brew "yt-dlp"
 brew "zsh"
 brew "zsh-completions"
 brew "zsh-syntax-highlighting"
 
 cask "adobe-creative-cloud", args: { appdir: "/Applications" }
 cask "alfred", args: { appdir: "/Applications" }
-cask "android-studio", args: { appdir: "/Applications" }
 cask "appcleaner", args: { appdir: "/Applications" }
 cask "bibdesk", args: { appdir: "/Applications" }
 cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
+cask "cloudflare-warp"
 cask "discord", args: { appdir: "/Applications" }
 cask "font-0xproto-nerd-font"
 cask "google-chrome", args: { appdir: "/Applications" }
 cask "gpg-suite", args: { appdir: "/Applications" }
-cask "gqrx", args: { appdir: "/Applications" }
-cask "grammarly-desktop"
 cask "istat-menus", args: { appdir: "/Applications" }
 cask "mactex"
 cask "microsoft-auto-update"
@@ -58,7 +54,6 @@ cask "obsidian", args: { appdir: "/Applications" }
 cask "steam", args: { appdir: "/Applications" }
 cask "tex-live-utility", args: { appdir: "/Applications" }
 cask "texstudio", args: { appdir: "/Applications" }
-cask "unity-hub", args: { appdir: "/Applications" }
 cask "vlc", args: { appdir: "/Applications" }
 cask "xquartz", args: { appdir: "/Applications" }
 cask "zoom", args: { appdir: "/Applications" }
@@ -89,7 +84,6 @@ mas "Reeder", id: 1529448980
 mas "RunCat", id: 1429033973
 mas "Slack", id: 803453959
 mas "Telegram", id: 747648890
-mas "Termius", id: 1176074088
 mas "Unicorn Blocker", id: 1231935892
 mas "Unicorn HTTPS", id: 1475628500
 mas "Xcode", id: 497799835
