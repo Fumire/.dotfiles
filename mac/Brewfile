@@ -63,6 +63,7 @@ mas "Bandizip", id: 1265704574
 mas "Cancer Finder", id: 6446483815
 mas "Cinebench", id: 1438772273
 mas "Color Picker", id: 641027709
+mas "Cyberduck", id: 409222199
 mas "FileZilla Pro", id: 1298486723
 mas "Goodnotes", id: 1444383602
 mas "Ivory", id: 6444602274
@@ -85,7 +86,6 @@ mas "RunCat", id: 1429033973
 mas "Slack", id: 803453959
 mas "Telegram", id: 747648890
 mas "Unicorn Blocker", id: 1231935892
-mas "Unicorn HTTPS", id: 1475628500
 mas "Xcode", id: 497799835
 
 go "github.com/mrtazz/checkmake/cmd/checkmake"
