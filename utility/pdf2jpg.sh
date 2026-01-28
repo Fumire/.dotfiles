@@ -2,6 +2,8 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 for f in "$@"; do
-    /opt/homebrew/bin/pdftoppm -jpeg -jpegopt quality=100 -r 600 "$f" "${f%.pdf}"
+    pdftoppm -jpeg -jpegopt quality=100 -r 600 "$f" "${f%.pdf}"
 done
