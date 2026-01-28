@@ -67,7 +67,7 @@ defaults write NSGlobalDomain AppleICUDateFormatStrings -dict-add 2 "yyyy-MM-dd,
 
 # Set the time zone
 sudo defaults write /Library/Preferences/com.apple.timezone.auto Active -bool YES
-# sudo systemsetup -setusingnetworktime on
+sudo systemsetup -setusingnetworktime on
 
 # Restart automatically if the computer freezes (Error:-99 can be ignored)
 sudo systemsetup -setrestartfreeze on 2> /dev/null
@@ -111,10 +111,10 @@ defaults write com.apple.screensaver askForPasswordDelay -int 0
 
 # Finder: show hidden files by default
 defaults write com.apple.finder AppleShowAllFiles -bool true
-#
+
 # Finder: show status bar
 defaults write com.apple.finder ShowStatusBar -bool true
-#
+
 # Finder: show path bar
 defaults write com.apple.finder ShowPathbar -bool true
 #

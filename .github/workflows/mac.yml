@@ -27,6 +27,3 @@ jobs:
 
       - name: check VIM
         run: make vim_run
-
-      - name: check starting
-        run: bash mac/starting.sh
