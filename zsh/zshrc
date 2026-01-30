@@ -26,6 +26,7 @@ plugins=(
 if [[ $(uname) == "Darwin" ]]; then
     export EDITOR=$(which nvim)
     export VISUAL=$(which nvim)
+    export PATH="/opt/homebrew/bin:$PATH"
 else
     export EDITOR=$(which vim)
     export VISUAL=$(which vim)
