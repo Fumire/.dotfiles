@@ -1,8 +1,4 @@
-tap "yt-dlp/taps"
-
-brew "webp"
 brew "astyle"
-brew "ccache"
 brew "sqlite"
 brew "python@3"
 brew "ccls"
@@ -12,41 +8,24 @@ brew "ctags"
 brew "curl"
 brew "docker"
 brew "dos2unix"
-brew "fd"
 brew "ffmpeg"
-brew "fzf"
 brew "gcc"
-brew "ghidra"
-brew "ghostscript"
 brew "git"
 brew "gnupg"
 brew "go"
-brew "handbrake"
-brew "languagetool", restart_service: :changed
-brew "lazygit"
-brew "lua"
+brew "languagetool"
 brew "mackup"
+brew "mas"
 brew "mole"
-brew "utf8proc"
 brew "neovim"
 brew "node"
 brew "openjdk"
-brew "pandoc"
-brew "php"
-brew "pinentry-mac"
-brew "pkgconf"
 brew "poppler"
-brew "protobuf"
 brew "r"
 brew "reattach-to-user-namespace"
-brew "ripgrep"
-brew "rust"
 brew "subversion"
 brew "tmux"
 brew "tree"
-brew "tree-sitter"
-brew "tree-sitter-cli"
-brew "uv"
 brew "wget"
 brew "whisper-cpp"
 brew "zsh"
@@ -55,33 +34,27 @@ brew "zsh-syntax-highlighting"
 
 cask "adobe-creative-cloud", args: { appdir: "/Applications" }
 cask "alfred", args: { appdir: "/Applications" }
-cask "bibdesk", args: { appdir: "/Applications" }
+cask "appcleaner", args: { appdir: "/Applications" }
 cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
-cask "cloudflare-warp"
-cask "discord", args: { appdir: "/Applications" }
 cask "dropbox"
 cask "font-0xproto-nerd-font"
 cask "google-chrome", args: { appdir: "/Applications" }
-cask "gpg-suite", args: { appdir: "/Applications" }
-cask "istat-menus", args: { appdir: "/Applications" }
-cask "mactex", args: { appdir: "/Applications" }
 cask "microsoft-auto-update"
 cask "notion", args: { appdir: "/Applications" }
 cask "obsidian", args: { appdir: "/Applications" }
-cask "steam", args: { appdir: "/Applications" }
-cask "tex-live-utility", args: { appdir: "/Applications" }
-cask "texifier"
-cask "texstudio", args: { appdir: "/Applications" }
-cask "visual-studio-code"
 cask "vlc", args: { appdir: "/Applications" }
 cask "xquartz", args: { appdir: "/Applications" }
 cask "zoom", args: { appdir: "/Applications" }
 cask "zotero", args: { appdir: "/Applications" }
 
-vscode "ms-vscode-remote.remote-ssh"
-vscode "ms-vscode-remote.remote-ssh-edit"
-vscode "ms-vscode.makefile-tools"
-vscode "ms-vscode.remote-explorer"
-vscode "vscodevim.vim"
+mas "Color Picker", id: 641027709
+mas "KakaoTalk", id: 869223134
+mas "Microsoft Excel", id: 462058435
+mas "Microsoft Outlook", id: 985367838
+mas "Microsoft PowerPoint", id: 462062816
+mas "Microsoft Word", id: 462054704
+mas "PiPifier", id: 1160374471
+mas "RunCat", id: 1429033973
+mas "Slack", id: 803453959
 
 go "github.com/mrtazz/checkmake/cmd/checkmake"
