@@ -1,6 +1,6 @@
 brew "astyle"
 brew "sqlite"
-brew "python@3.14"
+brew "python@3"
 brew "ccls"
 brew "cmake"
 brew "coreutils"
@@ -38,6 +38,7 @@ brew "zsh-syntax-highlighting"
 cask "adobe-creative-cloud", args: { appdir: "/Applications" }
 cask "alfred", args: { appdir: "/Applications" }
 cask "appcleaner", args: { appdir: "/Applications" }
+cask "bartender"
 cask "bibdesk", args: { appdir: "/Applications" }
 cask "chatgpt"
 cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
@@ -48,7 +49,6 @@ cask "font-0xproto-nerd-font"
 cask "google-chrome", args: { appdir: "/Applications" }
 cask "gpg-suite", args: { appdir: "/Applications" }
 cask "istat-menus", args: { appdir: "/Applications" }
-cask "jordanbaird-ice"
 cask "mactex"
 cask "microsoft-auto-update"
 cask "notion", args: { appdir: "/Applications" }
