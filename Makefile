@@ -5,17 +5,14 @@ mac_run:
 	$(MAKE) -C mac free
 .PHONY: mac_run
 
-update:
-	git fetch --all
-	git reset --hard origin/master
-.PHONY: update
-
 vim_run:
-	$(MAKE) -C vim
+	ln -sfv $(realpath vim/vimrc) ~/.vimrc
 .PHONY: vim_run
 
 zsh_run:
-	bash ./zsh/zsh.bash
+	ln -sfv $(realpath zsh/zshenv) ~/.zshenv
+	ln -sfv $(realpath zsh/zshrc) ~/.zshrc
+	ln -sfv $(realpath zsh/alias.zsh) ~/.alias.zsh
 .PHONY: zsh_run
 
 oh-my-zsh_run:
@@ -23,13 +20,17 @@ oh-my-zsh_run:
 .PHONY: oh-my-zsh_run
 
 tmux_run:
-	$(MAKE) -C tmux
+	ln -sfv $(realpath tmux/tmux.conf) ~/.tmux.conf
+	ln -sfv $(realpath tmux/tmux.conf.local) ~/.tmux.conf.local
 .PHONY: tmux_run
 
 git_run:
-	$(MAKE) -C git
+	ln -sfv $(realpath git/gitconfig) ~/.gitconfig
+	ln -sfv $(realpath git/gitignore_global) ~/.gitignore_global
 .PHONY: git_run
 
 gnupg_run:
-	$(MAKE) -C gnupg
+	ln -sfv $(realpath gnupg/gpg.conf) ~/.gpg.conf
+	ln -sfv $(realpath gnupg/gpg-agent.conf) ~/.gpg-agent.conf
+	gpgconf --kill gpg-agent
 .PHONY: gnupg_run

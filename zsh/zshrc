@@ -74,6 +74,10 @@ export GPG_TTY=$(tty)
 # Slurm settings
 export SQUEUE_FORMAT='%.9i %.20j %.9u %.8T %.9M %.3C %.9m %.20V %.20S %R'
 
+# X11 settings
+export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dsun.java2d.xrender=true'
+export JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dsun.java2d.xrender=true'
+
 # git status
 __git_prompt_git () {
     GIT_OPTIONAL_LOCKS=0 command timeout 1.0s git "$@"

@@ -1,4 +1,4 @@
-all: $(HOME)/.vimrc $(HOME)/.style.yapf $(HOME)/Library/Preferences/TabNine/TabNine.toml $(HOME)/Library/Preferences/TabNine/tabnine_config.json
+all: $(HOME)/.style.yapf $(HOME)/Library/Preferences/TabNine/TabNine.toml $(HOME)/Library/Preferences/TabNine/tabnine_config.json
 .PHONY: all
 
 $(HOME)/.vimrc: | vimrc
