@@ -7,7 +7,7 @@ alias cp="cp -i"
 alias py="python3"
 
 # PIP update
-alias pipUpdate="pip3 install -U pip wheel && pip3 freeze --local | grep -v '^\-e' | grep -v '@' | cut -d = -f 1 | xargs -n1 pip3 install -U"
+alias pipUpdate="pip3 freeze --local | grep -v '^\-e' | grep -v '@' | cut -d = -f 1 | xargs -n1 pip3 install -U"
 
 # yt-dlp
 if [[ $(uname) == "Darwin" ]]; then
