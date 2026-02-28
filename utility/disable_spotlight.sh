@@ -1,4 +1,5 @@
 #!/bin/bash
+# Maintainer: jaewoong@unist.ac.kr
 set -euo pipefail
 IFS=$'\n\t'
 
