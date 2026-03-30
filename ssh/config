@@ -1,13 +1,3 @@
-  Host darwin.kogic.kr
-    HostName darwin.kogic.kr
-    User jwlee230
-    Port 3030
-
-Host darwin.kogic.kr
-    HostName darwin.kogic.kr
-    User jwlee230
-    Port 3030
-
 Host *
     CheckHostIP yes
     Ciphers +aes256-cbc,aes256-ctr
