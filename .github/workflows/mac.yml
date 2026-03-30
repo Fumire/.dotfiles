@@ -14,10 +14,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: brew linking and update
-        run: brew update && brew upgrade || brew link --overwrite node@18
+        run: brew update && brew upgrade
 
       - name: check brew
-        run: make mac_run || brew link --overwrite go python
+        run: make mac_run
 
       - name: check ZSH
         run: make zsh_run
