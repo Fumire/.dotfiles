@@ -6,11 +6,16 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: read
+
 jobs:
   validate:
-    runs-on: macos-latest
+    runs-on: macos-15
     timeout-minutes: 30
     env:
+      HOMEBREW_BUNDLE_FILE: mac/Brewfile.Mac
+      HOMEBREW_BUNDLE_NO_UPGRADE: "1"
       HOMEBREW_NO_AUTO_UPDATE: "1"
       HOMEBREW_NO_INSTALL_CLEANUP: "1"
 
@@ -19,17 +24,34 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: check Brewfiles
+      - name: check full Mac Brewfile
         run: |
-          ruby -c mac/Brewfile
-          ruby -c mac/Brewfile.free
-          ruby -c mac/Brewfile.Mac
-          brew bundle list --all --file mac/Brewfile > /dev/null
-          brew bundle list --all --file mac/Brewfile.free > /dev/null
-          brew bundle list --all --file mac/Brewfile.Mac > /dev/null
+          ruby -c "$HOMEBREW_BUNDLE_FILE"
+          brew bundle list --all --file "$HOMEBREW_BUNDLE_FILE" > /dev/null
 
-      - name: check macOS Makefile
-        run: make -C mac -n free
+      - name: check Homebrew metadata
+        run: |
+          formulae="$(brew bundle list --formula --file "$HOMEBREW_BUNDLE_FILE")"
+          casks="$(brew bundle list --cask --file "$HOMEBREW_BUNDLE_FILE")"
+
+          if [ -n "$formulae" ]; then
+            brew info --json=v2 --formula $formulae > /dev/null
+          fi
+
+          if [ -n "$casks" ]; then
+            brew info --json=v2 --cask $casks > /dev/null
+          fi
+
+      - name: summarize Mac setup
+        run: |
+          {
+            echo "### $HOMEBREW_BUNDLE_FILE"
+            echo
+            for kind in tap formula cask mas vscode go; do
+              count="$(brew bundle list --"$kind" --file "$HOMEBREW_BUNDLE_FILE" | wc -l | tr -d ' ')"
+              echo "- $kind: $count"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: check ZSH
         run: |
