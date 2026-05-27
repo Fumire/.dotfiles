@@ -10,9 +10,7 @@ vim_run:
 .PHONY: vim_run
 
 zsh_run:
-	ln -sfv $(realpath zsh/zshenv) ~/.zshenv
-	ln -sfv $(realpath zsh/zshrc) ~/.zshrc
-	ln -sfv $(realpath zsh/alias.zsh) ~/.alias.zsh
+	$(MAKE) -C zsh
 .PHONY: zsh_run
 
 oh-my-zsh_run:
