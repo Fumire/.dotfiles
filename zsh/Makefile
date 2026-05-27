@@ -1,15 +1,29 @@
 ZSH_LINKS := \
 	zshenv:.zshenv \
 	zshrc:.zshrc \
-	alias.zsh:.alias.zsh \
-	zlogout:.zlogout
+	alias.zsh:.alias.zsh
+
+ZSH_LOGOUT_LINK := zlogout:.zlogout
+
+ifeq ($(WITH_ZLOGOUT),1)
+ZSH_LINKS += $(ZSH_LOGOUT_LINK)
+endif
+
+LINKS ?= $(ZSH_LINKS)
 
 all: install
-.PHONY: all install
+.PHONY: all install install-zlogout zlogout link
 
-install:
+install: link
+
+install-zlogout: LINKS = $(ZSH_LOGOUT_LINK)
+install-zlogout: link
+
+zlogout: install-zlogout
+
+link:
 	@set -eu; \
-	for item in $(ZSH_LINKS); do \
+	for item in $(LINKS); do \
 		src="$${item%%:*}"; \
 		dest="$(HOME)/$${item#*:}"; \
 		if [ -e "$$dest" ] && [ ! -L "$$dest" ]; then \
