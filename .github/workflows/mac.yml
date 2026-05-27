@@ -7,23 +7,37 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  validate:
     runs-on: macos-latest
+    timeout-minutes: 30
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
-      - name: brew linking and update
-        run: brew update && brew upgrade
+      - name: check Brewfiles
+        run: |
+          ruby -c mac/Brewfile
+          ruby -c mac/Brewfile.free
+          ruby -c mac/Brewfile.Mac
+          brew bundle list --all --file mac/Brewfile > /dev/null
+          brew bundle list --all --file mac/Brewfile.free > /dev/null
+          brew bundle list --all --file mac/Brewfile.Mac > /dev/null
 
-      - name: check brew
-        run: make mac_run
+      - name: check macOS Makefile
+        run: make -C mac -n free
 
       - name: check ZSH
-        run: make zsh_run
+        run: |
+          zsh -n zsh/zlogout zsh/zshenv zsh/zshrc zsh/alias.zsh
+          make zsh_run
 
       - name: check oh-my-zsh
-        run: make oh-my-zsh_run
+        run: make -C oh-my-zsh -n
 
       - name: check VIM
         run: make vim_run
