@@ -1,5 +1,6 @@
 # .dotfiles
-Configuration files (dotfiles)
+
+Personal dotfiles for setting up a familiar shell, editor, Git, tmux, and macOS/Ubuntu development environment. The Makefile symlinks tracked configuration files into the home directory so a new machine can be brought up quickly.
 
 ## Required
 * make
