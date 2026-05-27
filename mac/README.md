@@ -73,6 +73,52 @@ make -C mac start
 
 This runs `starting.sh`. It changes Finder, Dock, Safari, Terminal, screenshot, keyboard, trackpad, date/time, security, and related system preferences. It also runs `xcode-select --install`, uses `sudo` for some system settings, and restarts affected applications at the end.
 
+### `starting.sh` Settings
+
+The `starting.sh` script applies these macOS settings:
+
+| Area | Setting |
+| --- | --- |
+| Developer tools | Runs `xcode-select --install` to install Apple command line developer tools. |
+| Quick Look | Enables text selection in Quick Look previews. |
+| Printing | Quits the printer app automatically after print jobs complete. |
+| Software Update | Checks for software updates daily instead of weekly. |
+| Finder | Shows all filename extensions. |
+| Finder | Sets the preferred Finder view style to the configured `FXPreferredViewStyle` value. |
+| Finder | Prevents `.DS_Store` files on network and USB volumes. |
+| Finder | Hides Desktop icons by setting `CreateDesktop` to `false`. |
+| Finder | Shows hidden files by default. |
+| Finder | Shows the status bar and path bar. |
+| Finder | Keeps folders on top when sorting by name. |
+| Terminal | Restricts Terminal string encodings to UTF-8. |
+| Terminal | Uses the Pro profile for default and startup windows. |
+| Screenshots | Saves screenshots to `~/Desktop`. |
+| Screenshots | Saves screenshots as PNG files. |
+| Safari | Enables the internal debug menu. |
+| Safari | Enables the Develop menu and Web Inspector. |
+| Transmission | Disables the confirmation prompt before downloading. |
+| Time and locale | Uses 24-hour time. |
+| Time and locale | Sets custom date format strings. The script writes date format key `2` twice, so the later value is the one macOS keeps for that key. |
+| Time and locale | Enables automatic timezone detection and network time using `sudo`. |
+| Sound | Sets the alert sound to `Submarine.aiff`. |
+| Sound | Disables audio feedback when changing volume. |
+| Dock | Sets Dock tile size to `16`. |
+| Dock | Disables all four hot corners. |
+| Dock | Hides recently used applications from the Dock. |
+| System behavior | Enables automatic restart when the computer freezes. |
+| Security | Disables the quarantine prompt for opening downloaded applications. Review this before use on a security-sensitive machine. |
+| Security | Requires a password immediately after sleep or screen saver starts. |
+| Keyboard | Sets a fast key repeat rate and short initial repeat delay. |
+| Keyboard | Disables automatic spelling correction. |
+| Keyboard backlight | Enables automatic keyboard illumination in low light. |
+| Keyboard backlight | Turns off keyboard illumination after 5 minutes of inactivity. |
+| Trackpad | Enables tap-to-click for the current user and login screen. |
+| Trackpad | Enables three-finger swipe navigation between pages. |
+| Bluetooth audio | Raises the editable Bluetooth audio bitpool minimum to improve headset audio quality. |
+| Calendar | Shows week numbers. |
+| Calendar | Sets Monday as the first day of the week. |
+| App restart | Restarts affected apps such as Dock, Finder, Safari, Mail, Calendar, Contacts, and SystemUIServer so settings take effect. |
+
 Review `starting.sh` before running it on a machine that already has customized macOS preferences.
 
 ## Config Symlinks
