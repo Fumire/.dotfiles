@@ -1,1 +1,14 @@
-*VT100.translations: #override  Meta <KeyPress> V:  insert-selection(PRIMARY, CUT_BUFFER0) \n
+! XQuartz/xterm clipboard bridge for macOS.
+!
+! XQuartz syncs the macOS pasteboard with the X11 CLIPBOARD selection, while
+! xterm traditionally uses PRIMARY. Prefer CLIPBOARD, then fall back to PRIMARY
+! and CUT_BUFFER0 so both modern and old X11 paste paths keep working.
+
+XTerm*selectToClipboard: true
+XTerm*keepSelection: true
+
+*VT100.translations: #override \n\
+    Meta <KeyPress> V: insert-selection(CLIPBOARD, PRIMARY, CUT_BUFFER0) \n\
+    Meta <KeyPress> v: insert-selection(CLIPBOARD, PRIMARY, CUT_BUFFER0) \n\
+    Ctrl Shift <KeyPress> V: insert-selection(CLIPBOARD, PRIMARY, CUT_BUFFER0) \n\
+    Shift <KeyPress> Insert: insert-selection(CLIPBOARD, PRIMARY, CUT_BUFFER0)

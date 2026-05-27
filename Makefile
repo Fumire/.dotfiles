@@ -27,6 +27,10 @@ git_run:
 	ln -sfv $(realpath git/gitignore_global) ~/.gitignore_global
 .PHONY: git_run
 
+x11_run:
+	$(MAKE) -C X11 macos
+.PHONY: x11_run
+
 gnupg_run:
 	ln -sfv $(realpath gnupg/gpg.conf) ~/.gpg.conf
 	ln -sfv $(realpath gnupg/gpg-agent.conf) ~/.gpg-agent.conf
