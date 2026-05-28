@@ -39,7 +39,7 @@ The Makefile performs these actions:
 * Links `themes/local.zsh-theme` to `~/.oh-my-zsh/themes/local.zsh-theme`.
 * Links `themes/remote.zsh-theme` to `~/.oh-my-zsh/themes/remote.zsh-theme`.
 
-The theme links use `ln -sf`, so existing files with the same theme names are replaced.
+If an existing theme file with the same name is not a symlink, the Makefile backs it up before linking.
 
 ## Theme Selection
 

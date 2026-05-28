@@ -29,7 +29,7 @@ This creates:
 * `tmux/tmux.conf` -> `~/.tmux.conf`
 * `tmux/tmux.conf.local` -> `~/.tmux.conf.local`
 
-The install targets use `ln -sf`, so back up existing tmux config files before running them.
+If a destination file already exists and is not a symlink, the Makefile backs it up before linking.
 
 ## Main Behavior
 

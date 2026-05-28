@@ -38,7 +38,7 @@ The default `make` target installs the core shell and Vim configuration:
 * Symlinks local oh-my-zsh themes into `~/.oh-my-zsh/themes`
 * Symlinks `vim/vimrc` to `~/.vimrc`
 
-The installer uses symbolic links, so changes in this repository are reflected in your home directory. Existing destination files may be replaced by `ln -sf`, so back up any local dotfiles you want to keep before running the commands.
+The installer uses symbolic links, so changes in this repository are reflected in your home directory. When a target file already exists and is not a symlink, the Makefiles back it up with a `.bak.YYYYmmddHHMMSS` suffix before linking.
 
 ## Optional Components
 

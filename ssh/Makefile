@@ -1,5 +1,5 @@
 all:
-.PHONY: all
+.PHONY: all add_key decrypt_key $(HOME)/.ssh/config
 
 $(HOME)/.ssh/authorized_keys:
 	mkdir -p $(@D)
@@ -7,10 +7,16 @@ $(HOME)/.ssh/authorized_keys:
 
 add_key: id_rsa.pub $(HOME)/.ssh/authorized_keys
 	cat $(word 1,$^) >> $(word 2,$^)
-.PHONY: add_key
 
 $(HOME)/.ssh/config: | config
-	ln -sf $(abspath $|) $@
+	@set -eu; \
+	mkdir -p "$(@D)"; \
+	if [ -e "$@" ] && [ ! -L "$@" ]; then \
+		backup="$@.bak.$$(date +%Y%m%d%H%M%S)"; \
+		echo "Backing up $@ to $$backup"; \
+		mv "$@" "$$backup"; \
+	fi; \
+	ln -sfnv "$(abspath $|)" "$@"
 	chmod 600 $@
 
 $(HOME)/.ssh/id_%: $(HOME)/Documents/PrivateKeys/id_%.asc
@@ -18,4 +24,3 @@ $(HOME)/.ssh/id_%: $(HOME)/Documents/PrivateKeys/id_%.asc
 	chmod 400 $@
 
 decrypt_key: $(HOME)/.ssh/id_rsa
-.PHONY: decrypt_key

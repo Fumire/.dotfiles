@@ -81,4 +81,4 @@ make -C ssh "$HOME/.ssh/id_ed25519"
 
 Do not commit private keys. Public key files matching `*.pub` are also ignored in this folder.
 
-Back up any existing `~/.ssh/config` before running the symlink target, because the Makefile uses `ln -sf`.
+If `~/.ssh/config` already exists and is not a symlink, the Makefile backs it up before linking. Review SSH backups carefully because they may contain host-specific settings.

@@ -137,6 +137,8 @@ make -C mac "$HOME/.languagetool.cfg"
 
 The LanguageTool target links `languageserver.properties` to `~/.languagetool.cfg`.
 
+If either destination file already exists and is not a symlink, the Makefile backs it up before linking.
+
 ## Notes
 
 The Makefile includes a `brew` target for installing Homebrew, but the package targets assume Homebrew is already available. Install Homebrew first, then run the bundle targets.

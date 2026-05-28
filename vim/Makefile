@@ -1,16 +1,30 @@
-all: $(HOME)/.style.yapf $(HOME)/Library/Preferences/TabNine/TabNine.toml $(HOME)/Library/Preferences/TabNine/tabnine_config.json
-.PHONY: all
+VIM_LINKS := \
+	style.yapf:.style.yapf \
+	TabNine.toml:Library/Preferences/TabNine/TabNine.toml \
+	tabnine_config.json:Library/Preferences/TabNine/tabnine_config.json
 
-$(HOME)/.vimrc: | vimrc
-	ln -sf $(abspath $|) $@
+VIMRC_LINK := vimrc:.vimrc
 
-$(HOME)/.style.yapf: | style.yapf
-	ln -sf $(abspath $|) $@
+LINKS ?= $(VIM_LINKS)
 
-$(HOME)/Library/Preferences/TabNine/TabNine.toml: | TabNine.toml
-	mkdir -p $(@D)
-	ln -sf $(abspath $|) $@
+all: install
+.PHONY: all install install-vimrc link
 
-$(HOME)/Library/Preferences/TabNine/tabnine_config.json: | tabnine_config.json
-	mkdir -p $(@D)
-	ln -sf $(abspath $|) $@
+install: link
+
+install-vimrc: LINKS = $(VIMRC_LINK)
+install-vimrc: link
+
+link:
+	@set -eu; \
+	for item in $(LINKS); do \
+		src="$${item%%:*}"; \
+		dest="$(HOME)/$${item#*:}"; \
+		mkdir -p "$$(dirname "$$dest")"; \
+		if [ -e "$$dest" ] && [ ! -L "$$dest" ]; then \
+			backup="$$dest.bak.$$(date +%Y%m%d%H%M%S)"; \
+			echo "Backing up $$dest to $$backup"; \
+			mv "$$dest" "$$backup"; \
+		fi; \
+		ln -sfnv "$(CURDIR)/$$src" "$$dest"; \
+	done

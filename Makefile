@@ -6,7 +6,7 @@ mac_run:
 .PHONY: mac_run
 
 vim_run:
-	$(MAKE) -C vim $(HOME)/.vimrc
+	$(MAKE) -C vim install-vimrc
 .PHONY: vim_run
 
 zsh_run:
@@ -30,7 +30,5 @@ x11_run:
 .PHONY: x11_run
 
 gnupg_run:
-	ln -sfv $(realpath gnupg/gpg.conf) ~/.gpg.conf
-	ln -sfv $(realpath gnupg/gpg-agent.conf) ~/.gpg-agent.conf
-	gpgconf --kill gpg-agent
+	$(MAKE) -C gnupg legacy
 .PHONY: gnupg_run

@@ -28,7 +28,6 @@ For a fresh LazyVim setup, install the LazyVim starter first, then link this rep
 ```sh
 git clone https://github.com/LazyVim/starter ~/.config/nvim
 rm -rf ~/.config/nvim/.git
-mkdir -p ~/.config/nvim/lua/config ~/.config/nvim/lua/plugins
 make -C nvim
 ```
 
@@ -41,7 +40,9 @@ Run the commands from the repository root. The `make -C nvim` command creates th
 * `nvim/options.lua` -> `~/.config/nvim/lua/config/options.lua`
 * `nvim/plugin.lua` -> `~/.config/nvim/lua/plugins/plugin.lua`
 
-If `~/.config/nvim` already exists, back it up before cloning the LazyVim starter or running the Makefile. The symlink command uses `ln -sfv`, so existing files at the target paths may be replaced.
+The Makefile creates parent directories as needed. If a target file already exists and is not a symlink, it is backed up with a `.bak.YYYYmmddHHMMSS` suffix before linking.
+
+If `~/.config/nvim` already exists as a full configuration tree, review it before cloning the LazyVim starter. The backup behavior applies to individual linked files, not to the whole configuration directory.
 
 ## First Launch
 

@@ -72,6 +72,6 @@ GnuPG will start a new agent the next time it needs one.
 
 ## Notes
 
-Back up existing GnuPG config files before running the install targets, because the Makefiles use `ln -sf`.
+If a destination config file already exists and is not a symlink, the Makefile backs it up before linking.
 
 Do not commit private keys, revocation certificates, trust databases, or keyring files to this repository.

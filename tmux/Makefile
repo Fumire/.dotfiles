@@ -1,8 +1,24 @@
-all: $(HOME)/.tmux.conf $(HOME)/.tmux.conf.local
-.PHONY: all
+TMUX_LINKS := \
+	tmux.conf:.tmux.conf \
+	tmux.conf.local:.tmux.conf.local
 
-$(HOME)/.tmux.conf: | tmux.conf
-	ln -sf $(abspath $|) $@
+LINKS ?= $(TMUX_LINKS)
 
-$(HOME)/.tmux.conf.local: | tmux.conf.local
-	ln -sf $(abspath $|) $@
+all: install
+.PHONY: all install link
+
+install: link
+
+link:
+	@set -eu; \
+	for item in $(LINKS); do \
+		src="$${item%%:*}"; \
+		dest="$(HOME)/$${item#*:}"; \
+		mkdir -p "$$(dirname "$$dest")"; \
+		if [ -e "$$dest" ] && [ ! -L "$$dest" ]; then \
+			backup="$$dest.bak.$$(date +%Y%m%d%H%M%S)"; \
+			echo "Backing up $$dest to $$backup"; \
+			mv "$$dest" "$$backup"; \
+		fi; \
+		ln -sfnv "$(CURDIR)/$$src" "$$dest"; \
+	done

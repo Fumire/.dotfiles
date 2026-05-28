@@ -139,6 +139,8 @@ This symlinks:
 
 * `vim/vimrc` -> `~/.vimrc`
 
+If `~/.vimrc` already exists and is not a symlink, the Makefile backs it up before linking.
+
 To install additional Vim-related tooling configuration, run:
 
 ```sh
@@ -151,14 +153,13 @@ This symlinks:
 * `vim/TabNine.toml` -> `~/Library/Preferences/TabNine/TabNine.toml`
 * `vim/tabnine_config.json` -> `~/Library/Preferences/TabNine/tabnine_config.json`
 
-To install the Neovim Lua configuration, create the expected config directories and run the Neovim Makefile:
+To install the Neovim Lua configuration, run the Neovim Makefile:
 
 ```sh
-mkdir -p ~/.config/nvim/lua/config ~/.config/nvim/lua/plugins
 make -C nvim
 ```
 
-This symlinks the files in `nvim` into `~/.config/nvim`.
+This creates parent directories as needed and symlinks the files in `nvim` into `~/.config/nvim`. Existing non-symlink targets are backed up before linking.
 
 ## Optional Python Tools
 

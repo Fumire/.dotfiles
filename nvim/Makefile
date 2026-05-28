@@ -1,20 +1,28 @@
-all: $(HOME)/.config/nvim/stylua.toml $(HOME)/.config/nvim/lua/config/autocmds.lua $(HOME)/.config/nvim/lua/config/keymaps.lua $(HOME)/.config/nvim/lua/config/lazy.lua $(HOME)/.config/nvim/lua/config/options.lua $(HOME)/.config/nvim/lua/plugins/plugin.lua
-.PHONY: all
+NVIM_LINKS := \
+	stylua.toml:.config/nvim/stylua.toml \
+	autocmds.lua:.config/nvim/lua/config/autocmds.lua \
+	keymaps.lua:.config/nvim/lua/config/keymaps.lua \
+	lazy.lua:.config/nvim/lua/config/lazy.lua \
+	options.lua:.config/nvim/lua/config/options.lua \
+	plugin.lua:.config/nvim/lua/plugins/plugin.lua
 
-$(HOME)/.config/nvim/stylua.toml: stylua.toml
-	ln -sfv $(abspath $^) $@
+LINKS ?= $(NVIM_LINKS)
 
-$(HOME)/.config/nvim/lua/config/autocmds.lua: autocmds.lua
-	ln -sfv $(abspath $^) $@
+all: install
+.PHONY: all install link
 
-$(HOME)/.config/nvim/lua/config/keymaps.lua: keymaps.lua
-	ln -sfv $(abspath $^) $@
+install: link
 
-$(HOME)/.config/nvim/lua/config/lazy.lua: lazy.lua
-	ln -sfv $(abspath $^) $@
-
-$(HOME)/.config/nvim/lua/config/options.lua: options.lua
-	ln -sfv $(abspath $^) $@
-
-$(HOME)/.config/nvim/lua/plugins/plugin.lua: plugin.lua
-	ln -sfv $(abspath $^) $@
+link:
+	@set -eu; \
+	for item in $(LINKS); do \
+		src="$${item%%:*}"; \
+		dest="$(HOME)/$${item#*:}"; \
+		mkdir -p "$$(dirname "$$dest")"; \
+		if [ -e "$$dest" ] && [ ! -L "$$dest" ]; then \
+			backup="$$dest.bak.$$(date +%Y%m%d%H%M%S)"; \
+			echo "Backing up $$dest to $$backup"; \
+			mv "$$dest" "$$backup"; \
+		fi; \
+		ln -sfnv "$(CURDIR)/$$src" "$$dest"; \
+	done
