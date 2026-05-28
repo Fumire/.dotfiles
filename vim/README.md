@@ -76,20 +76,20 @@ The `set` commands in `vimrc` tune the default editing behavior:
 
 Notable Vim plugins include:
 
-* `vim-airline/vim-airline` for the status line and tab line
-* `scrooloose/nerdtree` for file tree navigation
-* `bling/vim-bufferline` for buffer display
-* `airblade/vim-gitgutter` for Git change markers
-* `Chiel92/vim-autoformat` for code formatting
-* `ctrlpvim/ctrlp.vim` for fuzzy file navigation
-* `dense-analysis/ale` for linting
-* `tpope/vim-commentary` for comments
-* `mbbill/undotree` for undo history
-* `Yggdroot/indentLine` for indentation guides
-* `majutsushi/tagbar` for tag navigation
-* `chrisbra/csv.vim` for CSV editing
-* `davidhalter/jedi-vim` for Python completion
-* `johngrib/vim-game-code-break` for the Code Break Vim game
+* [`vim-airline/vim-airline`](https://github.com/vim-airline/vim-airline) for the status line and tab line
+* [`scrooloose/nerdtree`](https://github.com/scrooloose/nerdtree) for file tree navigation
+* [`bling/vim-bufferline`](https://github.com/bling/vim-bufferline) for buffer display
+* [`airblade/vim-gitgutter`](https://github.com/airblade/vim-gitgutter) for Git change markers
+* [`Chiel92/vim-autoformat`](https://github.com/Chiel92/vim-autoformat) for code formatting
+* [`ctrlpvim/ctrlp.vim`](https://github.com/ctrlpvim/ctrlp.vim) for fuzzy file navigation
+* [`dense-analysis/ale`](https://github.com/dense-analysis/ale) for linting
+* [`tpope/vim-commentary`](https://github.com/tpope/vim-commentary) for comments
+* [`mbbill/undotree`](https://github.com/mbbill/undotree) for undo history
+* [`Yggdroot/indentLine`](https://github.com/Yggdroot/indentLine) for indentation guides
+* [`majutsushi/tagbar`](https://github.com/majutsushi/tagbar) for tag navigation
+* [`chrisbra/csv.vim`](https://github.com/chrisbra/csv.vim) for CSV editing
+* [`davidhalter/jedi-vim`](https://github.com/davidhalter/jedi-vim) for Python completion
+* [`johngrib/vim-game-code-break`](https://github.com/johngrib/vim-game-code-break) for the Code Break Vim game
 
 Common Vim key bindings:
 
