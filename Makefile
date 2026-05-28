@@ -6,7 +6,7 @@ mac_run:
 .PHONY: mac_run
 
 vim_run:
-	ln -sfv $(realpath vim/vimrc) ~/.vimrc
+	$(MAKE) -C vim $(HOME)/.vimrc
 .PHONY: vim_run
 
 zsh_run:
@@ -18,8 +18,7 @@ oh-my-zsh_run:
 .PHONY: oh-my-zsh_run
 
 tmux_run:
-	ln -sfv $(realpath tmux/tmux.conf) ~/.tmux.conf
-	ln -sfv $(realpath tmux/tmux.conf.local) ~/.tmux.conf.local
+	$(MAKE) -C tmux
 .PHONY: tmux_run
 
 git_run:
