@@ -76,20 +76,20 @@ The `set` commands in `vimrc` tune the default editing behavior:
 
 Notable Vim plugins include:
 
-* [`vim-airline/vim-airline`](https://github.com/vim-airline/vim-airline) for the status line and tab line
-* [`scrooloose/nerdtree`](https://github.com/scrooloose/nerdtree) for file tree navigation
-* [`bling/vim-bufferline`](https://github.com/bling/vim-bufferline) for buffer display
 * [`airblade/vim-gitgutter`](https://github.com/airblade/vim-gitgutter) for Git change markers
+* [`bling/vim-bufferline`](https://github.com/bling/vim-bufferline) for buffer display
+* [`chrisbra/csv.vim`](https://github.com/chrisbra/csv.vim) for CSV editing
 * [`Chiel92/vim-autoformat`](https://github.com/Chiel92/vim-autoformat) for code formatting
 * [`ctrlpvim/ctrlp.vim`](https://github.com/ctrlpvim/ctrlp.vim) for fuzzy file navigation
-* [`dense-analysis/ale`](https://github.com/dense-analysis/ale) for linting
-* [`tpope/vim-commentary`](https://github.com/tpope/vim-commentary) for comments
-* [`mbbill/undotree`](https://github.com/mbbill/undotree) for undo history
-* [`Yggdroot/indentLine`](https://github.com/Yggdroot/indentLine) for indentation guides
-* [`majutsushi/tagbar`](https://github.com/majutsushi/tagbar) for tag navigation
-* [`chrisbra/csv.vim`](https://github.com/chrisbra/csv.vim) for CSV editing
 * [`davidhalter/jedi-vim`](https://github.com/davidhalter/jedi-vim) for Python completion
+* [`dense-analysis/ale`](https://github.com/dense-analysis/ale) for linting
 * [`johngrib/vim-game-code-break`](https://github.com/johngrib/vim-game-code-break) for the Code Break Vim game
+* [`majutsushi/tagbar`](https://github.com/majutsushi/tagbar) for tag navigation
+* [`mbbill/undotree`](https://github.com/mbbill/undotree) for undo history
+* [`scrooloose/nerdtree`](https://github.com/scrooloose/nerdtree) for file tree navigation
+* [`tpope/vim-commentary`](https://github.com/tpope/vim-commentary) for comments
+* [`vim-airline/vim-airline`](https://github.com/vim-airline/vim-airline) for the status line and tab line
+* [`Yggdroot/indentLine`](https://github.com/Yggdroot/indentLine) for indentation guides
 
 Common Vim key bindings:
 
@@ -172,18 +172,18 @@ Package purpose:
 
 | Package | Purpose |
 | --- | --- |
-| `flake8` | Python style and error checker. Useful as a general-purpose linting backend. |
-| `mypy` | Static type checker for Python. This is configured in `vimrc` through ALE. |
 | `autopep8` | Python formatter that applies PEP 8 style fixes. This is used by the Vim autoformat configuration. |
-| `ruff` | Fast Python linter. This is configured in `vimrc` through ALE with selected rule families. |
+| `curl_cffi` | HTTP client package using libcurl bindings, useful when Python scripts need curl-like request behavior. |
+| `flake8` | Python style and error checker. Useful as a general-purpose linting backend. |
 | `matplotlib` | Plotting library for Python scripts and notebooks. |
+| `mypy` | Static type checker for Python. This is configured in `vimrc` through ALE. |
 | `neovim` | Python client package for Neovim integration. Useful for Python-based Neovim plugins/providers. |
 | `numpy` | Core numerical array library used by many scientific Python packages. |
 | `pandas` | Data analysis library for tabular data. |
 | `python-language-server` | Legacy Python language server package. Kept for editor/language-server compatibility. |
+| `ruff` | Fast Python linter. This is configured in `vimrc` through ALE with selected rule families. |
 | `scikit-learn` | Machine learning library built on NumPy and SciPy. |
 | `scipy` | Scientific computing library for numerical routines, optimization, statistics, and linear algebra. |
 | `seaborn` | Statistical plotting library built on matplotlib. |
 | `tqdm` | Progress bar utility for Python scripts. |
 | `vim-vint` | Vim script linter. This is configured in `vimrc` through ALE for Vim files. |
-| `curl_cffi` | HTTP client package using libcurl bindings, useful when Python scripts need curl-like request behavior. |
