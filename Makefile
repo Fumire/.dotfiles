@@ -23,8 +23,7 @@ tmux_run:
 .PHONY: tmux_run
 
 git_run:
-	ln -sfv $(realpath git/gitconfig) ~/.gitconfig
-	ln -sfv $(realpath git/gitignore_global) ~/.gitignore_global
+	$(MAKE) -C git
 .PHONY: git_run
 
 x11_run:

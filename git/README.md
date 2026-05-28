@@ -6,6 +6,7 @@ Personal Git configuration managed by this dotfiles repository.
 
 * `gitconfig`: Global Git settings, including user identity, GPG signing, default branch name, pull/rebase behavior, merge/diff tools, Git LFS filters, and credential helper settings.
 * `gitignore_global`: Global ignore rules for editor backup files, Vim swap files, macOS metadata files, and common local cache directories.
+* `Makefile`: Installs the Git config files as symlinks and backs up existing non-symlink destinations.
 
 ## `gitconfig`
 
@@ -43,10 +44,18 @@ Run this from the repository root:
 make git_run
 ```
 
+Or from this directory:
+
+```sh
+make
+```
+
 This creates the following symbolic links:
 
 * `git/gitconfig` -> `~/.gitconfig`
 * `git/gitignore_global` -> `~/.gitignore_global`
+
+If a destination file already exists and is not a symlink, the Makefile backs it up before linking.
 
 ## Notes
 
