@@ -167,3 +167,23 @@ The `requirements.txt` file lists Python packages used by the Vim and Neovim lin
 ```sh
 pip install -r vim/requirements.txt
 ```
+
+Package purpose:
+
+| Package | Purpose |
+| --- | --- |
+| `flake8` | Python style and error checker. Useful as a general-purpose linting backend. |
+| `mypy` | Static type checker for Python. This is configured in `vimrc` through ALE. |
+| `autopep8` | Python formatter that applies PEP 8 style fixes. This is used by the Vim autoformat configuration. |
+| `ruff` | Fast Python linter. This is configured in `vimrc` through ALE with selected rule families. |
+| `matplotlib` | Plotting library for Python scripts and notebooks. |
+| `neovim` | Python client package for Neovim integration. Useful for Python-based Neovim plugins/providers. |
+| `numpy` | Core numerical array library used by many scientific Python packages. |
+| `pandas` | Data analysis library for tabular data. |
+| `python-language-server` | Legacy Python language server package. Kept for editor/language-server compatibility. |
+| `scikit-learn` | Machine learning library built on NumPy and SciPy. |
+| `scipy` | Scientific computing library for numerical routines, optimization, statistics, and linear algebra. |
+| `seaborn` | Statistical plotting library built on matplotlib. |
+| `tqdm` | Progress bar utility for Python scripts. |
+| `vim-vint` | Vim script linter. This is configured in `vimrc` through ALE for Vim files. |
+| `curl_cffi` | HTTP client package using libcurl bindings, useful when Python scripts need curl-like request behavior. |
