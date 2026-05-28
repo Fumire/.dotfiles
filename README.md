@@ -2,6 +2,15 @@
 
 Personal dotfiles for setting up a familiar shell, editor, Git, tmux, and macOS/Ubuntu development environment. The Makefile symlinks tracked configuration files into the home directory so a new machine can be brought up quickly.
 
+## Table of Contents
+
+* [Required](#required)
+* [Installation](#installation)
+* [Optional Components](#optional-components)
+* [macOS](#macos)
+* [Ubuntu](#ubuntu)
+* [Acknowledgement](#acknowledgement)
+
 ## Required
 * make
 * git
