@@ -1,21 +1,17 @@
-MIT License
+Copyright © 2026-05-28 Jaewoong Lee <230@fumire.moe>
 
-Copyright (c) 2020 Jaewoong Lee
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+==
+
+저작권자 © 2026-05-28 이재웅 <230@fumire.moe>
+
+본 소프트웨어 및 관련 문서 파일(이하 “소프트웨어”)의 사본을 취득하는 모든 자는, 소프트웨어를 제한 없이 사용, 복제, 수정, 병합, 게시, 배포, 재실시 또는 판매할 수 있는 권한이 무상으로 부여되며, 또한 소프트웨어가 제공되는 자에게 그러한 행위를 허용할 수 있으며, 다만 아래의 조건을 충족하여야 한다.
+
+위 저작권 고지 및 본 허가 고지는 소프트웨어의 모든 사본 또는 실질적 부분에 포함되어야 한다.
+
+소프트웨어는 “있는 그대로” 제공되며, 상품성, 특정 목적에의 적합성 및 권리 비침해를 포함하나 이에 한정되지 아니하는 어떠한 보증도 명시적 또는 묵시적으로 제공되지 아니한다. 저작권자 또는 권리자는 계약상, 불법행위상, 또는 그 밖의 사유로 인해 소프트웨어나 소프트웨어의 사용 또는 기타 취급으로부터 발생하는 어떠한 청구, 손해 또는 그 밖의 책임에 대하여도 책임을 지지 아니한다.
