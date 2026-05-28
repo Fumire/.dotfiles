@@ -172,18 +172,18 @@ Package purpose:
 
 | Package | Purpose |
 | --- | --- |
-| `autopep8` | Python formatter that applies PEP 8 style fixes. This is used by the Vim autoformat configuration. |
-| `curl_cffi` | HTTP client package using libcurl bindings, useful when Python scripts need curl-like request behavior. |
-| `flake8` | Python style and error checker. Useful as a general-purpose linting backend. |
-| `matplotlib` | Plotting library for Python scripts and notebooks. |
-| `mypy` | Static type checker for Python. This is configured in `vimrc` through ALE. |
-| `neovim` | Python client package for Neovim integration. Useful for Python-based Neovim plugins/providers. |
-| `numpy` | Core numerical array library used by many scientific Python packages. |
-| `pandas` | Data analysis library for tabular data. |
-| `python-language-server` | Legacy Python language server package. Kept for editor/language-server compatibility. |
-| `ruff` | Fast Python linter. This is configured in `vimrc` through ALE with selected rule families. |
-| `scikit-learn` | Machine learning library built on NumPy and SciPy. |
-| `scipy` | Scientific computing library for numerical routines, optimization, statistics, and linear algebra. |
-| `seaborn` | Statistical plotting library built on matplotlib. |
-| `tqdm` | Progress bar utility for Python scripts. |
-| `vim-vint` | Vim script linter. This is configured in `vimrc` through ALE for Vim files. |
+| [`autopep8`](https://pypi.org/project/autopep8/) | Python formatter that applies PEP 8 style fixes. This is used by the Vim autoformat configuration. |
+| [`curl_cffi`](https://pypi.org/project/curl-cffi/) | HTTP client package using libcurl bindings, useful when Python scripts need curl-like request behavior. |
+| [`flake8`](https://pypi.org/project/flake8/) | Python style and error checker. Useful as a general-purpose linting backend. |
+| [`matplotlib`](https://pypi.org/project/matplotlib/) | Plotting library for Python scripts and notebooks. |
+| [`mypy`](https://pypi.org/project/mypy/) | Static type checker for Python. This is configured in `vimrc` through ALE. |
+| [`neovim`](https://pypi.org/project/neovim/) | Python client package for Neovim integration. Useful for Python-based Neovim plugins/providers. |
+| [`numpy`](https://pypi.org/project/numpy/) | Core numerical array library used by many scientific Python packages. |
+| [`pandas`](https://pypi.org/project/pandas/) | Data analysis library for tabular data. |
+| [`python-language-server`](https://pypi.org/project/python-language-server/) | Legacy Python language server package. Kept for editor/language-server compatibility. |
+| [`ruff`](https://pypi.org/project/ruff/) | Fast Python linter. This is configured in `vimrc` through ALE with selected rule families. |
+| [`scikit-learn`](https://pypi.org/project/scikit-learn/) | Machine learning library built on NumPy and SciPy. |
+| [`scipy`](https://pypi.org/project/scipy/) | Scientific computing library for numerical routines, optimization, statistics, and linear algebra. |
+| [`seaborn`](https://pypi.org/project/seaborn/) | Statistical plotting library built on matplotlib. |
+| [`tqdm`](https://pypi.org/project/tqdm/) | Progress bar utility for Python scripts. |
+| [`vim-vint`](https://pypi.org/project/vim-vint/) | Vim script linter. This is configured in `vimrc` through ALE for Vim files. |
