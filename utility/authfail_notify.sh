@@ -8,5 +8,4 @@ if [ -z "$PAM_USER" ]; then
 fi
 
 /usr/bin/mail -s "${PAM_SERVICE}-${HOSTNAME}" "root@compbio.unist.ac.kr" <<< "Failed login attempt in ${PAM_USER} on $(date)"
-
 exit 0
