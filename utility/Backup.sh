@@ -1,5 +1,5 @@
 #!/bin/bash
-# Maintainer: jaewoong@unist.ac.kr
+# Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
 set -euo pipefail
 IFS=$'\n\t'
 mkdir "/BiO/Backup/$(date +%Y%m%d)"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Maintainer: 230@fumire.moe
+# Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
 set -euo pipefail
 IFS=$'\n\t'
 

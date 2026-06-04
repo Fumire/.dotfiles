@@ -7,7 +7,7 @@
 #SBATCH --mail-user='root@compbio.unist.ac.kr'
 #SBATCH --output=/root/%x_%A.txt
 #SBATCH --error=/root/%x_%A.txt
-# Maintainer: jwlee230@unist.ac.kr
+# Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
 set -euo pipefail
 IFS=$'\n\t'
 tree -ls -I "tree.txt|md5.txt" | diff - tree.txt

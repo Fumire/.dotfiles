@@ -7,7 +7,7 @@
 #SBATCH --mail-user='root@compbio.unist.ac.kr'
 #SBATCH --output=/root/%x_%A.txt
 #SBATCH --error=/root/%x_%A.txt
-# Maintainer: jwlee230@unist.ac.kr
+# Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
 find -L . -type f -empty -delete -print
 find . -type f ! -empty ! -name '*.md5sum' -exec sh -c 'md5sum "$1" | awk "{print \$1}" > "$1.md5sum"' _ '{}' \; -print
 tree -ls | tee tree.txt
