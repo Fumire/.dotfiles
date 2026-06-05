@@ -8,21 +8,21 @@ These scripts are intentionally environment-specific. Review each script before 
 
 | File | Purpose |
 | --- | --- |
-| `whisper.sh` | Generates `.srt` subtitles from `mp4`, `m4a`, `aac`, or `mp3` files using `ffmpeg` and `whisper-cli`. |
-| `pdf2jpg.sh` | Converts PDF pages to 600 DPI JPEG images with `pdftoppm` and JPEG quality 100. |
-| `disable_spotlight.sh` | Adds `.metadata_never_index` to target folders and runs `dot_clean`; intended for macOS volumes. |
-| `yt-dlp.conf` | Default `yt-dlp` options for best-format downloads, retries, geo bypass, browser impersonation, metadata, chapters, subtitles, thumbnails, multistream handling, and MP4 remuxing. |
 | `authfail_notify.sh` | PAM helper that emails a notification for failed login attempts. |
-| `check_system.sh` | Checks CPU, memory, temperature, and optional NVIDIA GPU thresholds, then emails warnings or errors. |
 | `Backup.sh` | Archives account-related system files and emails the backup archive. |
+| `check_system.sh` | Checks CPU, memory, temperature, and optional NVIDIA GPU thresholds, then emails warnings or errors. |
+| `disable_spotlight.sh` | Adds `.metadata_never_index` to target folders and runs `dot_clean`; intended for macOS volumes. |
 | `make_user.sh` | Interactive Linux user creation helper for the local server environment. |
-| `update_key.sh` | Migrates legacy `apt-key` entries into `/etc/apt/trusted.gpg.d`. |
-| `reporting.sh` | Collects `sysstat` data from remote hosts, renders reports, and emails generated images. |
-| `report_storage.sh` | Creates and emails a storage usage report for the current directory. |
 | `migration_arrange.sh` | Prepares a directory for migration by deleting empty files, writing checksum files, and saving a tree listing. |
-| `migration_store.sh` | Prepares checksums, stores a tree listing, transfers the directory with `rsync --remove-source-files`, and removes transferred source files after success. |
 | `migration_check.sh` | Verifies a migrated directory against `tree.txt` and `md5.txt`. |
+| `migration_store.sh` | Prepares checksums, stores a tree listing, transfers the directory with `rsync --remove-source-files`, and removes transferred source files after success. |
 | `nologin.txt` | Login-disabled message for server account administration. |
+| `pdf2jpg.sh` | Converts PDF pages to 600 DPI JPEG images with `pdftoppm` and JPEG quality 100. |
+| `report_storage.sh` | Creates and emails a storage usage report for the current directory. |
+| `reporting.sh` | Collects `sysstat` data from remote hosts, renders reports, and emails generated images. |
+| `update_key.sh` | Migrates legacy `apt-key` entries into `/etc/apt/trusted.gpg.d`. |
+| `whisper.sh` | Generates `.srt` subtitles from `mp4`, `m4a`, `aac`, or `mp3` files using `ffmpeg` and `whisper-cli`. |
+| `yt-dlp.conf` | Default `yt-dlp` options for best-format downloads, retries, geo bypass, browser impersonation, metadata, chapters, subtitles, thumbnails, multistream handling, and MP4 remuxing. |
 
 ## Usage
 
