@@ -26,12 +26,13 @@ These scripts are intentionally environment-specific. Review each script before 
 
 ## Usage
 
-Run scripts directly from this directory or by path:
+### Media Processing
+
+Run media scripts directly from this directory or by path:
 
 ```sh
 utility/pdf2jpg.sh document.pdf
 lang=en utility/whisper.sh audio.mp3 video.mp4
-utility/disable_spotlight.sh /Volumes/ExternalDrive
 ```
 
 `whisper.sh` skips files that already have a matching `.srt`. It uses Korean by default (`lang=ko`) and a hard-coded local Whisper model path:
@@ -40,11 +41,23 @@ utility/disable_spotlight.sh /Volumes/ExternalDrive
 /Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3.bin
 ```
 
+### macOS Maintenance
+
+Use `disable_spotlight.sh` on macOS volumes or directories:
+
+```sh
+utility/disable_spotlight.sh /Volumes/ExternalDrive
+```
+
+### yt-dlp Configuration
+
 Use `yt-dlp.conf` with `yt-dlp`:
 
 ```sh
 yt-dlp --config-location utility/yt-dlp.conf URL
 ```
+
+### SLURM Migration And Reporting
 
 Submit SLURM-oriented migration or reporting scripts with `sbatch` only on systems where the hard-coded paths, remote hosts, SSH settings, and mail settings are valid:
 
@@ -54,6 +67,8 @@ sbatch utility/migration_store.sh
 sbatch utility/migration_check.sh
 sbatch utility/report_storage.sh
 ```
+
+### Server Administration
 
 Server administration scripts such as `Backup.sh`, `check_system.sh`, `make_user.sh`, `reporting.sh`, and `update_key.sh` should be run only on the matching Linux server environment. Several of them expect root privileges, working mail delivery, and paths under `/BiO`, `/etc`, `/var/log/sysstat`, or `/var/www/html`.
 
