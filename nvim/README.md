@@ -4,13 +4,13 @@ LazyVim-based Neovim configuration for this dotfiles repository. This folder sto
 
 ## Files
 
-* `lazy.lua`: bootstraps `lazy.nvim`, loads LazyVim, imports local plugin specs, and enables periodic plugin update checks.
-* `plugin.lua`: custom plugin list and overrides, including Gruvbox, Telescope settings, Pyright, Treesitter parsers, Mason tools, ALE, NERDTree, Vim Autoformat, bufferline, indent guides, Tagbar, and CSV support.
-* `options.lua`: editor preferences for indentation, clipboard, wrapping, line numbers, search, backup behavior, list characters, and status line formatting.
-* `keymaps.lua`: custom key bindings for splits and buffer navigation.
 * `autocmds.lua`: automatic file reload checks and split resizing after window size changes.
-* `stylua.toml`: Lua formatting rules for Neovim config files.
+* `keymaps.lua`: custom key bindings for splits and buffer navigation.
+* `lazy.lua`: bootstraps `lazy.nvim`, loads LazyVim, imports local plugin specs, and enables periodic plugin update checks.
 * `lazyvim.bash`: helper script for bootstrapping a LazyVim starter configuration.
+* `options.lua`: editor preferences for indentation, clipboard, wrapping, line numbers, search, backup behavior, list characters, and status line formatting.
+* `plugin.lua`: custom plugin list and overrides, including Gruvbox, Telescope settings, Pyright, Treesitter parsers, Mason tools, ALE, NERDTree, Vim Autoformat, bufferline, indent guides, Tagbar, and CSV support.
+* `stylua.toml`: Lua formatting rules for Neovim config files.
 
 ## Requirements
 

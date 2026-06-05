@@ -6,8 +6,8 @@ Personal GnuPG configuration for this dotfiles repository.
 
 | File | Purpose |
 | --- | --- |
-| `gpg.conf` | Main GPG behavior settings. |
 | `gpg-agent.conf` | GPG agent cache and pinentry settings. |
+| `gpg.conf` | Main GPG behavior settings. |
 | `Makefile` | Installs the config files under `~/.gnupg`. |
 
 ## `gpg.conf`

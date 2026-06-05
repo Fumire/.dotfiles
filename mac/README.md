@@ -6,16 +6,16 @@ macOS-specific setup files for this dotfiles repository. This folder mainly mana
 
 | File | Purpose |
 | --- | --- |
-| `Makefile` | Provides targets for Homebrew bundle installation, macOS defaults, and selected config symlinks. |
-| `Brewfile.free` | Core Homebrew profile used by the top-level `make mac_run` target. |
 | `Brewfile` | Broader Homebrew profile with additional apps and services. |
+| `Brewfile.free` | Core Homebrew profile used by the top-level `make mac_run` target. |
 | `Brewfile.Mac` | Extended Mac profile with extra development tools, casks, Mac App Store apps, VS Code extensions, and taps. |
-| `starting.sh` | Applies macOS defaults for Finder, Dock, Safari, Terminal, screenshots, keyboard, trackpad, security, date/time, and related settings. |
-| `mackup.cfg` | Mackup configuration using Dropbox storage while ignoring dotfiles already managed by this repository. |
+| `cloudflared.yml` | Cloudflare DNS-over-HTTPS proxy configuration. |
 | `languageserver.properties` | LanguageTool language server settings. |
 | `languagetool.cfg` | LanguageTool application configuration. |
-| `cloudflared.yml` | Cloudflare DNS-over-HTTPS proxy configuration. |
+| `mackup.cfg` | Mackup configuration using Dropbox storage while ignoring dotfiles already managed by this repository. |
+| `Makefile` | Provides targets for Homebrew bundle installation, macOS defaults, and selected config symlinks. |
 | `screenrc` | GNU Screen configuration. |
+| `starting.sh` | Applies macOS defaults for Finder, Dock, Safari, Terminal, screenshots, keyboard, trackpad, security, date/time, and related settings. |
 
 ## Requirements
 

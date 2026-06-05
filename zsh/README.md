@@ -6,12 +6,12 @@ ZSH configuration files for this dotfiles repository.
 
 | File | Purpose |
 | --- | --- |
+| `alias.zsh` | Shell aliases and helper functions loaded by `zshrc`. |
+| `Makefile` | Installs config files as symlinks and backs up existing non-symlink destinations. |
+| `zlogout` | Optional logout hook that prints a random quote. |
+| `zsh.bash` | Older Bash-based installer script; the Makefile is the preferred install path. |
 | `zshenv` | Sources `~/.zshrc` for login shells when the file exists. |
 | `zshrc` | Main interactive ZSH configuration. |
-| `alias.zsh` | Shell aliases and helper functions loaded by `zshrc`. |
-| `zlogout` | Optional logout hook that prints a random quote. |
-| `Makefile` | Installs config files as symlinks and backs up existing non-symlink destinations. |
-| `zsh.bash` | Older Bash-based installer script; the Makefile is the preferred install path. |
 
 ## Settings
 

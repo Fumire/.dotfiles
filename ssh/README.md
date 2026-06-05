@@ -6,9 +6,9 @@ Personal SSH configuration and helper targets for this dotfiles repository.
 
 | File | Purpose |
 | --- | --- |
+| `.gitignore` | Ignores local `*.pub` files so public keys can be used by helper targets without being tracked. |
 | `config` | Shared SSH client defaults for all hosts. |
 | `Makefile` | Helper targets for linking SSH config, appending a public key, and decrypting private keys. |
-| `.gitignore` | Ignores local `*.pub` files so public keys can be used by helper targets without being tracked. |
 
 ## SSH Defaults
 

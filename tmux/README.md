@@ -6,9 +6,9 @@ tmux configuration for this dotfiles repository. The main `tmux.conf` is based o
 
 | File | Purpose |
 | --- | --- |
+| `Makefile` | Installs both config files under the home directory. |
 | `tmux.conf` | Main tmux configuration, key bindings, helper functions, and theme engine. |
 | `tmux.conf.local` | Local overrides for prompt/status styling, mouse behavior, prefix key, clipboard integration, and plugins. |
-| `Makefile` | Installs both config files under the home directory. |
 
 ## Installation
 
