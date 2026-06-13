@@ -28,8 +28,8 @@ The main settings are in `zshrc`:
 | Homebrew PATH | Adds `/opt/homebrew/bin` and `/opt/homebrew/sbin` on macOS. |
 | Pager | Sets `PAGER` to `less`. |
 | Terminal fallback | Sets `TERM=xterm-256color` if `TERM` is empty. |
-| SSH key path | Sets `SSH_KEY_PATH` to `~/.ssh/id_rsa` when that key exists. |
-| ssh-agent plugin | Configures the oh-my-zsh `ssh-agent` plugin to load `id_rsa` and keep it for 12 hours. |
+| SSH key path | Sets `SSH_KEY_PATH` to `~/.ssh/id_ed25519` when that key exists, or falls back to `~/.ssh/id_rsa`. |
+| ssh-agent plugin | Configures the oh-my-zsh `ssh-agent` plugin to load `id_ed25519` before `id_rsa` and keep keys for 12 hours. |
 | Locale | Defaults `LC_ALL` and `LANG` to `en_US.UTF-8` if they are unset. |
 | Alias loading | Sources `~/.alias.zsh` when it exists. |
 | Command-line editor | Enables `edit-command-line` and binds it to `Ctrl-x e` and `Ctrl-x Ctrl-e`. |
@@ -56,7 +56,7 @@ The main settings are in `zshrc`:
 | `vim` | macOS alias | Runs `nvim` on macOS. |
 | `vi` | macOS alias | Runs `nvim` on macOS. |
 | `vimdiff` | macOS alias | Runs `nvim -d` on macOS. |
-| `copyssh` | macOS alias | Copies `~/.ssh/id_rsa.pub` to the macOS clipboard with `pbcopy`. |
+| `copyssh` | macOS function | Copies `~/.ssh/id_ed25519.pub` to the macOS clipboard with `pbcopy`, falling back to `~/.ssh/id_rsa.pub`. |
 | `weather` | Function | Fetches weather from `wttr.in`; defaults to Seoul and uses metric units. |
 | `gi` | Function | Fetches `.gitignore` templates from `gitignore.io`. |
 | `bkr` | Function | Runs a command in the background with `nohup`; stdout and stderr go to a generated UUID filename. |

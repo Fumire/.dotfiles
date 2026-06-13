@@ -23,7 +23,19 @@ fi
 
 # Shortcuts
 if [[ $(uname) == "Darwin" ]]; then
-    alias copyssh="pbcopy < $HOME/.ssh/id_rsa.pub"
+    function copyssh() {
+        local key_path
+
+        for key_path in "$HOME/.ssh/id_ed25519.pub" "$HOME/.ssh/id_rsa.pub"; do
+            if [[ -f "$key_path" ]]; then
+                pbcopy < "$key_path"
+                return
+            fi
+        done
+
+        printf '%s\n' "copyssh: no public SSH key found at ~/.ssh/id_ed25519.pub or ~/.ssh/id_rsa.pub" >&2
+        return 1
+    }
 fi
 
 function weather() { curl "https://wttr.in/${@:-seoul}?m" ;}

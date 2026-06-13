@@ -43,13 +43,13 @@ chmod 600 ~/.ssh/config
 
 ## Authorized Keys
 
-To append `ssh/id_rsa.pub` to `~/.ssh/authorized_keys`, place the public key at `ssh/id_rsa.pub`, then run:
+To append a public key to `~/.ssh/authorized_keys`, place `ssh/id_ed25519.pub` in this folder, then run:
 
 ```sh
 make -C ssh add_key
 ```
 
-This creates `~/.ssh/authorized_keys` if it does not exist and appends the public key to it.
+This creates `~/.ssh/authorized_keys` if it does not exist and appends `ssh/id_ed25519.pub`. If that file is absent, the target falls back to `ssh/id_rsa.pub`.
 
 ## Private Key Decryption
 
@@ -61,15 +61,17 @@ For example:
 make -C ssh decrypt_key
 ```
 
-This expects:
+This expects the first available encrypted key in this order:
 
+* `~/Documents/PrivateKeys/id_ed25519.asc`
 * `~/Documents/PrivateKeys/id_rsa.asc`
 
-And creates:
+And creates the matching private key:
 
+* `~/.ssh/id_ed25519`
 * `~/.ssh/id_rsa`
 
-The generated private key is set to mode `400`.
+Only the first available key is decrypted by `decrypt_key`. The generated private key is set to mode `400`.
 
 Pattern targets are also available. For example, this command expects `~/Documents/PrivateKeys/id_ed25519.asc` and creates `~/.ssh/id_ed25519`:
 

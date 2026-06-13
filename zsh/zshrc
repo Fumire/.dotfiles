@@ -38,10 +38,15 @@ if [[ -z "$TERM" ]]; then
 fi
 
 # ssh
-if [[ -f "${ZDOTDIR:-$HOME}/.ssh/id_rsa" ]]; then
-    export SSH_KEY_PATH="${ZDOTDIR:-$HOME}/.ssh/id_rsa"
-fi
-zstyle :omz:plugins:ssh-agent identities id_rsa
+_ssh_dir="${ZDOTDIR:-$HOME}/.ssh"
+for _ssh_key in id_ed25519 id_rsa; do
+    if [[ -f "${_ssh_dir}/${_ssh_key}" ]]; then
+        export SSH_KEY_PATH="${_ssh_dir}/${_ssh_key}"
+        break
+    fi
+done
+unset _ssh_dir _ssh_key
+zstyle :omz:plugins:ssh-agent identities id_ed25519 id_rsa
 zstyle :omz:plugins:ssh-agent lifetime 12h
 
 # locale setting

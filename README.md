@@ -48,6 +48,8 @@ Install additional configuration targets as needed:
 make tmux_run
 make git_run
 make gnupg_run
+make -C ssh "$HOME/.ssh/config"
+make -C ssh decrypt_key
 make -C nvim
 make -C vim
 make -C zsh
@@ -58,6 +60,8 @@ These commands install the following files:
 * `make tmux_run`: symlinks `~/.tmux.conf` and `~/.tmux.conf.local`
 * `make git_run`: symlinks `~/.gitconfig` and `~/.gitignore_global`
 * `make gnupg_run`: symlinks GnuPG config files and restarts `gpg-agent`
+* `make -C ssh "$HOME/.ssh/config"`: symlinks `ssh/config` to `~/.ssh/config`
+* `make -C ssh decrypt_key`: decrypts `~/Documents/PrivateKeys/id_ed25519.asc` to `~/.ssh/id_ed25519`, falling back to `id_rsa.asc`
 * `make -C nvim`: symlinks Neovim config files under `~/.config/nvim`
 * `make -C vim`: symlinks Vim-related tooling config such as YAPF and TabNine files
 * `make -C zsh`: symlinks `~/.zlogout`
