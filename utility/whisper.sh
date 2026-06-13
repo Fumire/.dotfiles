@@ -33,7 +33,7 @@ for f in "$@"; do
         if [[ -f "${f/%.aac/.srt}" ]]; then
             continue
         fi
-        ffmpeg -i "$f" -acodec libmp3lame "{$f/%.aac/.mp3}"
+        ffmpeg -i "$f" -acodec libmp3lame "${f/%.aac/.mp3}"
         whisper-cli -m "/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3.bin" --output-srt --language "${lang:-ko}" --threads 8 --processors 8 --print-colors --print-confidence --file "${f/%.aac/.mp3}"
         mv -v "${f/%.aac/.mp3.srt}" "${f/%.aac/.srt}"
         rm -fv "${f/%.aac/.mp3}"
