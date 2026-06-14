@@ -5,17 +5,81 @@ IFS=$'\n\t'
 
 HEAVY_TASK_LIMIT=5
 
-report_heaviest_tasks() {
+report_heaviest_processes() {
     local sort_column=$1
     local title=$2
 
     printf '%s\n' "$title"
     printf 'Generated at: %s on %s\n\n' "$(date '+%Y-%m-%d %H:%M:%S %Z')" "$(hostname)"
-    ps -eo pid,ppid,user,pcpu,pmem,etime,args --sort="$sort_column" | head -n "$((HEAVY_TASK_LIMIT + 1))"
+    printf '%-8s %-24s %-16s %-8s %8s %10s %8s\n' "PID" "PROCESS" "USER" "UID" "CPU%" "MEM_GB" "MEM%"
+    ps -eo pid=,comm=,user=,uid=,pcpu=,rss=,pmem= --sort="$sort_column" |
+        head -n "$HEAVY_TASK_LIMIT" |
+        awk '{
+            printf "%-8s %-24.24s %-16.16s %-8s %8s %10.2f %8s\n", $1, $2, $3, $4, $5, $6 / 1048576, $7
+        }'
+}
+
+trim_field() {
+    local value=$1
+
+    value=${value#"${value%%[![:space:]]*}"}
+    value=${value%"${value##*[![:space:]]}"}
+    printf '%s' "$value"
+}
+
+gpu_process_utilization() {
+    local pid=$1
+    local pmon_output=$2
+
+    if [[ -z "$pmon_output" ]]; then
+        printf 'N/A'
+        return
+    fi
+
+    awk -v pid="$pid" '
+        $1 !~ /^#/ && $2 == pid {
+            print $4
+            found = 1
+            exit
+        }
+        END {
+            if (!found) {
+                print "N/A"
+            }
+        }
+    ' <<< "$pmon_output"
+}
+
+process_identity() {
+    local pid=$1
+    local fallback_process=$2
+    local identity
+
+    if identity=$(ps -o user=,uid=,comm= -p "$pid" 2>/dev/null) && [[ -n "$identity" ]]; then
+        awk -v fallback_process="$fallback_process" '{
+            user = $1
+            uid = $2
+            process = $3
+            if (process == "") {
+                process = fallback_process
+            }
+            printf "%s\t%s\t%s\n", process, user, uid
+        }' <<< "$identity"
+    else
+        printf '%s\t%s\t%s\n' "$fallback_process" "N/A" "N/A"
+    fi
 }
 
 report_heaviest_gpu_tasks() {
     local gpu_processes
+    local gpu_pmon_output
+    local gpu_pid
+    local gpu_process
+    local gpu_mem_mib
+    local gpu_util
+    local process
+    local user
+    local uid
 
     printf 'Top %d GPU processes by memory usage\n' "$HEAVY_TASK_LIMIT"
     printf 'Generated at: %s on %s\n\n' "$(date '+%Y-%m-%d %H:%M:%S %Z')" "$(hostname)"
@@ -30,17 +94,30 @@ report_heaviest_gpu_tasks() {
         return
     fi
 
-    printf 'PID, Process, Used GPU memory (MiB)\n'
-    printf '%s\n' "$gpu_processes" | sort -t',' -k3,3nr | head -n "$HEAVY_TASK_LIMIT"
+    if ! gpu_pmon_output=$(nvidia-smi pmon -c 1 -s u 2>/dev/null); then
+        gpu_pmon_output=""
+    fi
+
+    printf '%-8s %-24s %-16s %-8s %8s %14s\n' "PID" "PROCESS" "USER" "UID" "GPU%" "GPU_MEM_MiB"
+    printf '%s\n' "$gpu_processes" | sort -t',' -k3,3nr | head -n "$HEAVY_TASK_LIMIT" |
+        while IFS=',' read -r gpu_pid gpu_process gpu_mem_mib; do
+            gpu_pid=$(trim_field "$gpu_pid")
+            gpu_process=$(trim_field "$gpu_process")
+            gpu_mem_mib=$(trim_field "$gpu_mem_mib")
+            gpu_util=$(gpu_process_utilization "$gpu_pid" "$gpu_pmon_output")
+
+            IFS=$'\t' read -r process user uid < <(process_identity "$gpu_pid" "$gpu_process")
+            printf '%-8s %-24.24s %-16.16s %-8s %8s %14s\n' "$gpu_pid" "$process" "$user" "$uid" "$gpu_util" "$gpu_mem_mib"
+        done
 }
 
 IDLE_CPU=$(top -b -n 1 | grep "\%Cpu(s)" | awk -F ',' '{ print $4}' | awk '{ print $1}' | cut -d "." -f 1)
 
 if (( IDLE_CPU < 10 )); then
-    report_heaviest_tasks "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage" | mail -s "[Error] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
+    report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage" | mail -s "[Error] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "CPU Error:" "$IDLE_CPU"
 elif (( IDLE_CPU < 15 )); then
-    report_heaviest_tasks "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage" | mail -s "[Warning] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
+    report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage" | mail -s "[Warning] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "CPU Warning:" "$IDLE_CPU"
 else
     echo "CPU is Okay:" "$IDLE_CPU"
@@ -55,10 +132,10 @@ fi
 IDLE_MEM=$(echo "$ACTUAL_MEM * 100 / $TOTAL_MEM" | bc)
 
 if (( IDLE_MEM < 10 )); then
-    report_heaviest_tasks "-pmem" "Top ${HEAVY_TASK_LIMIT} processes by memory usage" | mail -s "[Error] MEM Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
+    report_heaviest_processes "-rss" "Top ${HEAVY_TASK_LIMIT} processes by memory usage" | mail -s "[Error] MEM Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "MEM Error:" "${IDLE_MEM}"
 elif (( IDLE_MEM < 15 )); then
-    report_heaviest_tasks "-pmem" "Top ${HEAVY_TASK_LIMIT} processes by memory usage" | mail -s "[Warning] MEM Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
+    report_heaviest_processes "-rss" "Top ${HEAVY_TASK_LIMIT} processes by memory usage" | mail -s "[Warning] MEM Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "MEM Warning:" "${IDLE_MEM}"
 else
     echo "MEM is Okay:" "${IDLE_MEM}"
@@ -70,13 +147,13 @@ TEMPERATURE="$(echo "$TEMPERATURE / 1000" | bc -l | xargs printf "%1.0f")"
 if [[ $TEMPERATURE -gt 80 ]]; then
     {
         printf 'TEMPERATURE Error: %s\n\n' "$TEMPERATURE"
-        report_heaviest_tasks "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
+        report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
     } | mail -s "[Error] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "TEMPERATURE Error" "${TEMPERATURE}"
 elif [[ $TEMPERATURE -gt 70 && $TEMPERATURE -le 80 ]]; then
     {
         printf 'TEMPERATURE Warning: %s\n\n' "$TEMPERATURE"
-        report_heaviest_tasks "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
+        report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
     } | mail -s "[Warning] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "TEMPERATURE Warning" "${TEMPERATURE}"
 else
