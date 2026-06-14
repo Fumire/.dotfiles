@@ -21,6 +21,22 @@ for f in "$@"; do
         whisper-cli -m "/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3.bin" --output-srt --language "${lang:-ko}" --threads 8 --processors 8 --print-colors --print-confidence --file "${f/%.mp4/.mp3}"
         mv -v "${f/%.mp4/.mp3.srt}" "${f/%.mp4/.srt}"
         rm -fv "${f/%.mp4/.mp3}"
+    elif [[ "$f" == *.avi ]]; then
+        if [[ -f "${f/%.avi/.srt}" ]]; then
+            continue
+        fi
+        ffmpeg -y -i "$f" -q:a 0 -map a "${f/%.avi/.mp3}"
+        whisper-cli -m "/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3.bin" --output-srt --language "${lang:-ko}" --threads 8 --processors 8 --print-colors --print-confidence --file "${f/%.avi/.mp3}"
+        mv -v "${f/%.avi/.mp3.srt}" "${f/%.avi/.srt}"
+        rm -fv "${f/%.avi/.mp3}"
+    elif [[ "$f" == *.mkv ]]; then
+        if [[ -f "${f/%.mkv/.srt}" ]]; then
+            continue
+        fi
+        ffmpeg -y -i "$f" -q:a 0 -map a "${f/%.mkv/.mp3}"
+        whisper-cli -m "/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3.bin" --output-srt --language "${lang:-ko}" --threads 8 --processors 8 --print-colors --print-confidence --file "${f/%.mkv/.mp3}"
+        mv -v "${f/%.mkv/.mp3.srt}" "${f/%.mkv/.srt}"
+        rm -fv "${f/%.mkv/.mp3}"
     elif [[ "$f" == *.m4a ]]; then
         if [[ -f "${f/%.m4a/.srt}" ]]; then
             continue
