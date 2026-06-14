@@ -12,30 +12,32 @@ export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 
 readonly DEFAULT_WHISPER_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model"
 readonly DEFAULT_WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model"
-readonly FALLBACK_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3.bin"
-readonly WHISPER_MODEL_DIR="${WHISPER_MODEL_DIR:-$DEFAULT_WHISPER_MODEL_DIR}"
+readonly LARGE_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3.bin"
+readonly TURBO_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3-turbo.bin"
 readonly WHISPER_VAD_MODEL_DIR="${WHISPER_VAD_MODEL_DIR:-$DEFAULT_WHISPER_VAD_MODEL_DIR}"
 
 resolve_whisper_model() {
-    local configured_model="${WHISPER_MODEL_PATH:-${WHISPER_MODEL:-}}"
-    if [[ -n "$configured_model" ]]; then
-        printf '%s\n' "$configured_model"
+    if [[ -n "${WHISPER_MODEL_PATH:-}" ]]; then
+        printf '%s\n' "$WHISPER_MODEL_PATH"
         return
     fi
 
-    local model_name
-    for model_name in \
-        "current.bin" \
-        "distil-large-v3.5-ggml.bin" \
-        "ggml-large-v3-q5_0.bin" \
-        "ggml-large-v3-turbo.bin"; do
-        if [[ -f "${WHISPER_MODEL_DIR}/${model_name}" ]]; then
-            printf '%s\n' "${WHISPER_MODEL_DIR}/${model_name}"
-            return
-        fi
-    done
-
-    printf '%s\n' "$FALLBACK_WHISPER_MODEL"
+    local model_choice="${WHISPER_MODEL_CHOICE:-${WHISPER_MODEL:-large}}"
+    case "$model_choice" in
+        large | LARGE)
+            printf '%s\n' "$LARGE_WHISPER_MODEL"
+            ;;
+        turbo | TURBO)
+            printf '%s\n' "$TURBO_WHISPER_MODEL"
+            ;;
+        /* | ./* | ../*)
+            printf '%s\n' "$model_choice"
+            ;;
+        *)
+            echo "Unknown Whisper model choice: ${model_choice}. Use large, turbo, or set WHISPER_MODEL_PATH to a model file." >&2
+            exit 1
+            ;;
+    esac
 }
 
 readonly WHISPER_MODEL_PATH="$(resolve_whisper_model)"
