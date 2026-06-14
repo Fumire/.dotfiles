@@ -11,9 +11,10 @@ fi
 export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 
 readonly DEFAULT_WHISPER_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model"
+readonly DEFAULT_WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model"
 readonly FALLBACK_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3.bin"
 readonly WHISPER_MODEL_DIR="${WHISPER_MODEL_DIR:-$DEFAULT_WHISPER_MODEL_DIR}"
-readonly WHISPER_VAD_MODEL_DIR="${WHISPER_VAD_MODEL_DIR:-$WHISPER_MODEL_DIR}"
+readonly WHISPER_VAD_MODEL_DIR="${WHISPER_VAD_MODEL_DIR:-$DEFAULT_WHISPER_VAD_MODEL_DIR}"
 
 resolve_whisper_model() {
     local configured_model="${WHISPER_MODEL_PATH:-${WHISPER_MODEL:-}}"
