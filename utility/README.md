@@ -10,7 +10,7 @@ These scripts are intentionally environment-specific. Review each script before 
 | --- | --- |
 | `authfail_notify.sh` | PAM helper that emails a notification for failed login attempts. |
 | `Backup.sh` | Archives account-related system files and emails the backup archive. |
-| `check_system.sh` | Checks CPU, memory, temperature, and optional NVIDIA GPU thresholds, then emails warnings or errors. |
+| `check_system.sh` | Checks CPU, memory, temperature, and optional NVIDIA GPU thresholds, then emails warnings or errors with the five heaviest related processes. |
 | `disable_spotlight.sh` | Adds `.metadata_never_index` to target folders and runs `dot_clean`; intended for macOS volumes. |
 | `make_user.sh` | Interactive Linux user creation helper for the local server environment. |
 | `migration_arrange.sh` | Prepares a directory for migration by deleting empty files, writing checksum files, and saving a tree listing. |
@@ -21,7 +21,7 @@ These scripts are intentionally environment-specific. Review each script before 
 | `report_storage.sh` | Creates and emails a storage usage report for the current directory. |
 | `reporting.sh` | Collects `sysstat` data from remote hosts, renders reports, and emails generated images. |
 | `update_key.sh` | Migrates legacy `apt-key` entries into `/etc/apt/trusted.gpg.d`. |
-| `whisper.sh` | Generates `.srt` subtitles from `mp4`, `m4a`, `aac`, or `mp3` files using `ffmpeg` and `whisper-cli`. |
+| `whisper.sh` | Generates `.srt` subtitles from `mp4`, `avi`, `mkv`, `m4a`, `aac`, or `mp3` files using `ffmpeg` and `whisper-cli`. |
 | `yt-dlp.conf` | Default `yt-dlp` options for best-format downloads, retries, geo bypass, browser impersonation, metadata, chapters, subtitles, thumbnails, multistream handling, and MP4 remuxing. |
 
 ## Usage
@@ -33,9 +33,10 @@ Run media scripts directly from this directory or by path:
 ```sh
 utility/pdf2jpg.sh document.pdf
 lang=en utility/whisper.sh audio.mp3 video.mp4
+WHISPER_MODEL_PATH=/path/to/model.bin lang=en utility/whisper.sh audio.mp3
 ```
 
-`whisper.sh` skips files that already have a matching `.srt`. It uses Korean by default (`lang=ko`) and a hard-coded local Whisper model path:
+`whisper.sh` skips files that already have a matching `.srt`. It uses Korean by default (`lang=ko`). Set `WHISPER_MODEL_PATH` or `WHISPER_MODEL` to use a specific model file. Without an override, it looks in `${WHISPER_MODEL_DIR:-/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model}` for `current.bin`, `distil-large-v3.5-ggml.bin`, `ggml-large-v3-q5_0.bin`, or `ggml-large-v3-turbo.bin`, then falls back to the previous local model path:
 
 ```text
 /Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3.bin
@@ -78,14 +79,14 @@ Dependencies vary by script:
 
 * Media helpers: `ffmpeg`, `whisper-cli`, `pdftoppm`, `yt-dlp`
 * macOS helper: `dot_clean`
-* Linux/server helpers: `mail`, `top`, `free`, `bc`, `nvidia-smi`, `tar`, `gpg`, `apt-key`, `adduser`, `gpasswd`
+* Linux/server helpers: `mail`, `top`, `ps`, `free`, `bc`, `nvidia-smi`, `tar`, `gpg`, `apt-key`, `adduser`, `gpasswd`
 * Sysstat/reporting helpers: `sar`, `sadf`, `sysstat`, `convert`, `scp`, `ssh`
 * Migration/storage helpers: `rsync`, `tree`, `md5sum`, `du`, SLURM `sbatch`
 
 ## Notes
 
-Most shell scripts use `set -euo pipefail`, so they stop when a command fails or an expected variable is missing. Some scripts require environment variables, such as `PORT` for `reporting.sh` and `lang` for overriding the default Whisper language in `whisper.sh`.
+Most shell scripts use `set -euo pipefail`, so they stop when a command fails or an expected variable is missing. Some scripts require environment variables, such as `PORT` for `reporting.sh`, `lang` for overriding the default Whisper language in `whisper.sh`, and `WHISPER_MODEL_PATH` or `WHISPER_MODEL_DIR` for overriding Whisper model selection.
 
 The migration scripts create checksum and tree files in the working directory. `migration_arrange.sh` and `migration_store.sh` delete empty files before creating checksums. `migration_store.sh` uses `rsync --remove-source-files` to move transferred files to `root@kimura.kogic.kr:/BiO/Archive/` through SSH port `3030`, so run it only after confirming the destination and command behavior.
 
-`check_system.sh` sends CPU, memory, temperature, and GPU alerts to `root@compbio.unist.ac.kr`. GPU checks run only when `nvidia-smi` is available; warning thresholds start above 85% GPU memory or utilization, and error thresholds start above 90%.
+`check_system.sh` sends CPU, memory, temperature, and GPU alerts to `root@compbio.unist.ac.kr`. CPU and temperature alerts include the five busiest CPU processes, memory alerts include the five largest memory users, and GPU alerts include the five largest reported GPU compute processes. GPU checks run only when `nvidia-smi` is available; warning thresholds start above 85% GPU memory or utilization, and error thresholds start above 90%.
