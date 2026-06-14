@@ -3,18 +3,69 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+readonly DEFAULT_WHISPER_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model"
+readonly DEFAULT_WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model"
+readonly LARGE_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3.bin"
+readonly TURBO_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3-turbo.bin"
+readonly WHISPER_VAD_MODEL_DIR="${WHISPER_VAD_MODEL_DIR:-$DEFAULT_WHISPER_VAD_MODEL_DIR}"
+
+show_help() {
+    cat <<EOF
+Usage:
+  utility/whisper.sh [FILE ...]
+
+Generate .srt subtitle files from mp4, avi, mkv, m4a, aac, or mp3 inputs.
+Files with an existing matching .srt are skipped.
+
+Examples:
+  utility/whisper.sh video.mp4 audio.mp3
+  lang=en utility/whisper.sh audio.mp3
+  WHISPER_MODEL=turbo utility/whisper.sh audio.mp3
+  WHISPER_VAD=1 utility/whisper.sh audio.mp3
+
+Model selection:
+  Default and recommended:
+    WHISPER_MODEL=large
+    $LARGE_WHISPER_MODEL
+
+  Faster turbo model:
+    WHISPER_MODEL=turbo
+    $TURBO_WHISPER_MODEL
+
+  Explicit model path override:
+    WHISPER_MODEL_PATH=/path/to/model.bin
+
+Environment:
+  lang                                  Spoken language passed to whisper-cli; default: ko
+  WHISPER_MODEL                         Model choice: large or turbo; default: large
+  WHISPER_MODEL_CHOICE                  Alias for WHISPER_MODEL
+  WHISPER_MODEL_PATH                    Explicit Whisper model file path
+  WHISPER_VAD                           Enable VAD when set to 1, true, yes, or on
+  WHISPER_VAD_MODEL                     Explicit VAD model file path
+  WHISPER_VAD_MODEL_DIR                 VAD model directory; default: $DEFAULT_WHISPER_VAD_MODEL_DIR
+  WHISPER_VAD_THRESHOLD                 whisper-cli --vad-threshold
+  WHISPER_VAD_MIN_SPEECH_DURATION_MS    whisper-cli --vad-min-speech-duration-ms
+  WHISPER_VAD_MIN_SILENCE_DURATION_MS   whisper-cli --vad-min-silence-duration-ms
+  WHISPER_VAD_MAX_SPEECH_DURATION_S     whisper-cli --vad-max-speech-duration-s
+  WHISPER_VAD_SPEECH_PAD_MS             whisper-cli --vad-speech-pad-ms
+  WHISPER_VAD_SAMPLES_OVERLAP           whisper-cli --vad-samples-overlap
+
+Options:
+  -h, --help                            Show this help message
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    show_help
+    exit 0
+fi
+
 if [[ $(uname -s) != "Darwin" ]]; then
     echo "whisper.sh is only supported on macOS." >&2
     exit 0
 fi
 
 export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
-
-readonly DEFAULT_WHISPER_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model"
-readonly DEFAULT_WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model"
-readonly LARGE_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3.bin"
-readonly TURBO_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3-turbo.bin"
-readonly WHISPER_VAD_MODEL_DIR="${WHISPER_VAD_MODEL_DIR:-$DEFAULT_WHISPER_VAD_MODEL_DIR}"
 
 resolve_whisper_model() {
     if [[ -n "${WHISPER_MODEL_PATH:-}" ]]; then

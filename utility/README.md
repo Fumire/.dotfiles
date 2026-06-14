@@ -31,6 +31,7 @@ These scripts are intentionally environment-specific. Review each script before 
 Run media scripts directly from this directory or by path:
 
 ```sh
+utility/whisper.sh --help
 utility/pdf2jpg.sh document.pdf
 lang=en utility/whisper.sh audio.mp3 video.mp4
 WHISPER_MODEL=turbo lang=en utility/whisper.sh audio.mp3
@@ -38,7 +39,7 @@ WHISPER_MODEL_PATH=/path/to/model.bin utility/whisper.sh audio.mp3
 WHISPER_VAD=1 utility/whisper.sh audio.mp3
 ```
 
-`whisper.sh` skips files that already have a matching `.srt`. It uses Korean by default (`lang=ko`) and the large model by default. Set `WHISPER_MODEL=turbo` or `WHISPER_MODEL_CHOICE=turbo` to use the turbo model. Set `WHISPER_MODEL_PATH` for a specific model file.
+`whisper.sh` skips files that already have a matching `.srt`. It uses Korean by default (`lang=ko`) and recommends the large model as the default. Set `WHISPER_MODEL=turbo` or `WHISPER_MODEL_CHOICE=turbo` to use the turbo model. Set `WHISPER_MODEL_PATH` for a specific model file.
 
 | Choice | Model path |
 | --- | --- |
