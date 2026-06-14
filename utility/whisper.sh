@@ -13,6 +13,7 @@ export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 readonly DEFAULT_WHISPER_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model"
 readonly FALLBACK_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3.bin"
 readonly WHISPER_MODEL_DIR="${WHISPER_MODEL_DIR:-$DEFAULT_WHISPER_MODEL_DIR}"
+readonly WHISPER_VAD_MODEL_DIR="${WHISPER_VAD_MODEL_DIR:-$WHISPER_MODEL_DIR}"
 
 resolve_whisper_model() {
     local configured_model="${WHISPER_MODEL_PATH:-${WHISPER_MODEL:-}}"
@@ -38,11 +39,125 @@ resolve_whisper_model() {
 
 readonly WHISPER_MODEL_PATH="$(resolve_whisper_model)"
 
+is_truthy() {
+    case "${1:-}" in
+        1 | true | TRUE | yes | YES | on | ON)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+is_falsey() {
+    case "${1:-}" in
+        0 | false | FALSE | no | NO | off | OFF)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+whisper_vad_configured() {
+    [[ -n "${WHISPER_VAD_MODEL:-}" ]] ||
+        [[ -n "${WHISPER_VAD_THRESHOLD:-}" ]] ||
+        [[ -n "${WHISPER_VAD_MIN_SPEECH_DURATION_MS:-}" ]] ||
+        [[ -n "${WHISPER_VAD_MIN_SILENCE_DURATION_MS:-}" ]] ||
+        [[ -n "${WHISPER_VAD_MAX_SPEECH_DURATION_S:-}" ]] ||
+        [[ -n "${WHISPER_VAD_SPEECH_PAD_MS:-}" ]] ||
+        [[ -n "${WHISPER_VAD_SAMPLES_OVERLAP:-}" ]]
+}
+
+whisper_vad_enabled() {
+    if is_falsey "${WHISPER_VAD:-}"; then
+        return 1
+    fi
+
+    is_truthy "${WHISPER_VAD:-}" || whisper_vad_configured
+}
+
+resolve_whisper_vad_model() {
+    if [[ -n "${WHISPER_VAD_MODEL:-}" ]]; then
+        printf '%s\n' "$WHISPER_VAD_MODEL"
+        return
+    fi
+
+    local model_name
+    for model_name in \
+        "ggml-silero-v6.2.0.bin" \
+        "silero-v6.2.0-ggml.bin" \
+        "silero.bin" \
+        "ggml-silero-v5.1.2.bin"; do
+        if [[ -f "${WHISPER_VAD_MODEL_DIR}/${model_name}" ]]; then
+            printf '%s\n' "${WHISPER_VAD_MODEL_DIR}/${model_name}"
+            return
+        fi
+    done
+
+    local model_path
+    for model_path in "${WHISPER_VAD_MODEL_DIR}"/ggml-silero-*.bin "${WHISPER_VAD_MODEL_DIR}"/silero*-ggml.bin; do
+        if [[ -f "$model_path" ]]; then
+            printf '%s\n' "$model_path"
+            return
+        fi
+    done
+
+    return 1
+}
+
+append_whisper_vad_args() {
+    local vad_model_path
+
+    if ! vad_model_path="$(resolve_whisper_vad_model)"; then
+        echo "VAD is enabled, but no VAD model was found. Set WHISPER_VAD_MODEL or add a Silero VAD model to ${WHISPER_VAD_MODEL_DIR}." >&2
+        exit 1
+    fi
+
+    WHISPER_ARGS+=("--vad" "--vad-model" "$vad_model_path")
+
+    if [[ -n "${WHISPER_VAD_THRESHOLD:-}" ]]; then
+        WHISPER_ARGS+=("--vad-threshold" "$WHISPER_VAD_THRESHOLD")
+    fi
+    if [[ -n "${WHISPER_VAD_MIN_SPEECH_DURATION_MS:-}" ]]; then
+        WHISPER_ARGS+=("--vad-min-speech-duration-ms" "$WHISPER_VAD_MIN_SPEECH_DURATION_MS")
+    fi
+    if [[ -n "${WHISPER_VAD_MIN_SILENCE_DURATION_MS:-}" ]]; then
+        WHISPER_ARGS+=("--vad-min-silence-duration-ms" "$WHISPER_VAD_MIN_SILENCE_DURATION_MS")
+    fi
+    if [[ -n "${WHISPER_VAD_MAX_SPEECH_DURATION_S:-}" ]]; then
+        WHISPER_ARGS+=("--vad-max-speech-duration-s" "$WHISPER_VAD_MAX_SPEECH_DURATION_S")
+    fi
+    if [[ -n "${WHISPER_VAD_SPEECH_PAD_MS:-}" ]]; then
+        WHISPER_ARGS+=("--vad-speech-pad-ms" "$WHISPER_VAD_SPEECH_PAD_MS")
+    fi
+    if [[ -n "${WHISPER_VAD_SAMPLES_OVERLAP:-}" ]]; then
+        WHISPER_ARGS+=("--vad-samples-overlap" "$WHISPER_VAD_SAMPLES_OVERLAP")
+    fi
+}
+
 run_whisper() {
     local input_file="$1"
     local output_srt="$2"
+    local WHISPER_ARGS=(
+        "-m" "$WHISPER_MODEL_PATH"
+        "--output-srt"
+        "--language" "${lang:-ko}"
+        "--threads" "8"
+        "--processors" "8"
+        "--print-colors"
+        "--print-confidence"
+    )
 
-    whisper-cli -m "$WHISPER_MODEL_PATH" --output-srt --language "${lang:-ko}" --threads 8 --processors 8 --print-colors --print-confidence --file "$input_file"
+    if whisper_vad_enabled; then
+        append_whisper_vad_args
+    fi
+
+    WHISPER_ARGS+=("--file" "$input_file")
+
+    whisper-cli "${WHISPER_ARGS[@]}"
     mv -v "${input_file}.srt" "$output_srt"
 }
 
