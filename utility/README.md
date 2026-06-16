@@ -12,7 +12,7 @@ These scripts are intentionally environment-specific. Review each script before 
 | `Backup.sh` | Archives account-related system files and emails the backup archive. |
 | `check_system.sh` | Checks CPU, memory, temperature, and optional NVIDIA GPU thresholds, then emails warnings or errors with the five heaviest related processes. |
 | `disable_spotlight.sh` | Adds `.metadata_never_index` to target folders and runs `dot_clean`; intended for macOS volumes. |
-| `make_user.sh` | Interactive Linux user creation helper for the local server environment. |
+| `make_user.sh` | Argument-driven Linux user creation helper that keeps `adduser` user-information prompts interactive. |
 | `migration_arrange.sh` | Prepares a directory for migration by deleting empty files, writing checksum files, and saving a tree listing. |
 | `migration_check.sh` | Verifies a migrated directory against `tree.txt` and `md5.txt`. |
 | `migration_store.sh` | Prepares checksums, stores a tree listing, transfers the directory with `rsync --remove-source-files`, and removes transferred source files after success. |
