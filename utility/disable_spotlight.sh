@@ -1,5 +1,9 @@
 #!/bin/bash
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
+# Purpose:
+#   Mark macOS paths as Spotlight-excluded and clean AppleDouble metadata.
+# Usage:
+#   utility/disable_spotlight.sh PATH [...]
 set -euo pipefail
 IFS=$'\n\t'
 

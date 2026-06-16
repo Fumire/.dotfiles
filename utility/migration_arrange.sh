@@ -8,6 +8,11 @@
 #SBATCH --output=/root/%x_%A.txt
 #SBATCH --error=/root/%x_%A.txt
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
+# Purpose:
+#   Prepare a migration source directory by deleting empty files, writing
+#   per-file checksum sidecars, and saving a tree listing.
+# Usage:
+#   sbatch utility/migration_arrange.sh
 find -L . -type f -empty -delete -print
 find . -type f ! -empty ! -name '*.md5sum' -exec sh -c 'md5sum "$1" | awk "{print \$1}" > "$1.md5sum"' _ '{}' \; -print
 tree -ls | tee tree.txt

@@ -1,5 +1,11 @@
 #!/bin/bash
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
+# Purpose:
+#   Monitor CPU, memory, optional temperature, and optional NVIDIA GPU usage,
+#   then email threshold alerts with the five heaviest related processes.
+# Notes:
+#   Temperature and GPU checks are skipped when the host lacks readable sensor
+#   data or a usable NVIDIA driver.
 set -euo pipefail
 IFS=$'\n\t'
 

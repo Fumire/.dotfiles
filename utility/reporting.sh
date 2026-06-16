@@ -1,5 +1,10 @@
 #!/bin/bash
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
+# Purpose:
+#   Fetch sysstat data from remote hosts, render CPU/memory graphs, publish
+#   JPEG reports, and email the generated images.
+# Environment:
+#   PORT must be set to the SSH port used for remote sysstat downloads.
 set -euo pipefail
 IFS=$'\n\t'
 

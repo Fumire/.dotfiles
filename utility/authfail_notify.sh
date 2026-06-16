@@ -1,5 +1,9 @@
 #!/bin/bash
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
+# Purpose:
+#   Email root when PAM reports a failed login attempt.
+# Environment:
+#   PAM_USER, PAM_SERVICE, and HOSTNAME are expected from PAM.
 set -euo pipefail
 IFS=$'\n\t'
 

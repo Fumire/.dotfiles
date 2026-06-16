@@ -8,6 +8,13 @@
 #SBATCH --output=/root/%x_%A.txt
 #SBATCH --error=/root/%x_%A.txt
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
+# Purpose:
+#   Prepare checksums and a tree listing, then transfer the current directory
+#   to the remote archive with rsync source-file removal enabled.
+# Usage:
+#   sbatch utility/migration_store.sh
+# Notes:
+#   This script removes transferred source files after successful rsync.
 find -L . -type f -empty -delete -print
 find . -type f ! -empty ! -name '*.md5sum' -exec sh -c 'md5sum "$1" | awk "{print \$1}" > "$1.md5sum"' _ '{}' \; -print
 find -L . -type f ! -name 'tree.txt' -exec md5sum '{}' \; | tee md5.txt

@@ -1,5 +1,10 @@
 #!/bin/bash
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
+# Purpose:
+#   Interactively create a Linux server user under /BiO/Live and add the user
+#   to compbio and docker groups.
+# Usage:
+#   sudo utility/make_user.sh
 set -euo pipefail
 IFS=$'\n\t'
 

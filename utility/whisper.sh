@@ -1,5 +1,10 @@
 #!/bin/bash
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
+# Purpose:
+#   Generate .srt subtitle files from media inputs with whisper-cli, using
+#   local large/turbo Whisper models and optional Silero VAD.
+# Usage:
+#   utility/whisper.sh --help
 set -euo pipefail
 IFS=$'\n\t'
 

@@ -1,5 +1,9 @@
 #!/bin/bash
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
+# Purpose:
+#   Convert PDF pages to 600 DPI JPEG images with pdftoppm.
+# Usage:
+#   utility/pdf2jpg.sh FILE.pdf [...]
 set -euo pipefail
 IFS=$'\n\t'
 

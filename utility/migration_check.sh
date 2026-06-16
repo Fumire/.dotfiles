@@ -7,6 +7,11 @@
 #SBATCH --output=/root/%x_%A.txt
 #SBATCH --error=/root/%x_%A.txt
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
+# Purpose:
+#   Verify a migrated directory against saved tree.txt and md5.txt manifests,
+#   then email a PASS/FAIL report.
+# Usage:
+#   sbatch utility/migration_check.sh
 set -euo pipefail
 IFS=$'\n\t'
 
