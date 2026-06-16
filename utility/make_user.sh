@@ -1,10 +1,10 @@
 #!/bin/bash
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
 # Purpose:
-#   Create a Linux server user under /BiO/Live and add the user to compbio and
-#   docker groups.
+#   Create a Linux server user under a configurable home base directory and add
+#   the user to compbio and docker groups.
 # Usage:
-#   sudo utility/make_user.sh --id USER_ID [--uid UID] [--gid GID]
+#   sudo utility/make_user.sh --id USER_ID [--uid UID] [--gid GID] [--home DIR]
 # Notes:
 #   adduser remains interactive for user information prompts. The initial
 #   password is set to DEFAULT_PASSWORD after account creation.
@@ -12,28 +12,32 @@ set -euo pipefail
 IFS=$'\n\t'
 
 readonly DEFAULT_PASSWORD="1234567890"
+readonly DEFAULT_HOME_DIR="/BiO/Live"
 
 show_help() {
     cat <<EOF
 Usage:
-  sudo utility/make_user.sh --id USER_ID [--uid UID] [--gid GID]
+  sudo utility/make_user.sh --id USER_ID [--uid UID] [--gid GID] [--home DIR]
 
-Create a Linux server user under /BiO/Live, then add the user to compbio and
-docker groups. The script skips adduser's password prompt, sets the initial
-password to ${DEFAULT_PASSWORD}, and still leaves adduser's user information
-prompts interactive.
+Create a Linux server user under a home base directory, then add the user to
+compbio and docker groups. The script skips adduser's password prompt, sets the
+initial password to ${DEFAULT_PASSWORD}, and still leaves adduser's user
+information prompts interactive.
 
 Options:
-  --id USER_ID    Required login ID for the new user
-  --uid UID       Optional numeric UID
-  --gid GID       Optional numeric GID
-  -h, --help      Show this help message
+  --id USER_ID       Required login ID for the new user
+  --uid UID          Optional numeric UID
+  --gid GID          Optional numeric GID
+  --home DIR         Optional home base directory; default: ${DEFAULT_HOME_DIR}/
+                     The final home path is DIR/USER_ID.
+  -h, --help         Show this help message
 EOF
 }
 
 ID=""
 newUID=""
 newGID=""
+homeDir="$DEFAULT_HOME_DIR"
 
 while (($# > 0)); do
     case "$1" in
@@ -59,6 +63,14 @@ while (($# > 0)); do
                 exit 1
             fi
             newGID=$2
+            shift 2
+            ;;
+        --home)
+            if [[ -z "${2:-}" ]]; then
+                echo "--home requires a value" >&2
+                exit 1
+            fi
+            homeDir=$2
             shift 2
             ;;
         -h | --help)
@@ -101,12 +113,20 @@ else
     echo "GID is NULL"
 fi
 
+homeDir="${homeDir%/}"
+if [[ -z "$homeDir" ]]; then
+    echo "Home directory cannot be NULL" >&2
+    exit 1
+fi
+USER_HOME="${homeDir}/${ID}"
+echo "Home directory is <${USER_HOME}>"
+
 if getent passwd "${ID}" >/dev/null 2>&1; then
     echo "Same ID exists"
     exit 1
 fi
 
-adduser_args=(--disabled-password --home "/BiO/Live/${ID}" --shell /bin/bash)
+adduser_args=(--disabled-password --home "${USER_HOME}" --shell /bin/bash)
 
 if [[ -n "${newUID}" ]]; then
     adduser_args+=(--uid "${newUID}")
