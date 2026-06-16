@@ -70,6 +70,12 @@ process_identity() {
     fi
 }
 
+nvidia_driver_unavailable() {
+    local status=$1
+
+    [[ "$status" == *"couldn't communicate with the NVIDIA driver"* ]]
+}
+
 report_heaviest_gpu_tasks() {
     local gpu_processes
     local gpu_pmon_output
@@ -219,6 +225,8 @@ if command -v nvidia-smi >/dev/null 2>&1; then
             echo "GPU is Okay"
             printf '%s\n' "$GPU_REPORT"
         fi
+    elif nvidia_driver_unavailable "$GPU_STATUS"; then
+        :
     else
         printf '%s\n' "$GPU_STATUS" | mail -s "[Error] GPU status check failed in $(hostname)" "root@compbio.unist.ac.kr"
         echo "GPU Error"
