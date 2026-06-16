@@ -6,9 +6,12 @@
 # Usage:
 #   sudo utility/make_user.sh --id USER_ID [--uid UID] [--gid GID]
 # Notes:
-#   adduser remains interactive for password and user information prompts.
+#   adduser remains interactive for user information prompts. The initial
+#   password is set to DEFAULT_PASSWORD after account creation.
 set -euo pipefail
 IFS=$'\n\t'
+
+readonly DEFAULT_PASSWORD="1234567890"
 
 show_help() {
     cat <<EOF
@@ -16,7 +19,8 @@ Usage:
   sudo utility/make_user.sh --id USER_ID [--uid UID] [--gid GID]
 
 Create a Linux server user under /BiO/Live, then add the user to compbio and
-docker groups. The script still leaves adduser's password and user information
+docker groups. The script skips adduser's password prompt, sets the initial
+password to ${DEFAULT_PASSWORD}, and still leaves adduser's user information
 prompts interactive.
 
 Options:
@@ -102,7 +106,7 @@ if getent passwd "${ID}" >/dev/null 2>&1; then
     exit 1
 fi
 
-adduser_args=(--home "/BiO/Live/${ID}" --shell /bin/bash)
+adduser_args=(--disabled-password --home "/BiO/Live/${ID}" --shell /bin/bash)
 
 if [[ -n "${newUID}" ]]; then
     adduser_args+=(--uid "${newUID}")
@@ -113,6 +117,7 @@ if [[ -n "${newGID}" ]]; then
 fi
 
 adduser "${adduser_args[@]}" "${ID}"
+printf '%s:%s\n' "${ID}" "${DEFAULT_PASSWORD}" | chpasswd
 
 gpasswd -a "${ID}" compbio
 gpasswd -a "${ID}" docker
