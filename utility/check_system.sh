@@ -76,6 +76,39 @@ nvidia_driver_unavailable() {
     [[ "$status" == *"couldn't communicate with the NVIDIA driver"* ]]
 }
 
+read_temperature_celsius() {
+    local temp_file
+    local raw_temp
+    local nullglob_enabled=0
+
+    if shopt -q nullglob; then
+        nullglob_enabled=1
+    fi
+    shopt -s nullglob
+
+    for temp_file in /sys/class/thermal/thermal_zone*/temp; do
+        [[ -r "$temp_file" ]] || continue
+
+        if ! raw_temp=$(<"$temp_file"); then
+            continue
+        fi
+
+        raw_temp=$(trim_field "$raw_temp")
+        if [[ "$raw_temp" =~ ^[0-9]+$ ]]; then
+            if (( nullglob_enabled == 0 )); then
+                shopt -u nullglob
+            fi
+            echo "$raw_temp / 1000" | bc -l | xargs printf "%1.0f"
+            return 0
+        fi
+    done
+
+    if (( nullglob_enabled == 0 )); then
+        shopt -u nullglob
+    fi
+    return 1
+}
+
 report_heaviest_gpu_tasks() {
     local gpu_processes
     local gpu_pmon_output
@@ -147,23 +180,24 @@ else
     echo "MEM is Okay:" "${IDLE_MEM}"
 fi
 
-TEMPERATURE=$(cat /sys/class/thermal/thermal_zone0/temp)
-TEMPERATURE="$(echo "$TEMPERATURE / 1000" | bc -l | xargs printf "%1.0f")"
-
-if [[ $TEMPERATURE -gt 80 ]]; then
-    {
-        printf 'TEMPERATURE Error: %s\n\n' "$TEMPERATURE"
-        report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
-    } | mail -s "[Error] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
-    echo "TEMPERATURE Error" "${TEMPERATURE}"
-elif [[ $TEMPERATURE -gt 70 && $TEMPERATURE -le 80 ]]; then
-    {
-        printf 'TEMPERATURE Warning: %s\n\n' "$TEMPERATURE"
-        report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
-    } | mail -s "[Warning] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
-    echo "TEMPERATURE Warning" "${TEMPERATURE}"
+if TEMPERATURE=$(read_temperature_celsius); then
+    if [[ $TEMPERATURE -gt 80 ]]; then
+        {
+            printf 'TEMPERATURE Error: %s\n\n' "$TEMPERATURE"
+            report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
+        } | mail -s "[Error] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
+        echo "TEMPERATURE Error" "${TEMPERATURE}"
+    elif [[ $TEMPERATURE -gt 70 && $TEMPERATURE -le 80 ]]; then
+        {
+            printf 'TEMPERATURE Warning: %s\n\n' "$TEMPERATURE"
+            report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
+        } | mail -s "[Warning] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
+        echo "TEMPERATURE Warning" "${TEMPERATURE}"
+    else
+        echo "TEMPERATURE is Okay" "${TEMPERATURE}"
+    fi
 else
-    echo "TEMPERATURE is Okay" "${TEMPERATURE}"
+    echo "TEMPERATURE check skipped: no readable thermal zone temperature file"
 fi
 
 if command -v nvidia-smi >/dev/null 2>&1; then
