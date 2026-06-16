@@ -37,6 +37,7 @@ lang=en utility/whisper.sh audio.mp3 video.mp4
 WHISPER_MODEL=turbo lang=en utility/whisper.sh audio.mp3
 WHISPER_MODEL_PATH=/path/to/model.bin utility/whisper.sh audio.mp3
 WHISPER_VAD=1 utility/whisper.sh audio.mp3
+WHISPER_VAD=1 WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
 ```
 
 `whisper.sh` skips files that already have a matching `.srt`. It uses Korean by default (`lang=ko`) and recommends the large model as the default. Set `WHISPER_MODEL=turbo` or `WHISPER_MODEL_CHOICE=turbo` to use the turbo model. Set `WHISPER_MODEL_PATH` for a specific model file.
@@ -46,7 +47,14 @@ WHISPER_VAD=1 utility/whisper.sh audio.mp3
 | `large` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3.bin` |
 | `turbo` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3-turbo.bin` |
 
-Set `WHISPER_VAD=1` to enable whisper-cli Voice Activity Detection. By default, VAD looks for Silero models in `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model`, including `ggml-silero-v6.2.0.bin`. Set `WHISPER_VAD_MODEL` for a specific VAD model file or `WHISPER_VAD_MODEL_DIR` for another model directory. VAD tuning variables map directly to whisper-cli options: `WHISPER_VAD_THRESHOLD`, `WHISPER_VAD_MIN_SPEECH_DURATION_MS`, `WHISPER_VAD_MIN_SILENCE_DURATION_MS`, `WHISPER_VAD_MAX_SPEECH_DURATION_S`, `WHISPER_VAD_SPEECH_PAD_MS`, and `WHISPER_VAD_SAMPLES_OVERLAP`.
+Set `WHISPER_VAD=1` to enable whisper-cli Voice Activity Detection. VAD uses the v6.2.0 Silero model by default. Set `WHISPER_VAD_MODEL=v5.1.2` for the previous model, `WHISPER_VAD_MODEL=v6.2.0` for the default model explicitly, or `WHISPER_VAD_MODEL_PATH` for a specific VAD model file.
+
+| VAD choice | Model path |
+| --- | --- |
+| `v6.2.0` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model/ggml-silero-v6.2.0.bin` |
+| `v5.1.2` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model/ggml-silero-v5.1.2.bin` |
+
+VAD tuning variables map directly to whisper-cli options: `WHISPER_VAD_THRESHOLD`, `WHISPER_VAD_MIN_SPEECH_DURATION_MS`, `WHISPER_VAD_MIN_SILENCE_DURATION_MS`, `WHISPER_VAD_MAX_SPEECH_DURATION_S`, `WHISPER_VAD_SPEECH_PAD_MS`, and `WHISPER_VAD_SAMPLES_OVERLAP`.
 
 ### macOS Maintenance
 
@@ -91,7 +99,7 @@ Dependencies vary by script:
 
 ## Notes
 
-Most shell scripts use `set -euo pipefail`, so they stop when a command fails or an expected variable is missing. Some scripts require environment variables, such as `PORT` for `reporting.sh`, `lang` for overriding the default Whisper language in `whisper.sh`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, or `WHISPER_MODEL_PATH` for overriding Whisper model selection, and `WHISPER_VAD_MODEL` for VAD transcription.
+Most shell scripts use `set -euo pipefail`, so they stop when a command fails or an expected variable is missing. Some scripts require environment variables, such as `PORT` for `reporting.sh`, `lang` for overriding the default Whisper language in `whisper.sh`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, or `WHISPER_MODEL_PATH` for overriding Whisper model selection, and `WHISPER_VAD_MODEL` or `WHISPER_VAD_MODEL_PATH` for VAD transcription.
 
 The migration scripts create checksum and tree files in the working directory. `migration_arrange.sh` and `migration_store.sh` delete empty files before creating checksums. `migration_store.sh` uses `rsync --remove-source-files` to move transferred files to `root@kimura.kogic.kr:/BiO/Archive/` through SSH port `3030`, so run it only after confirming the destination and command behavior.
 

@@ -8,6 +8,8 @@ readonly DEFAULT_WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropb
 readonly LARGE_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3.bin"
 readonly TURBO_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3-turbo.bin"
 readonly WHISPER_VAD_MODEL_DIR="${WHISPER_VAD_MODEL_DIR:-$DEFAULT_WHISPER_VAD_MODEL_DIR}"
+readonly SILERO_VAD_MODEL_V5_1_2="${WHISPER_VAD_MODEL_DIR}/ggml-silero-v5.1.2.bin"
+readonly SILERO_VAD_MODEL_V6_2_0="${WHISPER_VAD_MODEL_DIR}/ggml-silero-v6.2.0.bin"
 
 show_help() {
     cat <<EOF
@@ -22,6 +24,7 @@ Examples:
   lang=en utility/whisper.sh audio.mp3
   WHISPER_MODEL=turbo utility/whisper.sh audio.mp3
   WHISPER_VAD=1 utility/whisper.sh audio.mp3
+  WHISPER_VAD=1 WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
 
 Model selection:
   Default and recommended:
@@ -35,13 +38,27 @@ Model selection:
   Explicit model path override:
     WHISPER_MODEL_PATH=/path/to/model.bin
 
+VAD model selection:
+  Default VAD model:
+    WHISPER_VAD_MODEL=v6.2.0
+    $SILERO_VAD_MODEL_V6_2_0
+
+  Previous VAD model:
+    WHISPER_VAD_MODEL=v5.1.2
+    $SILERO_VAD_MODEL_V5_1_2
+
+  Explicit VAD model path override:
+    WHISPER_VAD_MODEL_PATH=/path/to/vad-model.bin
+
 Environment:
   lang                                  Spoken language passed to whisper-cli; default: ko
   WHISPER_MODEL                         Model choice: large or turbo; default: large
   WHISPER_MODEL_CHOICE                  Alias for WHISPER_MODEL
   WHISPER_MODEL_PATH                    Explicit Whisper model file path
   WHISPER_VAD                           Enable VAD when set to 1, true, yes, or on
-  WHISPER_VAD_MODEL                     Explicit VAD model file path
+  WHISPER_VAD_MODEL                     VAD model choice: v6.2.0 or v5.1.2; default: v6.2.0
+  WHISPER_VAD_MODEL_CHOICE              Alias for WHISPER_VAD_MODEL
+  WHISPER_VAD_MODEL_PATH                Explicit VAD model file path
   WHISPER_VAD_MODEL_DIR                 VAD model directory; default: $DEFAULT_WHISPER_VAD_MODEL_DIR
   WHISPER_VAD_THRESHOLD                 whisper-cli --vad-threshold
   WHISPER_VAD_MIN_SPEECH_DURATION_MS    whisper-cli --vad-min-speech-duration-ms
@@ -117,6 +134,8 @@ is_falsey() {
 
 whisper_vad_configured() {
     [[ -n "${WHISPER_VAD_MODEL:-}" ]] ||
+        [[ -n "${WHISPER_VAD_MODEL_CHOICE:-}" ]] ||
+        [[ -n "${WHISPER_VAD_MODEL_PATH:-}" ]] ||
         [[ -n "${WHISPER_VAD_THRESHOLD:-}" ]] ||
         [[ -n "${WHISPER_VAD_MIN_SPEECH_DURATION_MS:-}" ]] ||
         [[ -n "${WHISPER_VAD_MIN_SILENCE_DURATION_MS:-}" ]] ||
@@ -134,39 +153,34 @@ whisper_vad_enabled() {
 }
 
 resolve_whisper_vad_model() {
-    if [[ -n "${WHISPER_VAD_MODEL:-}" ]]; then
-        printf '%s\n' "$WHISPER_VAD_MODEL"
+    if [[ -n "${WHISPER_VAD_MODEL_PATH:-}" ]]; then
+        printf '%s\n' "$WHISPER_VAD_MODEL_PATH"
         return
     fi
 
-    local model_name
-    for model_name in \
-        "ggml-silero-v6.2.0.bin" \
-        "silero-v6.2.0-ggml.bin" \
-        "silero.bin" \
-        "ggml-silero-v5.1.2.bin"; do
-        if [[ -f "${WHISPER_VAD_MODEL_DIR}/${model_name}" ]]; then
-            printf '%s\n' "${WHISPER_VAD_MODEL_DIR}/${model_name}"
-            return
-        fi
-    done
-
-    local model_path
-    for model_path in "${WHISPER_VAD_MODEL_DIR}"/ggml-silero-*.bin "${WHISPER_VAD_MODEL_DIR}"/silero*-ggml.bin; do
-        if [[ -f "$model_path" ]]; then
-            printf '%s\n' "$model_path"
-            return
-        fi
-    done
-
-    return 1
+    local vad_model_choice="${WHISPER_VAD_MODEL_CHOICE:-${WHISPER_VAD_MODEL:-v6.2.0}}"
+    case "$vad_model_choice" in
+        v6.2.0 | 6.2.0 | v6 | V6)
+            printf '%s\n' "$SILERO_VAD_MODEL_V6_2_0"
+            ;;
+        v5.1.2 | 5.1.2 | v5 | V5)
+            printf '%s\n' "$SILERO_VAD_MODEL_V5_1_2"
+            ;;
+        /* | ./* | ../*)
+            printf '%s\n' "$vad_model_choice"
+            ;;
+        *)
+            echo "Unknown VAD model choice: ${vad_model_choice}. Use v6.2.0, v5.1.2, or set WHISPER_VAD_MODEL_PATH to a model file." >&2
+            exit 1
+            ;;
+    esac
 }
 
 append_whisper_vad_args() {
     local vad_model_path
 
     if ! vad_model_path="$(resolve_whisper_vad_model)"; then
-        echo "VAD is enabled, but no VAD model was found. Set WHISPER_VAD_MODEL or add a Silero VAD model to ${WHISPER_VAD_MODEL_DIR}." >&2
+        echo "VAD is enabled, but no VAD model was found. Set WHISPER_VAD_MODEL to v6.2.0 or v5.1.2, or set WHISPER_VAD_MODEL_PATH." >&2
         exit 1
     fi
 
