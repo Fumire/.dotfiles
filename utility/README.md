@@ -56,6 +56,8 @@ Set `WHISPER_VAD=1` to enable whisper-cli Voice Activity Detection. VAD uses the
 
 VAD tuning variables map directly to whisper-cli options: `WHISPER_VAD_THRESHOLD`, `WHISPER_VAD_MIN_SPEECH_DURATION_MS`, `WHISPER_VAD_MIN_SILENCE_DURATION_MS`, `WHISPER_VAD_MAX_SPEECH_DURATION_S`, `WHISPER_VAD_SPEECH_PAD_MS`, and `WHISPER_VAD_SAMPLES_OVERLAP`.
 
+If ffmpeg fails while decoding corrupt AAC packets, `whisper.sh` retries the audio conversion with ffmpeg corruption-tolerance flags so isolated bad AAC frames can be skipped instead of stopping the whole transcription.
+
 ### macOS Maintenance
 
 Use `disable_spotlight.sh` on macOS volumes or directories:

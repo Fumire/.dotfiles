@@ -72,6 +72,10 @@ Environment:
   WHISPER_VAD_SPEECH_PAD_MS             whisper-cli --vad-speech-pad-ms
   WHISPER_VAD_SAMPLES_OVERLAP           whisper-cli --vad-samples-overlap
 
+AAC decode errors:
+  If ffmpeg fails while decoding corrupt AAC packets, whisper.sh retries the
+  audio conversion with ffmpeg corruption-tolerance flags.
+
 Options:
   -h, --help                            Show this help message
 EOF
@@ -234,19 +238,68 @@ run_whisper() {
     mv -v "${input_file}.srt" "$output_srt"
 }
 
+run_ffmpeg_conversion() {
+    local source_file="$1"
+    local mp3_file="$2"
+    local conversion_type="$3"
+    local output_existed=0
+
+    [[ -e "$mp3_file" ]] && output_existed=1
+
+    case "$conversion_type" in
+        video)
+            if ffmpeg -y -i "$source_file" -q:a 0 -map a "$mp3_file"; then
+                return
+            fi
+            ;;
+        m4a)
+            if ffmpeg -i "$source_file" -c:v copy -c:a libmp3lame -q:a 4 "$mp3_file"; then
+                return
+            fi
+            ;;
+        aac)
+            if ffmpeg -i "$source_file" -acodec libmp3lame "$mp3_file"; then
+                return
+            fi
+            ;;
+    esac
+
+    if (( output_existed )) && [[ "$conversion_type" != "video" ]]; then
+        return 1
+    fi
+
+    echo "ffmpeg failed for ${source_file}; retrying while discarding corrupt AAC packets." >&2
+
+    case "$conversion_type" in
+        video)
+            ffmpeg -y -fflags +discardcorrupt -err_detect ignore_err -i "$source_file" -q:a 0 -map a -max_error_rate 1 "$mp3_file"
+            ;;
+        m4a)
+            ffmpeg -y -fflags +discardcorrupt -err_detect ignore_err -i "$source_file" -c:v copy -c:a libmp3lame -q:a 4 -max_error_rate 1 "$mp3_file"
+            ;;
+        aac)
+            ffmpeg -y -fflags +discardcorrupt -err_detect ignore_err -i "$source_file" -acodec libmp3lame -max_error_rate 1 "$mp3_file"
+            ;;
+        *)
+            echo "Unknown ffmpeg conversion type: ${conversion_type}" >&2
+            return 1
+            ;;
+    esac
+}
+
 convert_to_mp3() {
     local source_file="$1"
     local mp3_file="$2"
 
     case "$source_file" in
         *.mp4 | *.avi | *.mkv)
-            ffmpeg -y -i "$source_file" -q:a 0 -map a "$mp3_file"
+            run_ffmpeg_conversion "$source_file" "$mp3_file" "video"
             ;;
         *.m4a)
-            ffmpeg -i "$source_file" -c:v copy -c:a libmp3lame -q:a 4 "$mp3_file"
+            run_ffmpeg_conversion "$source_file" "$mp3_file" "m4a"
             ;;
         *.aac)
-            ffmpeg -i "$source_file" -acodec libmp3lame "$mp3_file"
+            run_ffmpeg_conversion "$source_file" "$mp3_file" "aac"
             ;;
     esac
 }
