@@ -33,6 +33,7 @@ Run media scripts directly from this directory or by path:
 ```sh
 utility/whisper.sh --help
 utility/pdf2jpg.sh document.pdf
+utility/pdf2jpg.sh -o ./jpg document.pdf scans/document.pdf
 lang=en utility/whisper.sh audio.mp3 video.mp4
 WHISPER_MODEL=turbo lang=en utility/whisper.sh audio.mp3
 WHISPER_MODEL_PATH=/path/to/model.bin utility/whisper.sh audio.mp3
@@ -40,23 +41,28 @@ WHISPER_VAD=1 utility/whisper.sh audio.mp3
 WHISPER_VAD=1 WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
 ```
 
-`whisper.sh` skips files that already have a matching `.srt`. It uses Korean by default (`lang=ko`) and recommends the large model as the default. Set `WHISPER_MODEL=turbo` or `WHISPER_MODEL_CHOICE=turbo` to use the turbo model. Set `WHISPER_MODEL_PATH` for a specific model file.
+`pdf2jpg.sh` writes JPEGs next to each PDF by default, using the original input path without the trailing `.pdf` as the `pdftoppm` output prefix. Use `-o DIR` or `--output-dir DIR` to write all JPEGs to one directory; the directory is created if needed. In output-directory mode, each PDF gets a collision-safe output prefix based on its basename, so duplicate names such as `scan.pdf` from different folders become roots like `scan` and `scan-2`.
+
+`whisper.sh` announces each input as `(current/total) FILE`, skips files that already have a matching `.srt`, uses Korean by default (`lang=ko`), and recommends the large model as the default. Set `WHISPER_MODEL=turbo` or `WHISPER_MODEL_CHOICE=turbo` to use the turbo model. Set `WHISPER_MODEL_PATH` for a specific model file.
 
 | Choice | Model path |
 | --- | --- |
 | `large` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3.bin` |
 | `turbo` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3-turbo.bin` |
 
-Set `WHISPER_VAD=1` to enable whisper-cli Voice Activity Detection. VAD uses the v6.2.0 Silero model by default. Set `WHISPER_VAD_MODEL=v5.1.2` for the previous model, `WHISPER_VAD_MODEL=v6.2.0` for the default model explicitly, or `WHISPER_VAD_MODEL_PATH` for a specific VAD model file.
+Set `WHISPER_VAD=1` to enable whisper-cli Voice Activity Detection. VAD auto-detects the newest available Silero model by default and falls back to the v6.2.0 path when no matching model is found. Set `WHISPER_VAD_MODEL=v5.1.2` for the previous model, `WHISPER_VAD_MODEL=v6.2.0` for the current fallback model explicitly, or `WHISPER_VAD_MODEL_PATH` for a specific VAD model file.
 
 | VAD choice | Model path |
 | --- | --- |
+| `auto` | Newest `ggml-silero-v*.bin` under `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model`; falls back to the v6.2.0 path below |
 | `v6.2.0` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model/ggml-silero-v6.2.0.bin` |
 | `v5.1.2` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model/ggml-silero-v5.1.2.bin` |
 
+Leave `WHISPER_VAD_MODEL` unset, or set it to `auto`, to scan `WHISPER_VAD_MODEL_DIR` for the newest matching Silero VAD model. Set `WHISPER_VAD_MODEL_DIR` to scan a different directory. Explicit choices such as `WHISPER_VAD_MODEL=v5.1.2`, path values in `WHISPER_VAD_MODEL`, and `WHISPER_VAD_MODEL_PATH` still override auto-detection.
+
 VAD tuning variables map directly to whisper-cli options: `WHISPER_VAD_THRESHOLD`, `WHISPER_VAD_MIN_SPEECH_DURATION_MS`, `WHISPER_VAD_MIN_SILENCE_DURATION_MS`, `WHISPER_VAD_MAX_SPEECH_DURATION_S`, `WHISPER_VAD_SPEECH_PAD_MS`, and `WHISPER_VAD_SAMPLES_OVERLAP`.
 
-If ffmpeg fails while decoding corrupt AAC packets, `whisper.sh` retries the audio conversion with ffmpeg corruption-tolerance flags so isolated bad AAC frames can be skipped instead of stopping the whole transcription.
+For MP4, AVI, MKV, M4A, and AAC inputs, `whisper.sh` extracts the audio to MP3 with `ffmpeg -i INPUT -vn -q:a 0 -map a OUTPUT.mp3` before running `whisper-cli`.
 
 ### macOS Maintenance
 
@@ -101,7 +107,7 @@ Dependencies vary by script:
 
 ## Notes
 
-Most shell scripts use `set -euo pipefail`, so they stop when a command fails or an expected variable is missing. Some scripts require environment variables, such as `PORT` for `reporting.sh`, `lang` for overriding the default Whisper language in `whisper.sh`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, or `WHISPER_MODEL_PATH` for overriding Whisper model selection, and `WHISPER_VAD_MODEL` or `WHISPER_VAD_MODEL_PATH` for VAD transcription.
+Most shell scripts use `set -euo pipefail`, so they stop when a command fails or an expected variable is missing. Some scripts require environment variables, such as `PORT` for `reporting.sh`, `lang` for overriding the default Whisper language in `whisper.sh`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, or `WHISPER_MODEL_PATH` for overriding Whisper model selection, and `WHISPER_VAD_MODEL`, `WHISPER_VAD_MODEL_DIR`, or `WHISPER_VAD_MODEL_PATH` for VAD transcription.
 
 The migration scripts create checksum and tree files in the working directory. `migration_arrange.sh` and `migration_store.sh` delete empty files before creating checksums. `migration_store.sh` uses `rsync --remove-source-files` to move transferred files to `root@kimura.kogic.kr:/BiO/Archive/` through SSH port `3030`, so run it only after confirming the destination and command behavior.
 

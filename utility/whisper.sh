@@ -23,6 +23,7 @@ Usage:
 
 Generate .srt subtitle files from mp4, avi, mkv, m4a, aac, or mp3 inputs.
 Files with an existing matching .srt are skipped.
+Each input is announced as (current/total) before processing.
 
 Examples:
   utility/whisper.sh video.mp4 audio.mp3
@@ -44,11 +45,15 @@ Model selection:
     WHISPER_MODEL_PATH=/path/to/model.bin
 
 VAD model selection:
-  Default VAD model:
+  Default auto-detected VAD model:
+    WHISPER_VAD_MODEL=auto
+    newest ggml-silero-v*.bin in $WHISPER_VAD_MODEL_DIR
+    fallback: $SILERO_VAD_MODEL_V6_2_0
+
+  Explicit VAD model choices:
     WHISPER_VAD_MODEL=v6.2.0
     $SILERO_VAD_MODEL_V6_2_0
 
-  Previous VAD model:
     WHISPER_VAD_MODEL=v5.1.2
     $SILERO_VAD_MODEL_V5_1_2
 
@@ -61,10 +66,10 @@ Environment:
   WHISPER_MODEL_CHOICE                  Alias for WHISPER_MODEL
   WHISPER_MODEL_PATH                    Explicit Whisper model file path
   WHISPER_VAD                           Enable VAD when set to 1, true, yes, or on
-  WHISPER_VAD_MODEL                     VAD model choice: v6.2.0 or v5.1.2; default: v6.2.0
+  WHISPER_VAD_MODEL                     VAD model choice: auto, v6.2.0, v5.1.2, or path; default: auto
   WHISPER_VAD_MODEL_CHOICE              Alias for WHISPER_VAD_MODEL
   WHISPER_VAD_MODEL_PATH                Explicit VAD model file path
-  WHISPER_VAD_MODEL_DIR                 VAD model directory; default: $DEFAULT_WHISPER_VAD_MODEL_DIR
+  WHISPER_VAD_MODEL_DIR                 VAD model directory scanned by auto; default: $DEFAULT_WHISPER_VAD_MODEL_DIR
   WHISPER_VAD_THRESHOLD                 whisper-cli --vad-threshold
   WHISPER_VAD_MIN_SPEECH_DURATION_MS    whisper-cli --vad-min-speech-duration-ms
   WHISPER_VAD_MIN_SILENCE_DURATION_MS   whisper-cli --vad-min-silence-duration-ms
@@ -161,14 +166,89 @@ whisper_vad_enabled() {
     is_truthy "${WHISPER_VAD:-}" || whisper_vad_configured
 }
 
+extract_whisper_vad_model_version() {
+    local model_name="${1##*/}"
+
+    if [[ "$model_name" =~ ^ggml-silero-v([0-9]+([.][0-9]+)*)[.]bin$ ]]; then
+        printf '%s\n' "${BASH_REMATCH[1]}"
+        return 0
+    fi
+
+    return 1
+}
+
+version_greater_than() {
+    local left_version="$1"
+    local right_version="$2"
+    local left_part
+    local right_part
+    local i
+    local max_parts
+    local -a left_parts
+    local -a right_parts
+    local IFS=.
+
+    left_parts=($left_version)
+    right_parts=($right_version)
+    max_parts="${#left_parts[@]}"
+
+    if (( ${#right_parts[@]} > max_parts )); then
+        max_parts="${#right_parts[@]}"
+    fi
+
+    for (( i = 0; i < max_parts; i++ )); do
+        left_part="${left_parts[$i]:-0}"
+        right_part="${right_parts[$i]:-0}"
+
+        if (( 10#$left_part > 10#$right_part )); then
+            return 0
+        fi
+        if (( 10#$left_part < 10#$right_part )); then
+            return 1
+        fi
+    done
+
+    return 1
+}
+
+detect_newest_whisper_vad_model() {
+    local model_file
+    local model_version
+    local newest_model=""
+    local newest_version=""
+
+    for model_file in "${WHISPER_VAD_MODEL_DIR}"/ggml-silero-v*.bin; do
+        [[ -e "$model_file" ]] || continue
+
+        if ! model_version="$(extract_whisper_vad_model_version "$model_file")"; then
+            continue
+        fi
+
+        if [[ -z "$newest_model" ]] || version_greater_than "$model_version" "$newest_version"; then
+            newest_model="$model_file"
+            newest_version="$model_version"
+        fi
+    done
+
+    if [[ -n "$newest_model" ]]; then
+        printf '%s\n' "$newest_model"
+        return 0
+    fi
+
+    return 1
+}
+
 resolve_whisper_vad_model() {
     if [[ -n "${WHISPER_VAD_MODEL_PATH:-}" ]]; then
         printf '%s\n' "$WHISPER_VAD_MODEL_PATH"
         return
     fi
 
-    local vad_model_choice="${WHISPER_VAD_MODEL_CHOICE:-${WHISPER_VAD_MODEL:-v6.2.0}}"
+    local vad_model_choice="${WHISPER_VAD_MODEL_CHOICE:-${WHISPER_VAD_MODEL:-auto}}"
     case "$vad_model_choice" in
+        auto | AUTO)
+            detect_newest_whisper_vad_model || printf '%s\n' "$SILERO_VAD_MODEL_V6_2_0"
+            ;;
         v6.2.0 | 6.2.0 | v6 | V6)
             printf '%s\n' "$SILERO_VAD_MODEL_V6_2_0"
             ;;
@@ -179,7 +259,7 @@ resolve_whisper_vad_model() {
             printf '%s\n' "$vad_model_choice"
             ;;
         *)
-            echo "Unknown VAD model choice: ${vad_model_choice}. Use v6.2.0, v5.1.2, or set WHISPER_VAD_MODEL_PATH to a model file." >&2
+            echo "Unknown VAD model choice: ${vad_model_choice}. Use auto, v6.2.0, v5.1.2, or set WHISPER_VAD_MODEL_PATH to a model file." >&2
             exit 1
             ;;
     esac
@@ -189,7 +269,7 @@ append_whisper_vad_args() {
     local vad_model_path
 
     if ! vad_model_path="$(resolve_whisper_vad_model)"; then
-        echo "VAD is enabled, but no VAD model was found. Set WHISPER_VAD_MODEL to v6.2.0 or v5.1.2, or set WHISPER_VAD_MODEL_PATH." >&2
+        echo "VAD is enabled, but no VAD model was found. Set WHISPER_VAD_MODEL to auto, v6.2.0, or v5.1.2, or set WHISPER_VAD_MODEL_PATH." >&2
         exit 1
     fi
 
@@ -326,7 +406,11 @@ process_media_file() {
     esac
 }
 
+total_input_files="$#"
+current_input_file=0
+
 for f in "$@"; do
-    echo "$f"
+    current_input_file=$((current_input_file + 1))
+    printf '(%d/%d) %s\n' "$current_input_file" "$total_input_files" "$f"
     process_media_file "$f"
 done
