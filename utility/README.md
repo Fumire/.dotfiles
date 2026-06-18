@@ -11,7 +11,7 @@ These scripts are intentionally environment-specific. Review each script before 
 | `authfail_notify.sh` | PAM helper that emails a notification for failed login attempts. |
 | `Backup.sh` | Archives account-related system files and emails the backup archive. |
 | `check_system.sh` | Checks CPU, memory, temperature, and optional NVIDIA GPU thresholds, then emails warnings or errors with the five heaviest related processes. |
-| `disable_spotlight.sh` | Adds `.metadata_never_index` to target folders and runs `dot_clean`; intended for macOS volumes. |
+| `disable_spotlight.sh` | Adds `.metadata_never_index` to one or more target directories and runs `dot_clean`; intended for macOS volumes. |
 | `make_user.sh` | Argument-driven Linux user creation helper with optional `--home` base, default initial password, and interactive `adduser` user-information prompts. |
 | `migration_arrange.sh` | Prepares a directory for migration by deleting empty files, writing checksum files, and saving a tree listing. |
 | `migration_check.sh` | Verifies a migrated directory against `tree.txt` and `md5.txt`. |
@@ -70,7 +70,10 @@ Use `disable_spotlight.sh` on macOS volumes or directories:
 
 ```sh
 utility/disable_spotlight.sh /Volumes/ExternalDrive
+utility/disable_spotlight.sh /Volumes/ExternalDrive /Volumes/BackupDrive
 ```
+
+At least one target directory is required. Run `utility/disable_spotlight.sh --help` to show the usage message.
 
 ### yt-dlp Configuration
 
