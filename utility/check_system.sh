@@ -2,14 +2,169 @@
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
 # Purpose:
 #   Monitor CPU, memory, optional temperature, and optional NVIDIA GPU usage,
-#   then email threshold alerts with the five heaviest related processes.
+#   then email threshold alerts with the heaviest related processes.
+# Usage:
+#   utility/check_system.sh [OPTIONS]
 # Notes:
 #   Temperature and GPU checks are skipped when the host lacks readable sensor
 #   data or a usable NVIDIA driver.
 set -euo pipefail
 IFS=$'\n\t'
 
-HEAVY_TASK_LIMIT=5
+readonly DEFAULT_HEAVY_TASK_LIMIT=5
+readonly DEFAULT_IDLE_WARNING_THRESHOLD=15
+readonly DEFAULT_IDLE_ERROR_THRESHOLD=10
+readonly DEFAULT_TEMPERATURE_WARNING_THRESHOLD=70
+readonly DEFAULT_TEMPERATURE_ERROR_THRESHOLD=80
+readonly DEFAULT_GPU_WARNING_THRESHOLD=85
+readonly DEFAULT_GPU_ERROR_THRESHOLD=90
+
+HEAVY_TASK_LIMIT=$DEFAULT_HEAVY_TASK_LIMIT
+IDLE_WARNING_THRESHOLD=$DEFAULT_IDLE_WARNING_THRESHOLD
+IDLE_ERROR_THRESHOLD=$DEFAULT_IDLE_ERROR_THRESHOLD
+TEMPERATURE_WARNING_THRESHOLD=$DEFAULT_TEMPERATURE_WARNING_THRESHOLD
+TEMPERATURE_ERROR_THRESHOLD=$DEFAULT_TEMPERATURE_ERROR_THRESHOLD
+GPU_WARNING_THRESHOLD=$DEFAULT_GPU_WARNING_THRESHOLD
+GPU_ERROR_THRESHOLD=$DEFAULT_GPU_ERROR_THRESHOLD
+
+show_help() {
+    cat <<EOF
+Usage:
+  utility/check_system.sh [OPTIONS]
+
+Monitor CPU, memory, optional temperature, and optional NVIDIA GPU usage, then
+email threshold alerts with the heaviest related processes.
+
+Options:
+  --heavy-task-limit N              Number of heavy processes to include; default: ${DEFAULT_HEAVY_TASK_LIMIT}
+  --idle-warning-threshold PERCENT  CPU/MEM idle percent below which warning alerts start; default: ${DEFAULT_IDLE_WARNING_THRESHOLD}
+  --idle-error-threshold PERCENT    CPU/MEM idle percent below which error alerts start; default: ${DEFAULT_IDLE_ERROR_THRESHOLD}
+  --temperature-warning-threshold C Temperature above which warning alerts start; default: ${DEFAULT_TEMPERATURE_WARNING_THRESHOLD}
+  --temperature-error-threshold C   Temperature above which error alerts start; default: ${DEFAULT_TEMPERATURE_ERROR_THRESHOLD}
+  --gpu-warning-threshold PERCENT   GPU memory/utilization percent above which warnings start; default: ${DEFAULT_GPU_WARNING_THRESHOLD}
+  --gpu-error-threshold PERCENT     GPU memory/utilization percent above which errors start; default: ${DEFAULT_GPU_ERROR_THRESHOLD}
+  -h, --help                        Show this help message
+EOF
+}
+
+require_value() {
+    local option=$1
+    local value=${2:-}
+
+    if [[ -z "$value" ]]; then
+        echo "${option} requires a value" >&2
+        show_help >&2
+        exit 1
+    fi
+}
+
+require_positive_integer() {
+    local option=$1
+    local value=$2
+
+    if [[ ! "$value" =~ ^[1-9][0-9]*$ ]]; then
+        echo "${option} must be a positive integer" >&2
+        show_help >&2
+        exit 1
+    fi
+}
+
+require_percent() {
+    local option=$1
+    local value=$2
+
+    if [[ ! "$value" =~ ^(0|[1-9][0-9]*)$ ]] || (( value > 100 )); then
+        echo "${option} must be an integer from 0 to 100" >&2
+        show_help >&2
+        exit 1
+    fi
+}
+
+require_non_negative_integer() {
+    local option=$1
+    local value=$2
+
+    if [[ ! "$value" =~ ^(0|[1-9][0-9]*)$ ]]; then
+        echo "${option} must be a non-negative integer" >&2
+        show_help >&2
+        exit 1
+    fi
+}
+
+while (($# > 0)); do
+    case "$1" in
+        --heavy-task-limit)
+            require_value "$1" "${2:-}"
+            HEAVY_TASK_LIMIT=$2
+            shift 2
+            ;;
+        --idle-warning-threshold)
+            require_value "$1" "${2:-}"
+            IDLE_WARNING_THRESHOLD=$2
+            shift 2
+            ;;
+        --idle-error-threshold)
+            require_value "$1" "${2:-}"
+            IDLE_ERROR_THRESHOLD=$2
+            shift 2
+            ;;
+        --temperature-warning-threshold)
+            require_value "$1" "${2:-}"
+            TEMPERATURE_WARNING_THRESHOLD=$2
+            shift 2
+            ;;
+        --temperature-error-threshold)
+            require_value "$1" "${2:-}"
+            TEMPERATURE_ERROR_THRESHOLD=$2
+            shift 2
+            ;;
+        --gpu-warning-threshold)
+            require_value "$1" "${2:-}"
+            GPU_WARNING_THRESHOLD=$2
+            shift 2
+            ;;
+        --gpu-error-threshold)
+            require_value "$1" "${2:-}"
+            GPU_ERROR_THRESHOLD=$2
+            shift 2
+            ;;
+        -h | --help)
+            show_help
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument: $1" >&2
+            show_help >&2
+            exit 1
+            ;;
+    esac
+done
+
+require_positive_integer "--heavy-task-limit" "$HEAVY_TASK_LIMIT"
+require_percent "--idle-warning-threshold" "$IDLE_WARNING_THRESHOLD"
+require_percent "--idle-error-threshold" "$IDLE_ERROR_THRESHOLD"
+require_non_negative_integer "--temperature-warning-threshold" "$TEMPERATURE_WARNING_THRESHOLD"
+require_non_negative_integer "--temperature-error-threshold" "$TEMPERATURE_ERROR_THRESHOLD"
+require_percent "--gpu-warning-threshold" "$GPU_WARNING_THRESHOLD"
+require_percent "--gpu-error-threshold" "$GPU_ERROR_THRESHOLD"
+
+if (( IDLE_ERROR_THRESHOLD >= IDLE_WARNING_THRESHOLD )); then
+    echo "--idle-error-threshold must be lower than --idle-warning-threshold" >&2
+    show_help >&2
+    exit 1
+fi
+
+if (( TEMPERATURE_ERROR_THRESHOLD <= TEMPERATURE_WARNING_THRESHOLD )); then
+    echo "--temperature-error-threshold must be higher than --temperature-warning-threshold" >&2
+    show_help >&2
+    exit 1
+fi
+
+if (( GPU_ERROR_THRESHOLD <= GPU_WARNING_THRESHOLD )); then
+    echo "--gpu-error-threshold must be higher than --gpu-warning-threshold" >&2
+    show_help >&2
+    exit 1
+fi
 
 report_heaviest_processes() {
     local sort_column=$1
@@ -158,10 +313,10 @@ report_heaviest_gpu_tasks() {
 
 IDLE_CPU=$(top -b -n 1 | grep "\%Cpu(s)" | awk -F ',' '{ print $4}' | awk '{ print $1}' | cut -d "." -f 1)
 
-if (( IDLE_CPU < 10 )); then
+if (( IDLE_CPU < IDLE_ERROR_THRESHOLD )); then
     report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage" | mail -s "[Error] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "CPU Error:" "$IDLE_CPU"
-elif (( IDLE_CPU < 15 )); then
+elif (( IDLE_CPU < IDLE_WARNING_THRESHOLD )); then
     report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage" | mail -s "[Warning] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "CPU Warning:" "$IDLE_CPU"
 else
@@ -176,10 +331,10 @@ else
 fi
 IDLE_MEM=$(echo "$ACTUAL_MEM * 100 / $TOTAL_MEM" | bc)
 
-if (( IDLE_MEM < 10 )); then
+if (( IDLE_MEM < IDLE_ERROR_THRESHOLD )); then
     report_heaviest_processes "-rss" "Top ${HEAVY_TASK_LIMIT} processes by memory usage" | mail -s "[Error] MEM Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "MEM Error:" "${IDLE_MEM}"
-elif (( IDLE_MEM < 15 )); then
+elif (( IDLE_MEM < IDLE_WARNING_THRESHOLD )); then
     report_heaviest_processes "-rss" "Top ${HEAVY_TASK_LIMIT} processes by memory usage" | mail -s "[Warning] MEM Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
     echo "MEM Warning:" "${IDLE_MEM}"
 else
@@ -187,13 +342,13 @@ else
 fi
 
 if TEMPERATURE=$(read_temperature_celsius); then
-    if [[ $TEMPERATURE -gt 80 ]]; then
+    if (( TEMPERATURE > TEMPERATURE_ERROR_THRESHOLD )); then
         {
             printf 'TEMPERATURE Error: %s\n\n' "$TEMPERATURE"
             report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
         } | mail -s "[Error] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
         echo "TEMPERATURE Error" "${TEMPERATURE}"
-    elif [[ $TEMPERATURE -gt 70 && $TEMPERATURE -le 80 ]]; then
+    elif (( TEMPERATURE > TEMPERATURE_WARNING_THRESHOLD && TEMPERATURE <= TEMPERATURE_ERROR_THRESHOLD )); then
         {
             printf 'TEMPERATURE Warning: %s\n\n' "$TEMPERATURE"
             report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
@@ -235,9 +390,9 @@ if command -v nvidia-smi >/dev/null 2>&1; then
                 GPU_MEM_PERCENT=$(printf '%d.%d' "$((GPU_MEM_PERCENT_TENTHS / 10))" "$((GPU_MEM_PERCENT_TENTHS % 10))")
                 GPU_REPORT+="GPU ${GPU_INDEX}: memory ${GPU_MEM_PERCENT}% (${GPU_MEM_USED} MiB / ${GPU_MEM_TOTAL} MiB), util ${GPU_UTIL}%"$'\n'
 
-                if (( GPU_MEM_USED * 100 > GPU_MEM_TOTAL * 90 || GPU_UTIL > 90 )); then
+                if (( GPU_MEM_USED * 100 > GPU_MEM_TOTAL * GPU_ERROR_THRESHOLD || GPU_UTIL > GPU_ERROR_THRESHOLD )); then
                     GPU_ALERT_LEVEL=2
-                elif (( GPU_ALERT_LEVEL < 1 )) && (( GPU_MEM_USED * 100 > GPU_MEM_TOTAL * 85 || GPU_UTIL > 85 )); then
+                elif (( GPU_ALERT_LEVEL < 1 )) && (( GPU_MEM_USED * 100 > GPU_MEM_TOTAL * GPU_WARNING_THRESHOLD || GPU_UTIL > GPU_WARNING_THRESHOLD )); then
                     GPU_ALERT_LEVEL=1
                 fi
             done <<< "$GPU_QUERY"
