@@ -34,8 +34,9 @@ Run media scripts directly from this directory or by path:
 
 ```sh
 utility/whisper.sh --help
+utility/pdf2jpg.sh --help
 utility/pdf2jpg.sh document.pdf
-utility/pdf2jpg.sh -o ./jpg document.pdf scans/document.pdf
+utility/pdf2jpg.sh document.pdf scans/document.pdf
 lang=en utility/whisper.sh audio.mp3 video.mp4
 WHISPER_MODEL=turbo lang=en utility/whisper.sh audio.mp3
 WHISPER_MODEL_PATH=/path/to/model.bin utility/whisper.sh audio.mp3
@@ -43,7 +44,7 @@ WHISPER_VAD=1 utility/whisper.sh audio.mp3
 WHISPER_VAD=1 WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
 ```
 
-`pdf2jpg.sh` writes JPEGs next to each PDF by default, using the original input path without the trailing `.pdf` as the `pdftoppm` output prefix. Use `-o DIR` or `--output-dir DIR` to write all JPEGs to one directory; the directory is created if needed. In output-directory mode, each PDF gets a collision-safe output prefix based on its basename, so duplicate names such as `scan.pdf` from different folders become roots like `scan` and `scan-2`.
+`pdf2jpg.sh` requires at least one PDF file and writes JPEGs next to each PDF, using the original input path without the trailing `.pdf` as the `pdftoppm` output prefix.
 
 `whisper.sh` announces each input as `(current/total) FILE`, skips files that already have a matching `.srt`, uses Korean by default (`lang=ko`), and recommends the large model as the default. Set `WHISPER_MODEL=turbo` or `WHISPER_MODEL_CHOICE=turbo` to use the turbo model. Set `WHISPER_MODEL_PATH` for a specific model file.
 
