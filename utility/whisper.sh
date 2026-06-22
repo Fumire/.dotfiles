@@ -2,7 +2,7 @@
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
 # Purpose:
 #   Generate .srt subtitle files from media inputs with whisper-cli, using
-#   local large/turbo Whisper models and optional Silero VAD.
+#   local large/turbo Whisper models and Silero VAD by default.
 # Usage:
 #   utility/whisper.sh --help
 set -euo pipefail
@@ -24,13 +24,14 @@ Usage:
 Generate .srt subtitle files from mp4, avi, mkv, m4a, aac, or mp3 inputs.
 Files with an existing matching .srt are skipped.
 Each input is announced as (current/total) before processing.
+VAD is enabled by default; set WHISPER_VAD=0 to disable it.
 
 Examples:
   utility/whisper.sh video.mp4 audio.mp3
   lang=en utility/whisper.sh audio.mp3
   WHISPER_MODEL=turbo utility/whisper.sh audio.mp3
-  WHISPER_VAD=1 utility/whisper.sh audio.mp3
-  WHISPER_VAD=1 WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
+  WHISPER_VAD=0 utility/whisper.sh audio.mp3
+  WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
 
 Model selection:
   Default and recommended:
@@ -65,7 +66,7 @@ Environment:
   WHISPER_MODEL                         Model choice: large or turbo; default: large
   WHISPER_MODEL_CHOICE                  Alias for WHISPER_MODEL
   WHISPER_MODEL_PATH                    Explicit Whisper model file path
-  WHISPER_VAD                           Enable VAD when set to 1, true, yes, or on
+  WHISPER_VAD                           Disable VAD when set to 0, false, no, or off
   WHISPER_VAD_MODEL                     VAD model choice: auto, v6.2.0, v5.1.2, or path; default: auto
   WHISPER_VAD_MODEL_CHOICE              Alias for WHISPER_VAD_MODEL
   WHISPER_VAD_MODEL_PATH                Explicit VAD model file path
@@ -124,17 +125,6 @@ resolve_whisper_model() {
 
 readonly WHISPER_MODEL_PATH="$(resolve_whisper_model)"
 
-is_truthy() {
-    case "${1:-}" in
-        1 | true | TRUE | yes | YES | on | ON)
-            return 0
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-}
-
 is_falsey() {
     case "${1:-}" in
         0 | false | FALSE | no | NO | off | OFF)
@@ -146,24 +136,12 @@ is_falsey() {
     esac
 }
 
-whisper_vad_configured() {
-    [[ -n "${WHISPER_VAD_MODEL:-}" ]] ||
-        [[ -n "${WHISPER_VAD_MODEL_CHOICE:-}" ]] ||
-        [[ -n "${WHISPER_VAD_MODEL_PATH:-}" ]] ||
-        [[ -n "${WHISPER_VAD_THRESHOLD:-}" ]] ||
-        [[ -n "${WHISPER_VAD_MIN_SPEECH_DURATION_MS:-}" ]] ||
-        [[ -n "${WHISPER_VAD_MIN_SILENCE_DURATION_MS:-}" ]] ||
-        [[ -n "${WHISPER_VAD_MAX_SPEECH_DURATION_S:-}" ]] ||
-        [[ -n "${WHISPER_VAD_SPEECH_PAD_MS:-}" ]] ||
-        [[ -n "${WHISPER_VAD_SAMPLES_OVERLAP:-}" ]]
-}
-
 whisper_vad_enabled() {
     if is_falsey "${WHISPER_VAD:-}"; then
         return 1
     fi
 
-    is_truthy "${WHISPER_VAD:-}" || whisper_vad_configured
+    return 0
 }
 
 extract_whisper_vad_model_version() {

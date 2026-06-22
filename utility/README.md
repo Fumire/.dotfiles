@@ -40,8 +40,8 @@ utility/pdf2jpg.sh document.pdf scans/document.pdf
 lang=en utility/whisper.sh audio.mp3 video.mp4
 WHISPER_MODEL=turbo lang=en utility/whisper.sh audio.mp3
 WHISPER_MODEL_PATH=/path/to/model.bin utility/whisper.sh audio.mp3
-WHISPER_VAD=1 utility/whisper.sh audio.mp3
-WHISPER_VAD=1 WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
+WHISPER_VAD=0 utility/whisper.sh audio.mp3
+WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
 ```
 
 `pdf2jpg.sh` requires at least one PDF file and writes JPEGs next to each PDF, using the original input path without the trailing `.pdf` as the `pdftoppm` output prefix.
@@ -53,7 +53,7 @@ WHISPER_VAD=1 WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
 | `large` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3.bin` |
 | `turbo` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3-turbo.bin` |
 
-Set `WHISPER_VAD=1` to enable whisper-cli Voice Activity Detection. VAD auto-detects the newest available Silero model by default and falls back to the v6.2.0 path when no matching model is found. Set `WHISPER_VAD_MODEL=v5.1.2` for the previous model, `WHISPER_VAD_MODEL=v6.2.0` for the current fallback model explicitly, or `WHISPER_VAD_MODEL_PATH` for a specific VAD model file.
+`whisper-cli` Voice Activity Detection is enabled by default. Set `WHISPER_VAD=0`, `false`, `no`, or `off` to disable it. VAD auto-detects the newest available Silero model by default and falls back to the v6.2.0 path when no matching model is found. Set `WHISPER_VAD_MODEL=v5.1.2` for the previous model, `WHISPER_VAD_MODEL=v6.2.0` for the current fallback model explicitly, or `WHISPER_VAD_MODEL_PATH` for a specific VAD model file.
 
 | VAD choice | Model path |
 | --- | --- |
