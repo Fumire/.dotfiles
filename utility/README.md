@@ -18,8 +18,8 @@ These scripts are intentionally environment-specific. Review each script before 
 | `migration_store.sh` | Prepares checksums, stores a tree listing, transfers the directory with `rsync --remove-source-files`, and removes transferred source files after success. |
 | `nologin.txt` | Login-disabled message for server account administration. |
 | `pdf2jpg.sh` | Converts PDF pages to 600 DPI JPEG images with `pdftoppm` and JPEG quality 100. |
-| `r-freeze.R` | Backs up the active R package environment into `renv.lock`, `requirements.txt`, and package/session metadata files. |
-| `r-restore.R` | Restores R packages from a backup made by `r-freeze.R`, preferring `renv.lock` and falling back to `requirements.txt`. |
+| `r-freeze.R` | Backs up the active R package environment into `renv.lock`, `requirements.txt`, and package/session metadata files, including remote-source and Bioconductor release metadata when available. |
+| `r-restore.R` | Restores R packages from a backup made by `r-freeze.R`, preferring `renv.lock` and using backup metadata for GitHub/remotes and Bioconductor packages. |
 | `report_storage.sh` | Creates and emails a storage usage report for the current directory. |
 | `reporting.sh` | Collects `sysstat` data from remote hosts, renders reports, and emails generated images. |
 | `update_key.sh` | Migrates legacy `apt-key` entries into `/etc/apt/trusted.gpg.d`. |
@@ -81,7 +81,7 @@ Restore it after reinstalling R:
 utility/r-restore.R ~/r-env-backup
 ```
 
-`r-freeze.R` writes `renv.lock` as the primary reproducibility artifact, plus a pip-style `requirements.txt`, `r-packages.tsv`, `sessionInfo.txt`, `R.version.txt`, and `libPaths.txt`. `r-restore.R` prefers `renv.lock`; if the lockfile is missing, it installs packages from `requirements.txt`. Set `R_RESTORE_LIBRARY=/path/to/library` to restore into a specific R library instead of `.libPaths()[1]`.
+`r-freeze.R` writes `renv.lock` as the primary reproducibility artifact, plus a pip-style `requirements.txt`, `r-packages.tsv`, `sessionInfo.txt`, `R.version.txt`, `libPaths.txt`, and `bioconductor-version.txt` when `BiocManager` is available. `r-packages.tsv` records repository and remote metadata used by `r-restore.R` to reinstall GitHub, GitLab, Bitbucket, git URL, URL, and Bioconductor packages from their recorded sources. `r-restore.R` prefers `renv.lock`, then reapplies recorded remote and Bioconductor metadata; if the lockfile is missing, it restores from `r-packages.tsv` and falls back to `requirements.txt` when package metadata is unavailable. Set `R_RESTORE_LIBRARY=/path/to/library` to restore into a specific R library instead of `.libPaths()[1]`.
 
 ### macOS Maintenance
 

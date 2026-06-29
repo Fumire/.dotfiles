@@ -15,7 +15,8 @@ show_help <- function() {
     "Artifacts:\n",
     "  renv.lock        Versioned lockfile for reproducible restore\n",
     "  requirements.txt Pip-style Package==Version fallback list\n",
-    "  r-packages.tsv   Full installed.packages() table\n",
+    "  r-packages.tsv   Full installed.packages() table with repository metadata\n",
+    "  bioconductor-version.txt Recorded Bioconductor release when available\n",
     "  sessionInfo.txt  R session and platform details\n",
     "  libPaths.txt     Active R library paths\n\n",
     "Arguments:\n",
@@ -59,7 +60,10 @@ extra_fields <- c(
   "RemoteRepo",
   "RemoteUsername",
   "RemoteRef",
-  "RemoteSha"
+  "RemoteSha",
+  "RemoteUrl",
+  "RemoteSubdir",
+  "RemotePkgRef"
 )
 
 packages <- as.data.frame(
@@ -111,7 +115,7 @@ if (install_if_missing("renv")) {
     }
   )
 } else {
-  warning("renv is unavailable; restore will fall back to requirements.txt.")
+  warning("renv is unavailable; restore will fall back to r-packages.tsv or requirements.txt.")
 }
 
 message("R environment backup written to: ", normalizePath(output_dir))
