@@ -1,70 +1,130 @@
+tap "elgar328/nfd2nfc"
+#
+# Source code beautifier for C, C++, C#, and Java
 brew "astyle"
+# Command-line interface for SQLite
 brew "sqlite"
+# Interpreted, interactive, object-oriented programming language
 brew "python@3"
+# C/C++/ObjC language server
 brew "ccls"
+# Cross-platform make
 brew "cmake"
+# GNU File, Shell, and Text utilities
 brew "coreutils"
+# Reimplementation of ctags(1)
 brew "ctags"
+# Get a file from an HTTP, HTTPS or FTP server
 brew "curl"
-brew "dnscrypt-proxy", restart_service: :changed
+# Pack, ship and run any application as a lightweight container
 brew "docker"
+# Convert text between DOS, UNIX, and Mac formats
 brew "dos2unix"
+# Play, record, convert, and stream select audio and video codecs
 brew "ffmpeg"
+# GNU compiler collection
 brew "gcc"
+# Distributed revision control system
 brew "git"
+# GNU Privacy Guard (OpenPGP)
 brew "gnupg"
+# Open source programming language to build simple/reliable/efficient software
 brew "go"
-brew "languagetool"
+# Tools and libraries to manipulate images in select formats
+brew "imagemagick"
+# Keep your Mac's application settings in sync
 brew "mackup"
+# Mac App Store command-line interface
 brew "mas"
+# Deep clean and optimize your Mac
 brew "mole"
+# Ambitious Vim-fork focused on extensibility and agility
 brew "neovim"
+# Open-source, cross-platform JavaScript runtime environment
 brew "node"
+# Development kit for the Java programming language
 brew "openjdk"
+# Pinentry for GPG on Mac
 brew "pinentry-mac"
+# PDF rendering library (based on the xpdf-3.0 code base)
 brew "poppler"
+# Software environment for statistical computing
 brew "r"
+# Reattach process (e.g., tmux) to background
 brew "reattach-to-user-namespace"
+# Version control system designed to be a better CVS
 brew "subversion"
+# Terminal multiplexer
 brew "tmux"
+# Display directories as trees (with optional color/HTML output)
 brew "tree"
+# Internet file retriever
 brew "wget"
+# Port of OpenAI's Whisper model in C/C++
 brew "whisper-cpp"
+# UNIX shell (command interpreter)
 brew "zsh"
+# Additional completion definitions for zsh
 brew "zsh-completions"
+# Fish shell like syntax highlighting for zsh
 brew "zsh-syntax-highlighting"
+# Convert filesystem entry names from NFD to NFC for cross-platform compatibility
+brew "elgar328/nfd2nfc/nfd2nfc", trusted: true
 
+# Collection of apps and services for photography, design, video, web, and UX
 cask "adobe-creative-cloud", args: { appdir: "/Applications" }
+# Application launcher and productivity software
 cask "alfred", args: { appdir: "/Applications" }
+# Application uninstaller
 cask "appcleaner", args: { appdir: "/Applications" }
+# Menu bar icon organiser
 cask "bartender"
+# Edit and manage bibliographies
 cask "bibdesk", args: { appdir: "/Applications" }
+# OpenAI's official ChatGPT desktop app
 cask "chatgpt"
+# Remotely access another computer through the Google Chrome browser
 cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
+# Free app that makes your Internet safer
 cask "cloudflare-warp"
+# OpenAI's coding agent that runs in your terminal
+cask "codex"
+# Voice and text chat software
 cask "discord", args: { appdir: "/Applications" }
+# Client for the Dropbox cloud storage service
 cask "dropbox"
 cask "font-0xproto-nerd-font"
+# Web browser
 cask "google-chrome", args: { appdir: "/Applications" }
+# Tools to protect your emails and files
 cask "gpg-suite", args: { appdir: "/Applications" }
+# File management software for iPhone and other Apple products
+cask "ifunbox"
+# System monitoring app
 cask "istat-menus", args: { appdir: "/Applications" }
+# Full TeX Live distribution with GUI applications
 cask "mactex"
+# Provides updates to various Microsoft products
 cask "microsoft-auto-update"
+# App to write, plan, collaborate, and get organised
 cask "notion", args: { appdir: "/Applications" }
+# Knowledge base that works on top of a local folder of plain text Markdown files
 cask "obsidian", args: { appdir: "/Applications" }
+# Video game digital distribution service
 cask "steam", args: { appdir: "/Applications" }
+# Graphical user interface for TeX Live Manager
 cask "tex-live-utility", args: { appdir: "/Applications" }
+# LaTeX editor
 cask "texstudio", args: { appdir: "/Applications" }
-cask "vlc", args: { appdir: "/Applications" }
+# Open-source version of the X.Org X Window System
 cask "xquartz", args: { appdir: "/Applications" }
+# Video communication and virtual meeting platform
 cask "zoom", args: { appdir: "/Applications" }
+# Collect, organise, cite, and share research sources
 cask "zotero", args: { appdir: "/Applications" }
 
 mas "Bandizip", id: 1265704574
-mas "Cancer Finder", id: 6446483815
 mas "Cinebench", id: 1438772273
-mas "Color Picker", id: 641027709
-mas "Cyberduck", id: 409222199
 mas "FileZilla Pro", id: 1298486723
 mas "Goodnotes", id: 1444383602
 mas "Ivory", id: 6444602274
@@ -75,9 +135,11 @@ mas "Microsoft Excel", id: 462058435
 mas "Microsoft Outlook", id: 985367838
 mas "Microsoft PowerPoint", id: 462062816
 mas "Microsoft Word", id: 462054704
+mas "MsgFiler 4", id: 6478043112
 mas "Notability", id: 360593530
 mas "nPlayer", id: 1451273814
 mas "PiPifier", id: 1160374471
+mas "Redacted", id: 984968384
 mas "Reeder", id: 1529448980
 mas "RunCat", id: 1429033973
 mas "Slack", id: 803453959
