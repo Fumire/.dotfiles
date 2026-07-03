@@ -18,6 +18,7 @@ readonly DEFAULT_TEMPERATURE_WARNING_THRESHOLD=70
 readonly DEFAULT_TEMPERATURE_ERROR_THRESHOLD=80
 readonly DEFAULT_GPU_WARNING_THRESHOLD=85
 readonly DEFAULT_GPU_ERROR_THRESHOLD=90
+readonly DEFAULT_ALERT_RECIPIENT="root@compbio.unist.ac.kr"
 
 HEAVY_TASK_LIMIT=$DEFAULT_HEAVY_TASK_LIMIT
 IDLE_WARNING_THRESHOLD=$DEFAULT_IDLE_WARNING_THRESHOLD
@@ -26,6 +27,7 @@ TEMPERATURE_WARNING_THRESHOLD=$DEFAULT_TEMPERATURE_WARNING_THRESHOLD
 TEMPERATURE_ERROR_THRESHOLD=$DEFAULT_TEMPERATURE_ERROR_THRESHOLD
 GPU_WARNING_THRESHOLD=$DEFAULT_GPU_WARNING_THRESHOLD
 GPU_ERROR_THRESHOLD=$DEFAULT_GPU_ERROR_THRESHOLD
+ALERT_RECIPIENT=${CHECK_SYSTEM_ALERT_RECIPIENT:-$DEFAULT_ALERT_RECIPIENT}
 
 show_help() {
     cat <<EOF
@@ -43,7 +45,11 @@ Options:
   --temperature-error-threshold C   Temperature above which error alerts start; default: ${DEFAULT_TEMPERATURE_ERROR_THRESHOLD}
   --gpu-warning-threshold PERCENT   GPU memory/utilization percent above which warnings start; default: ${DEFAULT_GPU_WARNING_THRESHOLD}
   --gpu-error-threshold PERCENT     GPU memory/utilization percent above which errors start; default: ${DEFAULT_GPU_ERROR_THRESHOLD}
+  --alert-recipient ADDRESS         Email recipient for alerts; default: ${DEFAULT_ALERT_RECIPIENT}
   -h, --help                        Show this help message
+
+Environment:
+  CHECK_SYSTEM_ALERT_RECIPIENT      Default alert recipient when --alert-recipient is not set
 EOF
 }
 
@@ -126,6 +132,11 @@ while (($# > 0)); do
         --gpu-error-threshold)
             require_value "$1" "${2:-}"
             GPU_ERROR_THRESHOLD=$2
+            shift 2
+            ;;
+        --alert-recipient)
+            require_value "$1" "${2:-}"
+            ALERT_RECIPIENT=$2
             shift 2
             ;;
         -h | --help)
@@ -314,10 +325,10 @@ report_heaviest_gpu_tasks() {
 IDLE_CPU=$(top -b -n 1 | grep "\%Cpu(s)" | awk -F ',' '{ print $4}' | awk '{ print $1}' | cut -d "." -f 1)
 
 if (( IDLE_CPU < IDLE_ERROR_THRESHOLD )); then
-    report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage" | mail -s "[Error] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
+    report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage" | mail -s "[Error] CPU Usage is too high in $(hostname)" "$ALERT_RECIPIENT"
     echo "CPU Error:" "$IDLE_CPU"
 elif (( IDLE_CPU < IDLE_WARNING_THRESHOLD )); then
-    report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage" | mail -s "[Warning] CPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
+    report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage" | mail -s "[Warning] CPU Usage is too high in $(hostname)" "$ALERT_RECIPIENT"
     echo "CPU Warning:" "$IDLE_CPU"
 else
     echo "CPU is Okay:" "$IDLE_CPU"
@@ -332,10 +343,10 @@ fi
 IDLE_MEM=$(echo "$ACTUAL_MEM * 100 / $TOTAL_MEM" | bc)
 
 if (( IDLE_MEM < IDLE_ERROR_THRESHOLD )); then
-    report_heaviest_processes "-rss" "Top ${HEAVY_TASK_LIMIT} processes by memory usage" | mail -s "[Error] MEM Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
+    report_heaviest_processes "-rss" "Top ${HEAVY_TASK_LIMIT} processes by memory usage" | mail -s "[Error] MEM Usage is too high in $(hostname)" "$ALERT_RECIPIENT"
     echo "MEM Error:" "${IDLE_MEM}"
 elif (( IDLE_MEM < IDLE_WARNING_THRESHOLD )); then
-    report_heaviest_processes "-rss" "Top ${HEAVY_TASK_LIMIT} processes by memory usage" | mail -s "[Warning] MEM Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
+    report_heaviest_processes "-rss" "Top ${HEAVY_TASK_LIMIT} processes by memory usage" | mail -s "[Warning] MEM Usage is too high in $(hostname)" "$ALERT_RECIPIENT"
     echo "MEM Warning:" "${IDLE_MEM}"
 else
     echo "MEM is Okay:" "${IDLE_MEM}"
@@ -346,13 +357,13 @@ if TEMPERATURE=$(read_temperature_celsius); then
         {
             printf 'TEMPERATURE Error: %s\n\n' "$TEMPERATURE"
             report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
-        } | mail -s "[Error] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
+        } | mail -s "[Error] TEMPERATURE is too high in $(hostname)" "$ALERT_RECIPIENT"
         echo "TEMPERATURE Error" "${TEMPERATURE}"
     elif (( TEMPERATURE > TEMPERATURE_WARNING_THRESHOLD && TEMPERATURE <= TEMPERATURE_ERROR_THRESHOLD )); then
         {
             printf 'TEMPERATURE Warning: %s\n\n' "$TEMPERATURE"
             report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
-        } | mail -s "[Warning] TEMPERATURE is too high in $(hostname)" "root@compbio.unist.ac.kr"
+        } | mail -s "[Warning] TEMPERATURE is too high in $(hostname)" "$ALERT_RECIPIENT"
         echo "TEMPERATURE Warning" "${TEMPERATURE}"
     else
         echo "TEMPERATURE is Okay" "${TEMPERATURE}"
@@ -406,14 +417,14 @@ if command -v nvidia-smi >/dev/null 2>&1; then
             {
                 printf '%s\n\n' "$GPU_REPORT"
                 report_heaviest_gpu_tasks
-            } | mail -s "[Error] GPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
+            } | mail -s "[Error] GPU Usage is too high in $(hostname)" "$ALERT_RECIPIENT"
             echo "GPU Error:"
             printf '%s\n' "$GPU_REPORT"
         elif (( GPU_ALERT_LEVEL == 1 )); then
             {
                 printf '%s\n\n' "$GPU_REPORT"
                 report_heaviest_gpu_tasks
-            } | mail -s "[Warning] GPU Usage is too high in $(hostname)" "root@compbio.unist.ac.kr"
+            } | mail -s "[Warning] GPU Usage is too high in $(hostname)" "$ALERT_RECIPIENT"
             echo "GPU Warning:"
             printf '%s\n' "$GPU_REPORT"
         else
@@ -423,7 +434,7 @@ if command -v nvidia-smi >/dev/null 2>&1; then
     elif nvidia_driver_unavailable "$GPU_STATUS"; then
         :
     else
-        printf '%s\n' "$GPU_STATUS" | mail -s "[Error] GPU status check failed in $(hostname)" "root@compbio.unist.ac.kr"
+        printf '%s\n' "$GPU_STATUS" | mail -s "[Error] GPU status check failed in $(hostname)" "$ALERT_RECIPIENT"
         echo "GPU Error"
         printf '%s\n' "$GPU_STATUS"
     fi

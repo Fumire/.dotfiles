@@ -10,7 +10,7 @@ These scripts are intentionally environment-specific. Review each script before 
 | --- | --- |
 | `authfail_notify.sh` | PAM helper that emails a notification for failed login attempts. |
 | `Backup.sh` | Archives account-related system files and emails the backup archive. |
-| `check_system.sh` | Checks CPU, memory, temperature, and optional NVIDIA GPU thresholds, then emails warnings or errors with the configured number of heaviest related processes. |
+| `check_system.sh` | Checks CPU, memory, temperature, and optional NVIDIA GPU thresholds, then emails warnings or errors to the configured alert recipient with the configured number of heaviest related processes. |
 | `disable_spotlight.sh` | Adds `.metadata_never_index` to one or more target directories and runs `dot_clean`; intended for macOS volumes. |
 | `make_user.sh` | Argument-driven Linux user creation helper with optional `--home` base, default initial password, and interactive `adduser` user-information prompts. |
 | `migration_arrange.sh` | Prepares a directory for migration by deleting empty files, writing checksum files, and saving a tree listing. |
@@ -123,9 +123,11 @@ utility/check_system.sh --heavy-task-limit 10
 utility/check_system.sh --idle-warning-threshold 20 --idle-error-threshold 10
 utility/check_system.sh --temperature-warning-threshold 75 --temperature-error-threshold 85
 utility/check_system.sh --gpu-warning-threshold 80 --gpu-error-threshold 90
+CHECK_SYSTEM_ALERT_RECIPIENT=ops@example.org utility/check_system.sh
+utility/check_system.sh --alert-recipient ops@example.org
 ```
 
-`check_system.sh` uses idle-percentage thresholds for CPU and memory, so lower values are worse. By default, CPU and memory warnings start when idle capacity falls below 15%, and errors start below 10%. Temperature and GPU thresholds are upper bounds, so higher values are worse. By default, temperature warnings start above 70 C and errors above 80 C; GPU memory or utilization warnings start above 85%, and errors above 90%. The error threshold must be more severe than the warning threshold.
+`check_system.sh` uses idle-percentage thresholds for CPU and memory, so lower values are worse. By default, CPU and memory warnings start when idle capacity falls below 15%, and errors start below 10%. Temperature and GPU thresholds are upper bounds, so higher values are worse. By default, temperature warnings start above 70 C and errors above 80 C; GPU memory or utilization warnings start above 85%, and errors above 90%. The error threshold must be more severe than the warning threshold. Alerts default to `root@compbio.unist.ac.kr`; set `CHECK_SYSTEM_ALERT_RECIPIENT` to change the environment default, or pass `--alert-recipient` to override it for one run.
 
 ## Dependencies
 
@@ -140,8 +142,8 @@ Dependencies vary by script:
 
 ## Notes
 
-Most shell scripts use `set -euo pipefail`, so they stop when a command fails or an expected variable is missing. Some scripts require environment variables, such as `PORT` for `reporting.sh`, `lang` for overriding the default Whisper language in `whisper.sh`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, or `WHISPER_MODEL_PATH` for overriding Whisper model selection, and `WHISPER_VAD_MODEL`, `WHISPER_VAD_MODEL_DIR`, or `WHISPER_VAD_MODEL_PATH` for VAD transcription.
+Most shell scripts use `set -euo pipefail`, so they stop when a command fails or an expected variable is missing. Some scripts require or accept environment variables, such as `PORT` for `reporting.sh`, `CHECK_SYSTEM_ALERT_RECIPIENT` for the default `check_system.sh` alert recipient, `lang` for overriding the default Whisper language in `whisper.sh`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, or `WHISPER_MODEL_PATH` for overriding Whisper model selection, and `WHISPER_VAD_MODEL`, `WHISPER_VAD_MODEL_DIR`, or `WHISPER_VAD_MODEL_PATH` for VAD transcription.
 
 The migration scripts create checksum and tree files in the working directory. `migration_arrange.sh` and `migration_store.sh` delete empty files before creating checksums. `migration_store.sh` uses `rsync --remove-source-files` to move transferred files to `root@kimura.kogic.kr:/BiO/Archive/` through SSH port `3030`, so run it only after confirming the destination and command behavior.
 
-`check_system.sh` sends CPU, memory, temperature, and GPU alerts to `root@compbio.unist.ac.kr`. CPU and temperature alerts include the configured number of busiest CPU processes with PID, process name, user, UID, CPU%, memory GB, and memory %. Memory alerts include the configured number of largest memory users with the same process fields. Temperature checks use the first readable `/sys/class/thermal/thermal_zone*/temp` file and are skipped on hosts without one. GPU alerts include the configured number of largest reported GPU compute processes with PID, process name, user, UID, GPU%, and GPU memory. GPU checks run only when `nvidia-smi` is available and can communicate with the NVIDIA driver; hosts without a usable NVIDIA driver skip GPU monitoring.
+`check_system.sh` sends CPU, memory, temperature, and GPU alerts to `root@compbio.unist.ac.kr` by default. `CHECK_SYSTEM_ALERT_RECIPIENT` changes that default, and `--alert-recipient ADDRESS` overrides both for one invocation. CPU and temperature alerts include the configured number of busiest CPU processes with PID, process name, user, UID, CPU%, memory GB, and memory %. Memory alerts include the configured number of largest memory users with the same process fields. Temperature checks use the first readable `/sys/class/thermal/thermal_zone*/temp` file and are skipped on hosts without one. GPU alerts include the configured number of largest reported GPU compute processes with PID, process name, user, UID, GPU%, and GPU memory. GPU checks run only when `nvidia-smi` is available and can communicate with the NVIDIA driver; hosts without a usable NVIDIA driver skip GPU monitoring.
