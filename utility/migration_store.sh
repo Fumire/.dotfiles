@@ -15,8 +15,21 @@
 #   sbatch utility/migration_store.sh
 # Notes:
 #   This script removes transferred source files after successful rsync.
-find -L . -type f -empty -delete -print
-find . -type f ! -empty ! -name '*.md5sum' -exec sh -c 'md5sum "$1" | awk "{print \$1}" > "$1.md5sum"' _ '{}' \; -print
-find -L . -type f ! -name 'tree.txt' -exec md5sum '{}' \; | tee md5.txt
-tree -ls | tee tree.txt
+set -euo pipefail
+IFS=$'\n\t'
+
+find -L . -type f -empty \
+    ! -name 'tree.txt' \
+    ! -name 'md5.txt' \
+    -delete -print
+
+find -L . -type f \
+    ! -name 'tree.txt' \
+    ! -name 'md5.txt' \
+    ! -name '*.md5sum' \
+    -print0 |
+    sort -z |
+    xargs -0 -r md5sum >md5.txt
+
+tree -ls -I 'tree.txt|md5.txt|*.md5sum' >tree.txt
 rsync -alrtvzLP --remove-source-files --delete-during -e 'ssh -p 3030 -c aes256-cbc' "$(realpath .)" root@kimura.kogic.kr:/BiO/Archive/

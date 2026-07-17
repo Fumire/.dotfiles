@@ -10,9 +10,23 @@
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
 # Purpose:
 #   Prepare a migration source directory by deleting empty files, writing
-#   per-file checksum sidecars, and saving a tree listing.
+#   checksum and tree manifests for later verification.
 # Usage:
 #   sbatch utility/migration_arrange.sh
-find -L . -type f -empty -delete -print
-find . -type f ! -empty ! -name '*.md5sum' -exec sh -c 'md5sum "$1" | awk "{print \$1}" > "$1.md5sum"' _ '{}' \; -print
-tree -ls | tee tree.txt
+set -euo pipefail
+IFS=$'\n\t'
+
+find -L . -type f -empty \
+    ! -name 'tree.txt' \
+    ! -name 'md5.txt' \
+    -delete -print
+
+find . -type f \
+    ! -name 'tree.txt' \
+    ! -name 'md5.txt' \
+    ! -name '*.md5sum' \
+    -print0 |
+    sort -z |
+    xargs -0 -r md5sum >md5.txt
+
+tree -ls -I 'tree.txt|md5.txt|*.md5sum' >tree.txt

@@ -10,6 +10,11 @@ IFS=$'\n\t'
 
 hosts=("host1" "host2")
 
+if [[ -z "${PORT:-}" ]]; then
+	echo "PORT must be set to the SSH port used for remote sysstat downloads." >&2
+	exit 1
+fi
+
 for h in "${hosts[@]}"; do
 	scp -c aes256-cbc -P "$PORT" "jwlee230@$h.kogic.kr:/var/log/sysstat/sa$(date +%d)" "$h"
 done

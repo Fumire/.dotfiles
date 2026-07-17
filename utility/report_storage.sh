@@ -13,7 +13,12 @@
 #   as a TSV attachment.
 # Usage:
 #   sbatch utility/report_storage.sh
-number=$RANDOM
-du -s ./* > /BiO/Live/jwlee230/Report_${number}.tsv
-pwd | mail --attach /BiO/Live/jwlee230/Report_${number}.tsv --subject "Storage report for $(hostname)" -- "root@compbio.unist.ac.kr"
-rm /BiO/Live/jwlee230/Report_${number}.tsv
+set -euo pipefail
+IFS=$'\n\t'
+
+readonly REPORT_DIR="/BiO/Live/jwlee230"
+report_file="$(mktemp "${REPORT_DIR}/Report_XXXXXXXX.tsv")"
+trap 'rm -f "$report_file"' EXIT
+
+du -s -- ./* >"$report_file"
+pwd | mail --attach "$report_file" --subject "Storage report for $(hostname)" -- "root@compbio.unist.ac.kr"

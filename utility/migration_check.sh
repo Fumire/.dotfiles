@@ -30,7 +30,10 @@ tree_status=0
 md5_status=0
 mail_status=0
 
-if tree -ls -I "tree.txt|md5.txt" >"$current_tree" 2>"$tree_output"; then
+if [[ ! -f tree.txt ]]; then
+    printf 'Missing required manifest: tree.txt\n' >"$tree_output"
+    tree_status=1
+elif tree -ls -I "tree.txt|md5.txt|*.md5sum" >"$current_tree" 2>"$tree_output"; then
     if diff "$current_tree" tree.txt >>"$tree_output" 2>&1; then
         tree_status=0
     else
@@ -41,7 +44,10 @@ else
     printf 'tree command failed; diff was not run.\n' >>"$tree_output"
 fi
 
-if md5sum -c md5.txt >"$md5_output" 2>&1; then
+if [[ ! -f md5.txt ]]; then
+    printf 'Missing required manifest: md5.txt\n' >"$md5_output"
+    md5_status=1
+elif md5sum -c md5.txt >"$md5_output" 2>&1; then
     md5_status=0
 else
     md5_status=$?
@@ -70,7 +76,7 @@ fi
 
     printf '== Tree diff ==\n'
     printf 'Result: %s (exit %d)\n' "$tree_result" "$tree_status"
-    printf 'Command: tree -ls -I "tree.txt|md5.txt" | diff - tree.txt\n\n'
+    printf 'Command: tree -ls -I "tree.txt|md5.txt|*.md5sum" | diff - tree.txt\n\n'
     if [[ -s "$tree_output" ]]; then
         cat "$tree_output"
     else
