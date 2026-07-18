@@ -1,8 +1,13 @@
-#!/bin/bash
-xcode-select --install
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if ! xcode-select -p > /dev/null 2>&1; then
+  xcode-select --install
+fi
 
 # Allow text selection in Quick Look
-defaults write com.apple.finder QLEnableTextSelection -bool TRUE
+defaults write com.apple.finder QLEnableTextSelection -bool true
 
 # Quit printer app once the print jobs complete
 defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
@@ -10,10 +15,10 @@ defaults write com.apple.print.PrintingPrefs "Quit When Finished" -bool true
 # Check for software updates daily, not weekly
 defaults write com.apple.SoftwareUpdate ScheduleFrequency -int 1
 
-# Showing all filename extenstion in Finder
+# Show all filename extensions in Finder
 defaults write NSGlobalDomain AppleShowAllExtensions -bool true
 
-# Use column view in all Finder tabs by default
+# Use list view by default in Finder
 defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
 
 # Do not make .DS_Store files on network volumes
@@ -33,18 +38,10 @@ defaults write com.apple.screencapture location -string "$HOME/Desktop"
 # Setting screenshots format to PNG
 defaults write com.apple.screencapture type -string "png"
 
-# Enabling debug menu in Safari
-defaults write com.apple.Safari IncludeInternalDebugMenu -bool true
+# Enable the Develop menu in Safari
+defaults write com.apple.Safari.SandboxBroker ShowDevelopMenu -bool true
 
-# Enabling the Develop menu and the Web Inspector in Safari
-defaults write com.apple.Safari IncludeDevelopMenu -bool true
-defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
-defaults write com.apple.Safari "com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" -bool true
-
-# Do not prompt for confirmation before downloading
-defaults write org.m0k.transmission DownloadAsk -bool false
-
-# Use 24 Hour instead 12 Hour
+# Use 24-hour time
 defaults write -globaldomain AppleICUForce24HourTime -int 1
 
 # Use "Submarine" warning sounds
@@ -56,90 +53,64 @@ defaults write com.apple.dock tilesize -int 16
 # Remove every icon on the Desktop
 defaults write com.apple.finder CreateDesktop -bool false
 
-# No .DS_Store creation on external disk
-defaults write com.apple.desktopservices DSDontWriteNetworkStores true
-
-# Data format
+# Date formats
 defaults write NSGlobalDomain AppleICUDateFormatStrings -dict-add 1 "yyMMdd"
 defaults write NSGlobalDomain AppleICUDateFormatStrings -dict-add 2 "yyyyMMdd"
 defaults write NSGlobalDomain AppleICUDateFormatStrings -dict-add 3 "yyyy-MM-dd"
-defaults write NSGlobalDomain AppleICUDateFormatStrings -dict-add 2 "yyyy-MM-dd, EEEE"
+defaults write NSGlobalDomain AppleICUDateFormatStrings -dict-add 4 "yyyy-MM-dd, EEEE"
 
 # Set the time zone
-sudo defaults write /Library/Preferences/com.apple.timezone.auto Active -bool YES
+sudo defaults write /Library/Preferences/com.apple.timezone.auto Active -bool true
 sudo systemsetup -setusingnetworktime on
 
 # Restart automatically if the computer freezes (Error:-99 can be ignored)
-sudo systemsetup -setrestartfreeze on 2> /dev/null
+sudo systemsetup -setrestartfreeze on 2> /dev/null || true
 
-# Disable audio feedback when volume is changed
-defaults write com.apple.sound.beep.feedback -bool false
-
-# Disable the “Are you sure you want to open this application?” dialog
-defaults write com.apple.LaunchServices LSQuarantine -bool false
-
-# Set a blazingly fast keyboard repeat rate
-defaults write NSGlobalDomain KeyRepeat -int 1
+# Set a fast keyboard repeat rate
+defaults write NSGlobalDomain KeyRepeat -int 2
 defaults write NSGlobalDomain InitialKeyRepeat -int 15
-
-# Automatically illuminate built-in MacBook keyboard in low light
-defaults write com.apple.BezelServices kDim -bool true
-
-# Turn off keyboard illumination when computer is not used for 5 minutes
-defaults write com.apple.BezelServices kDimTime -int 300
 
 # Disable auto-correct
 defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
 
-# Trackpad: enable tap to click for this user and for the login screen
+# Trackpad: enable tap to click
 defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
 defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
-defaults write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
 
-# Trackpad: swipe between pages with three fingers
-defaults write NSGlobalDomain AppleEnableSwipeNavigateWithScrolls -bool true
-defaults -currentHost write NSGlobalDomain com.apple.trackpad.threeFingerHorizSwipeGesture -int 1
-defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerHorizSwipeGesture -int 1
-
-# Increase sound quality for Bluetooth headphones/headsets
-defaults write com.apple.BluetoothAudioAgent "Apple Bitpool Min (editable)" -int 40
-
-# Require password immediately after sleep or screen saver begins
-defaults write com.apple.screensaver askForPassword -int 1
-defaults write com.apple.screensaver askForPasswordDelay -int 0
-
-# Finder: show hidden files by default
-defaults write com.apple.finder AppleShowAllFiles -bool true
+# Trackpad: swipe between full-screen applications with three fingers
+defaults -currentHost write NSGlobalDomain com.apple.trackpad.threeFingerHorizSwipeGesture -int 2
+defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerHorizSwipeGesture -int 2
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerHorizSwipeGesture -int 2
 
 # Finder: show status bar
 defaults write com.apple.finder ShowStatusBar -bool true
 
 # Finder: show path bar
 defaults write com.apple.finder ShowPathbar -bool true
-#
+
 # Keep folders on top when sorting by name
 defaults write com.apple.finder _FXSortFoldersFirst -bool true
 
 # Disable hot corners
-defaults write com.apple.dock wvous-tl-corner -int 0
-defaults write com.apple.dock wvous-tr-corner -int 0
-defaults write com.apple.dock wvous-bl-corner -int 0
-defaults write com.apple.dock wvous-br-corner -int 0
+defaults write com.apple.dock wvous-tl-corner -int 1
+defaults write com.apple.dock wvous-tr-corner -int 1
+defaults write com.apple.dock wvous-bl-corner -int 1
+defaults write com.apple.dock wvous-br-corner -int 1
 
 # Don't show recently used applications in the Dock
-defaults write com.Apple.Dock show-recents -bool false
+defaults write com.apple.dock show-recents -bool false
 
-# Calendar: Show week numbers (10.8 only)
+# Calendar: show week numbers
 defaults write com.apple.iCal "Show Week Numbers" -bool true
 
-# Calendar: Week starts on monday
-defaults write com.apple.iCal "first day of week" -int 1
+# Calendar: start weeks on Sunday
+defaults write com.apple.iCal "first day of week" -int 0
 
 ###############################################################################
 # Kill affected applications                                                  #
 ###############################################################################
 
-for app in "Address Book" "Calendar" "Contacts" "Dock" "Finder" "Mail" "Safari" "SystemUIServer" "iCal"; do
-  killall "${app}" &> /dev/null
+for app in "Calendar" "Contacts" "Dock" "Finder" "Mail" "Safari" "SystemUIServer"; do
+  killall "${app}" > /dev/null 2>&1 || true
 done
