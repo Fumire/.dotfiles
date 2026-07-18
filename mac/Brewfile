@@ -1,5 +1,3 @@
-tap "elgar328/nfd2nfc"
-#
 # Source code beautifier for C, C++, C#, and Java
 brew "astyle"
 # Command-line interface for SQLite
@@ -30,8 +28,12 @@ brew "git"
 brew "gnupg"
 # Open source programming language to build simple/reliable/efficient software
 brew "go"
+# Open-source video transcoder available for Linux, Mac, and Windows
+brew "handbrake"
 # Tools and libraries to manipulate images in select formats
 brew "imagemagick"
+# Style and grammar checker
+brew "languagetool"
 # Keep your Mac's application settings in sync
 brew "mackup"
 # Mac App Store command-line interface
@@ -40,6 +42,8 @@ brew "mas"
 brew "mole"
 # Ambitious Vim-fork focused on extensibility and agility
 brew "neovim"
+# Convert filesystem entry names from NFD to NFC for cross-platform compatibility
+brew "nfd2nfc"
 # Open-source, cross-platform JavaScript runtime environment
 brew "node"
 # Development kit for the Java programming language
@@ -68,9 +72,7 @@ brew "zsh"
 brew "zsh-completions"
 # Fish shell like syntax highlighting for zsh
 brew "zsh-syntax-highlighting"
-# Convert filesystem entry names from NFD to NFC for cross-platform compatibility
-brew "elgar328/nfd2nfc/nfd2nfc", trusted: true
-
+#
 # Collection of apps and services for photography, design, video, web, and UX
 cask "adobe-creative-cloud", args: { appdir: "/Applications" }
 # Application launcher and productivity software
@@ -79,8 +81,12 @@ cask "alfred", args: { appdir: "/Applications" }
 cask "appcleaner", args: { appdir: "/Applications" }
 # Menu bar icon organiser
 cask "bartender"
+# Edit and manage bibliographies
+cask "bibdesk", args: { appdir: "/Applications" }
 # OpenAI's official ChatGPT desktop app
 cask "chatgpt"
+# OpenAI's previous ChatGPT desktop app
+cask "chatgpt-classic"
 # Remotely access another computer through the Google Chrome browser
 cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
 # Free app that makes your Internet safer
@@ -96,6 +102,10 @@ cask "font-0xproto-nerd-font"
 cask "google-chrome", args: { appdir: "/Applications" }
 # Tools to protect your emails and files
 cask "gpg-suite", args: { appdir: "/Applications" }
+# Open-source video transcoder
+cask "handbrake-app"
+# File management software for iPhone and other Apple products
+cask "ifunbox"
 # System monitoring app
 cask "istat-menus", args: { appdir: "/Applications" }
 # Full TeX Live distribution with GUI applications
@@ -112,6 +122,8 @@ cask "steam", args: { appdir: "/Applications" }
 cask "tex-live-utility", args: { appdir: "/Applications" }
 # LaTeX editor
 cask "texstudio", args: { appdir: "/Applications" }
+# Multimedia player
+cask "vlc", args: { appdir: "/Applications" }
 # Open-source version of the X.Org X Window System
 cask "xquartz", args: { appdir: "/Applications" }
 # Video communication and virtual meeting platform
@@ -120,6 +132,7 @@ cask "zoom", args: { appdir: "/Applications" }
 cask "zotero", args: { appdir: "/Applications" }
 
 mas "Bandizip", id: 1265704574
+mas "Cinebench", id: 1438772273
 mas "FileZilla Pro", id: 1298486723
 mas "Goodnotes", id: 1444383602
 mas "Ivory", id: 6444602274
@@ -134,9 +147,10 @@ mas "MsgFiler 4", id: 6478043112
 mas "Notability", id: 360593530
 mas "nPlayer", id: 1451273814
 mas "PiPifier", id: 1160374471
-# mas "Redacted", id: 984968384
+mas "Redacted", id: 984968384
 mas "Reeder", id: 1529448980
 mas "RunCat", id: 1429033973
+mas "RunCatNeo", id: 6757801838
 mas "Slack", id: 803453959
 mas "Telegram", id: 747648890
 mas "Unicorn Blocker", id: 1231935892
