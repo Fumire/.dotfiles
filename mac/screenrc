@@ -1,36 +1,61 @@
 shell -$SHELL
 
-# 256 color xterm
-term xterm-256color
+# Match the tmux terminal and encoding behavior.
+term screen-256color
+defutf8 on
+altscreen on
 
-# Green text, time, and date; windows in blue:
-hardstatus alwayslastline '%{Yk}%=%{Yk}[%{W}%{Y}%H%{Y} Server] %{wk}%?%-Lw%?%{=b kR}(%{W}%n*%f %t%?(%u)%?%{=b kR})%{= kw}%?%+Lw%?%?%{w} %{G}%C%A'
-
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= #
-##    Some general options    ##
-
-# Turn off start message:
+# General behavior.
 startup_message off
-
-# Set messages timeout to one second:
 msgwait 1
-
-# Set scrollback buffer size:
-defscrollback 100000
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= #
-
-##    Keybindings    ##
-
-bindkey "^[[1;5C" next
-bindkey "^[[1;5D" prev
-
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= #
-
 defscrollback 5000
+compacthist on
 
-termcapinfo xterm* ti@:te@
-
-# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= #
-
+# Monitor background activity without displaying notification messages.
+defmonitor on
+activity ""
 vbell off
 bell_msg ""
+
+# Reuse tmux-cpu when it is installed by TPM.
+backtick 1 10 10 /bin/sh -c 'cpu="$HOME/.tmux/plugins/tmux-cpu/scripts/cpu_percentage.sh"; if [ -x "$cpu" ]; then printf "CPU: "; "$cpu"; printf " | "; fi'
+
+# Match the tmux status line's uptime and online indicators.
+backtick 2 60 60 /bin/sh -c 'uptime 2>/dev/null | sed -E "s/^.* up (.*), [0-9]+ users?.*$/\1/; s/, / /g"'
+backtick 3 60 60 /bin/sh -c 'ping -c 1 -W 1000 8.8.8.8 >/dev/null 2>&1 && printf "✔" || printf "✘"'
+
+# Session, uptime, load, connectivity, windows, CPU, date/time, and hostname.
+hardstatus alwayslastline '%{=b Yk} ❐ %S %{= mW}| ↑ %2` %{= Gk}| %l | %3` %{= kW}%-Lw%{=b Ck}%50>%n%f %t%{-}%+Lw%<%=%{= kW} %1`%D %M-%d %c | %H '
+
+# Use the same primary prefix as tmux.
+escape ^Aa
+
+# Reload the installed Screen configuration.
+bind r source "$HOME/.screenrc"
+
+# Screen 4 supports vertically stacked regions only. Map tmux's directional
+# bindings to the nearest supported focus and resize operations.
+bind - split
+bind h focus up
+bind j focus down
+bind k focus up
+bind l focus down
+bind H resize -2
+bind J resize +2
+bind K resize -2
+bind L resize +2
+
+# Window navigation and last-window behavior.
+bind ^H prev
+bind ^L next
+bind ^I other
+
+# Match tmux's copy and paste bindings where Screen has an equivalent.
+bind ^M copy
+bind p paste .
+bind P paste
+
+# Keep direct Control-arrow window navigation for terminals that emit these
+# sequences.
+bindkey "^[[1;5C" next
+bindkey "^[[1;5D" prev

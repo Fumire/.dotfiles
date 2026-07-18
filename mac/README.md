@@ -14,7 +14,7 @@ macOS-specific setup files for this dotfiles repository. This folder mainly mana
 | `languagetool.cfg` | LanguageTool application configuration. |
 | `mackup.cfg` | Mackup configuration using Dropbox storage while ignoring dotfiles already managed by this repository. |
 | `Makefile` | Provides targets for Homebrew bundle installation, macOS defaults, and selected config symlinks. |
-| `screenrc` | GNU Screen configuration. |
+| `screenrc` | GNU Screen configuration aligned with the repository's tmux prefix, history, status, and navigation settings. |
 | `starting.sh` | Applies macOS defaults for Finder, Dock, Safari, Terminal, screenshots, keyboard, trackpad, date/time, and related settings. |
 
 ## Requirements
