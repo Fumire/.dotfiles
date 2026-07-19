@@ -107,7 +107,7 @@ The `starting.sh` script applies these macOS settings:
 | Trackpad | Enables tap-to-click for built-in and Bluetooth trackpads. |
 | Trackpad | Uses a three-finger horizontal swipe to move between full-screen applications. |
 | Calendar | Shows week numbers. |
-| Calendar | Sets Sunday as the first day of the week. |
+| Calendar | Sets Monday as the first day of the week. |
 | App restart | Restarts affected apps such as Dock, Finder, Safari, Mail, Calendar, Contacts, and SystemUIServer so settings take effect. |
 
 Review `starting.sh` before running it on a machine that already has customized macOS preferences.

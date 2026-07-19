@@ -104,8 +104,8 @@ defaults write com.apple.dock show-recents -bool false
 # Calendar: show week numbers
 defaults write com.apple.iCal "Show Week Numbers" -bool true
 
-# Calendar: start weeks on Sunday
-defaults write com.apple.iCal "first day of week" -int 0
+# Calendar: start weeks on Monday
+defaults write com.apple.iCal "first day of week" -int 1
 
 ###############################################################################
 # Kill affected applications                                                  #
