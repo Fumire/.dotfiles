@@ -5,7 +5,7 @@ Personal Git configuration managed by this dotfiles repository.
 ## Files
 
 * `gitconfig`: Global Git settings, including user identity, GPG signing, default branch name, pull/rebase behavior, merge/diff tools, Git LFS filters, and credential helper settings.
-* `gitignore_global`: Global ignore rules for editor backup files, Vim swap files, macOS metadata files, and common local cache directories.
+* `gitignore_global`: Global ignore rules for editor backup files, Vim swap files, macOS metadata, and Python-generated files, environments, build output, and tool caches.
 * `Makefile`: Installs the Git config files as symlinks and backs up existing non-symlink destinations.
 
 ## `gitconfig`
