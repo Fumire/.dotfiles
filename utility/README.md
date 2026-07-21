@@ -24,7 +24,7 @@ These scripts are intentionally environment-specific. Review each script before 
 | `reporting.sh` | Collects `sysstat` data from remote hosts, renders reports, and emails generated images. |
 | `update_key.sh` | Migrates legacy `apt-key` entries into `/etc/apt/trusted.gpg.d`. |
 | `whisper.sh` | Generates `.srt` subtitles from `mp4`, `avi`, `mkv`, `m4a`, `aac`, or `mp3` files using `ffmpeg` and `whisper-cli`. |
-| `yt-dlp.conf` | Default `yt-dlp` options for best-format downloads, retries, geo bypass, browser impersonation, metadata, chapters, subtitles, thumbnails, multistream handling, and MP4 remuxing. |
+| `yt-dlp.conf` | MP4-oriented `yt-dlp` defaults that prefer non-Premium video, use bounded retry backoff, and embed thumbnails, metadata, chapters, and manual subtitles except live chat. |
 
 ## Usage
 
@@ -99,8 +99,10 @@ At least one target directory is required. Run `utility/disable_spotlight.sh --h
 Use `yt-dlp.conf` with `yt-dlp`:
 
 ```sh
-yt-dlp --config-location utility/yt-dlp.conf URL
+yt-dlp --config-locations utility/yt-dlp.conf URL
 ```
+
+The configuration first tries the best separate video and audio streams with a video not labelled Premium, retaining videos without `format_note`, and falls back to the best combined format when necessary. The `mp4` preset prefers H.264 video and AAC audio, then merges or remuxes to MP4 when supported; it does not re-encode incompatible codecs. HTTP and fragment failures are retried up to 10 times with exponential backoff. Thumbnails, metadata, chapters, and all available manual subtitles except live chat are embedded; automatic captions are not requested.
 
 ### SLURM Migration And Reporting
 
