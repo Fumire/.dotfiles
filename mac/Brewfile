@@ -110,8 +110,6 @@ cask "ifunbox"
 cask "istat-menus", args: { appdir: "/Applications" }
 # Full TeX Live distribution with GUI applications
 cask "mactex"
-# Provides updates to various Microsoft products
-cask "microsoft-auto-update"
 # App to write, plan, collaborate, and get organised
 cask "notion", args: { appdir: "/Applications" }
 # Knowledge base that works on top of a local folder of plain text Markdown files
@@ -139,10 +137,6 @@ mas "Ivory", id: 6444602274
 mas "KakaoTalk", id: 869223134
 mas "Keynote", id: 409183694
 mas "Magnet", id: 441258766
-mas "Microsoft Excel", id: 462058435
-mas "Microsoft Outlook", id: 985367838
-mas "Microsoft PowerPoint", id: 462062816
-mas "Microsoft Word", id: 462054704
 mas "MsgFiler 4", id: 6478043112
 mas "Notability", id: 360593530
 mas "nPlayer", id: 1451273814
