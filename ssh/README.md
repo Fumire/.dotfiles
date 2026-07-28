@@ -16,12 +16,10 @@ The `config` file applies these settings to all SSH hosts:
 
 * Enables host IP checking and hashed known hosts
 * Enables compression
-* Adds AES cipher options
-* Enables trusted X11 forwarding
-* Sends locale environment variables matching `LC_*`
+* Disables X11 forwarding by default
 * Sends keepalive packets every 60 seconds
 
-Review these defaults before using the file on shared or security-sensitive systems. In particular, X11 forwarding and legacy cipher compatibility should be enabled only when needed.
+Review these defaults before using the file on shared or security-sensitive systems. Enable X11 forwarding only when needed, and prefer host-specific overrides for local exceptions.
 
 ## Installation
 

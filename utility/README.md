@@ -22,7 +22,7 @@ These scripts are intentionally environment-specific. Review each script before 
 | `r-restore.R` | Restores R packages from a backup made by `r-freeze.R`, preferring `renv.lock` and using backup metadata for GitHub/remotes and Bioconductor packages. |
 | `report_storage.sh` | Creates and emails a storage usage report for the current directory. |
 | `reporting.sh` | Collects `sysstat` data from remote hosts, renders reports, and emails generated images. |
-| `update_key.sh` | Migrates legacy `apt-key` entries into `/etc/apt/trusted.gpg.d`. |
+| `update_key.sh` | Exports legacy trusted keys from `/etc/apt/trusted.gpg` into `/etc/apt/keyrings` for `signed-by`-style source entries. |
 | `whisper.sh` | Generates `.srt` subtitles from `mp4`, `avi`, `mkv`, `m4a`, `aac`, or `mp3` files using `ffmpeg` and `whisper-cli`. |
 | `yt-dlp.conf` | MP4-oriented `yt-dlp` defaults that prefer non-Premium video, use bounded retry backoff, and embed thumbnails, metadata, chapters, and manual subtitles except live chat. |
 
@@ -138,7 +138,7 @@ Dependencies vary by script:
 * Media helpers: `ffmpeg`, `whisper-cli`, `pdftoppm`, `yt-dlp`
 * macOS helper: `dot_clean`
 * R environment helpers: `Rscript`, `renv`, `remotes`, optional `BiocManager`
-* Linux/server helpers: `mail`, `top`, `ps`, `free`, `bc`, `nvidia-smi`, `tar`, `gpg`, `apt-key`, `adduser`, `gpasswd`
+* Linux/server helpers: `mail`, `top`, `ps`, `free`, `bc`, `nvidia-smi`, `tar`, `gpg`, `adduser`, `gpasswd`
 * Sysstat/reporting helpers: `sar`, `sadf`, `sysstat`, `convert`, `scp`, `ssh`
 * Migration/storage helpers: `rsync`, `tree`, `md5sum`, `du`, SLURM `sbatch`
 

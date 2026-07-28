@@ -38,10 +38,52 @@ if [[ $(uname) == "Darwin" ]]; then
     }
 fi
 
-function weather() { curl "https://wttr.in/${@:-seoul}?m" ;}
+function weather() {
+    local location="${*:-seoul}"
+    local pattern="^[A-Za-z0-9._+-]+$"
+
+    location="${location// /+}"
+
+    if [[ -z "$location" ]]; then
+        echo "weather: location argument cannot be empty" >&2
+        return 1
+    fi
+
+    if [[ ! "$location" =~ $pattern ]]; then
+        echo "weather: location has invalid characters" >&2
+        return 1
+    fi
+
+    curl --proto '=https' --tlsv1.2 --silent --show-error --location --connect-timeout 5 --max-time 15 --fail \
+         "https://wttr.in/${location}?m"
+}
 
 # Make .gitignore
-function gi() { curl -sL "https://www.gitignore.io/api/$@" ;}
+function gi() {
+    local template
+    local templates=""
+    local pattern='^[A-Za-z0-9.,_+-]+$'
+
+    if (( $# == 0 )); then
+        echo "gi: usage: gi <template>[,<template> ...]" >&2
+        return 1
+    fi
+
+    for template in "$@"; do
+        if [[ ! "$template" =~ $pattern ]]; then
+            echo "gi: template contains invalid characters: $template" >&2
+            return 1
+        fi
+
+        if [[ -n "$templates" ]]; then
+            templates+=","
+        fi
+        templates+="$template"
+    done
+
+    curl --proto '=https' --tlsv1.2 --silent --show-error --location --connect-timeout 5 --max-time 15 --fail \
+         "https://www.gitignore.io/api/${templates}"
+}
 
 # Background execute
 function bkr() { (nohup "$@" 1>"$(uuid)" 2>&1 &) ;}
