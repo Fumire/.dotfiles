@@ -6,6 +6,7 @@
 # Usage:
 #   utility/check_system.sh [OPTIONS]
 # Notes:
+#   CPU/memory/temperature checks are delegated to dedicated scripts.
 #   Temperature and GPU checks are skipped when the host lacks readable sensor
 #   data or a usable NVIDIA driver.
 set -euo pipefail
@@ -177,20 +178,6 @@ if (( GPU_ERROR_THRESHOLD <= GPU_WARNING_THRESHOLD )); then
     exit 1
 fi
 
-report_heaviest_processes() {
-    local sort_column=$1
-    local title=$2
-
-    printf '%s\n' "$title"
-    printf 'Generated at: %s on %s\n\n' "$(date '+%Y-%m-%d %H:%M:%S %Z')" "$(hostname)"
-    printf '%-8s %-24s %-16s %-8s %8s %10s %8s\n' "PID" "PROCESS" "USER" "UID" "CPU%" "MEM_GB" "MEM%"
-    ps -eo pid=,comm=,user=,uid=,pcpu=,rss=,pmem= --sort="$sort_column" |
-        head -n "$HEAVY_TASK_LIMIT" |
-        awk '{
-            printf "%-8s %-24.24s %-16.16s %-8s %8s %10.2f %8s\n", $1, $2, $3, $4, $5, $6 / 1048576, $7
-        }'
-}
-
 trim_field() {
     local value=$1
 
@@ -248,39 +235,6 @@ nvidia_driver_unavailable() {
     [[ "$status" == *"couldn't communicate with the NVIDIA driver"* ]]
 }
 
-read_temperature_celsius() {
-    local temp_file
-    local raw_temp
-    local nullglob_enabled=0
-
-    if shopt -q nullglob; then
-        nullglob_enabled=1
-    fi
-    shopt -s nullglob
-
-    for temp_file in /sys/class/thermal/thermal_zone*/temp; do
-        [[ -r "$temp_file" ]] || continue
-
-        if ! raw_temp=$(<"$temp_file"); then
-            continue
-        fi
-
-        raw_temp=$(trim_field "$raw_temp")
-        if [[ "$raw_temp" =~ ^[0-9]+$ ]]; then
-            if (( nullglob_enabled == 0 )); then
-                shopt -u nullglob
-            fi
-            echo "$raw_temp / 1000" | bc -l | xargs printf "%1.0f"
-            return 0
-        fi
-    done
-
-    if (( nullglob_enabled == 0 )); then
-        shopt -u nullglob
-    fi
-    return 1
-}
-
 report_heaviest_gpu_tasks() {
     local gpu_processes
     local gpu_pmon_output
@@ -322,55 +276,17 @@ report_heaviest_gpu_tasks() {
         done
 }
 
-IDLE_CPU=$(top -b -n 1 | grep "\%Cpu(s)" | awk -F ',' '{ print $4}' | awk '{ print $1}' | cut -d "." -f 1)
+SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export HEAVY_TASK_LIMIT
+export IDLE_WARNING_THRESHOLD
+export IDLE_ERROR_THRESHOLD
+export TEMPERATURE_WARNING_THRESHOLD
+export TEMPERATURE_ERROR_THRESHOLD
+export ALERT_RECIPIENT
 
-if (( IDLE_CPU < IDLE_ERROR_THRESHOLD )); then
-    report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage" | mail -s "[Error] CPU Usage is too high in $(hostname)" "$ALERT_RECIPIENT"
-    echo "CPU Error:" "$IDLE_CPU"
-elif (( IDLE_CPU < IDLE_WARNING_THRESHOLD )); then
-    report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage" | mail -s "[Warning] CPU Usage is too high in $(hostname)" "$ALERT_RECIPIENT"
-    echo "CPU Warning:" "$IDLE_CPU"
-else
-    echo "CPU is Okay:" "$IDLE_CPU"
-fi
-
-TOTAL_MEM=$(free | grep "^Mem" | awk '{print $2}')
-if free | grep -q "available"; then
-    ACTUAL_MEM=$(free | grep "^Mem" | awk '{print $7}')
-else
-    ACTUAL_MEM=$(free | grep "^-/+" | awk '{print $4}')
-fi
-IDLE_MEM=$(echo "$ACTUAL_MEM * 100 / $TOTAL_MEM" | bc)
-
-if (( IDLE_MEM < IDLE_ERROR_THRESHOLD )); then
-    report_heaviest_processes "-rss" "Top ${HEAVY_TASK_LIMIT} processes by memory usage" | mail -s "[Error] MEM Usage is too high in $(hostname)" "$ALERT_RECIPIENT"
-    echo "MEM Error:" "${IDLE_MEM}"
-elif (( IDLE_MEM < IDLE_WARNING_THRESHOLD )); then
-    report_heaviest_processes "-rss" "Top ${HEAVY_TASK_LIMIT} processes by memory usage" | mail -s "[Warning] MEM Usage is too high in $(hostname)" "$ALERT_RECIPIENT"
-    echo "MEM Warning:" "${IDLE_MEM}"
-else
-    echo "MEM is Okay:" "${IDLE_MEM}"
-fi
-
-if TEMPERATURE=$(read_temperature_celsius); then
-    if (( TEMPERATURE > TEMPERATURE_ERROR_THRESHOLD )); then
-        {
-            printf 'TEMPERATURE Error: %s\n\n' "$TEMPERATURE"
-            report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
-        } | mail -s "[Error] TEMPERATURE is too high in $(hostname)" "$ALERT_RECIPIENT"
-        echo "TEMPERATURE Error" "${TEMPERATURE}"
-    elif (( TEMPERATURE > TEMPERATURE_WARNING_THRESHOLD && TEMPERATURE <= TEMPERATURE_ERROR_THRESHOLD )); then
-        {
-            printf 'TEMPERATURE Warning: %s\n\n' "$TEMPERATURE"
-            report_heaviest_processes "-pcpu" "Top ${HEAVY_TASK_LIMIT} processes by CPU usage"
-        } | mail -s "[Warning] TEMPERATURE is too high in $(hostname)" "$ALERT_RECIPIENT"
-        echo "TEMPERATURE Warning" "${TEMPERATURE}"
-    else
-        echo "TEMPERATURE is Okay" "${TEMPERATURE}"
-    fi
-else
-    echo "TEMPERATURE check skipped: no readable thermal zone temperature file"
-fi
+"$SCRIPT_DIR/check_system_cpu.sh"
+"$SCRIPT_DIR/check_system_memory.sh"
+"$SCRIPT_DIR/check_system_temperature.sh"
 
 if command -v nvidia-smi >/dev/null 2>&1; then
     if GPU_STATUS=$(nvidia-smi 2>&1); then

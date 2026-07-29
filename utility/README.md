@@ -11,6 +11,9 @@ These scripts are intentionally environment-specific. Review each script before 
 | `authfail_notify.sh` | PAM helper that emails a notification for failed login attempts. |
 | `Backup.sh` | Archives account-related system files and emails the backup archive. |
 | `check_system.sh` | Checks CPU, memory, temperature, and optional NVIDIA GPU thresholds, then emails warnings or errors to the configured alert recipient with the configured number of heaviest related processes. |
+| `check_system_cpu.sh` | Checks CPU threshold and sends process-heavy alerts; called by `check_system.sh`. |
+| `check_system_memory.sh` | Checks memory threshold and sends process-heavy alerts; called by `check_system.sh`. |
+| `check_system_temperature.sh` | Checks thermal threshold and sends alerts with heavy CPU process context; called by `check_system.sh`. |
 | `disable_spotlight.sh` | Adds `.metadata_never_index` to one or more target directories and runs `dot_clean`; intended for macOS volumes. |
 | `make_user.sh` | Argument-driven Linux user creation helper with optional `--home` base, default initial password, and interactive `adduser` user-information prompts. |
 | `migration_arrange.sh` | Prepares a directory for migration by deleting empty files and writing consistent `md5.txt` and `tree.txt` manifests. |
