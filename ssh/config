@@ -5,7 +5,7 @@ Host *
     ControlPath ~/.ssh/master-%h-%p-%r
     ControlPersist 1m
     HashKnownHosts yes
-    ForwardX11 yes
+    ForwardX11 no
     ForwardX11Trusted no
     ServerAliveInterval 60
     VisualHostKey yes
