@@ -1,6 +1,10 @@
 all: zsh_run oh-my-zsh_run vim_run
 .PHONY: all
 
+ubuntu_run:
+	$(MAKE) -C ubuntu
+.PHONY: ubuntu_run
+
 mac_run:
 	$(MAKE) -C mac free
 .PHONY: mac_run
