@@ -109,3 +109,8 @@ make WITH_ZLOGOUT=1
 
 When installed, `zlogout` prints one randomly selected quote to stderr when an
 interactive ZSH login shell exits.
+
+
+## Last Updated
+
+- 2026-07-29

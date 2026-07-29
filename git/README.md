@@ -62,3 +62,8 @@ If a destination file already exists and is not a symlink, the Makefile backs it
 This configuration enables signed commits by default and uses `gpg` as the signing program. Make sure the configured signing key is available on the machine before creating commits.
 
 The credential helper is set to `osxkeychain`, which is intended for macOS. On other operating systems, update `credential.helper` after installation if needed.
+
+
+## Last Updated
+
+- 2026-07-29

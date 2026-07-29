@@ -109,3 +109,8 @@ curl -fsSL "https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.s
 ```
 
 Review the upstream installer behavior before running it on a machine with an existing zsh setup, because it may create or modify shell startup files.
+
+
+## Last Updated
+
+- 2026-07-29

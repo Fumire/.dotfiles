@@ -82,3 +82,8 @@ make -C ssh "$HOME/.ssh/id_ed25519"
 Do not commit private keys. Public key files matching `*.pub` are also ignored in this folder.
 
 If `~/.ssh/config` already exists and is not a symlink, the Makefile backs it up before linking. Review SSH backups carefully because they may contain host-specific settings.
+
+
+## Last Updated
+
+- 2026-07-29

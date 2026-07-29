@@ -75,3 +75,8 @@ GnuPG will start a new agent the next time it needs one.
 If a destination config file already exists and is not a symlink, the Makefile backs it up before linking.
 
 Do not commit private keys, revocation certificates, trust databases, or keyring files to this repository.
+
+
+## Last Updated
+
+- 2026-07-29

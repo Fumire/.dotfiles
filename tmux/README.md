@@ -127,3 +127,8 @@ Clipboard copying works when one of these tools is available:
 `tmux.conf` includes a comment that it should not be edited directly. Put personal changes in `~/.tmux.conf.local`, which is linked from `tmux/tmux.conf.local` by this repository.
 
 Powerline-style separators are used in the status line. Use a font with Powerline symbols if separators do not render correctly.
+
+
+## Last Updated
+
+- 2026-07-29

@@ -136,3 +136,8 @@ If either destination file already exists and is not a symlink, the Makefile bac
 The Makefile includes a `brew` target for installing Homebrew, but the package targets assume Homebrew is already available. Install Homebrew first, then run the bundle targets.
 
 Several files in this folder are personal-machine specific. Check paths, app lists, Mac App Store IDs, and service configuration before using them on another machine.
+
+
+## Last Updated
+
+- 2026-07-29

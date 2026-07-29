@@ -125,3 +125,8 @@ Host *
 ```
 
 XQuartz should also have authentication enabled in Preferences > Security.
+
+
+## Last Updated
+
+- 2026-07-29

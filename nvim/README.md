@@ -73,3 +73,8 @@ Custom key bindings added by this config:
 ## Notes
 
 This directory does not include a standalone `init.lua`. The LazyVim starter provides the entry point that loads `lua/config/lazy.lua`, so use the starter layout for new machines.
+
+
+## Last Updated
+
+- 2026-07-29

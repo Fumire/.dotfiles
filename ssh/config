@@ -1,7 +1,12 @@
 Host *
     CheckHostIP yes
     Compression yes
+    ControlMaster auto
+    ControlPath ~/.ssh/master-%h-%p-%r
+    ControlPersist 1m
     HashKnownHosts yes
-    ForwardX11 no
+    ForwardX11 yes
     ForwardX11Trusted no
     ServerAliveInterval 60
+    VisualHostKey yes
+    ConnectTimeout 10
