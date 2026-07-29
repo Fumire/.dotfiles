@@ -54,8 +54,7 @@ function weather() {
         return 1
     fi
 
-    curl --proto '=https' --tlsv1.2 --silent --show-error --location --connect-timeout 5 --max-time 15 --fail \
-         "https://wttr.in/${location}?m"
+    curl --proto '=https' --tlsv1.2 --silent --show-error --location --connect-timeout 5 --max-time 15 --fail "https://wttr.in/${location}?m"
 }
 
 # Make .gitignore
@@ -81,12 +80,11 @@ function gi() {
         templates+="$template"
     done
 
-    curl --proto '=https' --tlsv1.2 --silent --show-error --location --connect-timeout 5 --max-time 15 --fail \
-         "https://www.gitignore.io/api/${templates}"
+    curl --proto '=https' --tlsv1.2 --silent --show-error --location --connect-timeout 5 --max-time 15 --fail "https://www.gitignore.io/api/${templates}"
 }
 
 # Background execute
-function bkr() { (nohup "$@" 1>"$(uuid)" 2>&1 &) ;}
+function bkr() { (nohup "$@" 1>"$@-$(uuid).txt" 2>&1 &) ;}
 
 # Count files & directories
 function count() { printf '%s\n' "$#" ;}
