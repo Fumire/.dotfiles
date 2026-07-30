@@ -5,27 +5,50 @@
 -- * disable/enabled LazyVim plugins
 -- * override the configuration of LazyVim plugins
 
-local function repair_vim_treesitter_parser()
-  local parser_path = vim.fn.stdpath("data") .. "/site/parser/vim.so"
-  if vim.fn.filereadable(parser_path) ~= 1 then
-    return
+local function parser_is_compatible_with_host(parser_info, host_machine)
+  if not parser_info:find("Mach-O", 1, true) then
+    return true
   end
 
-  local info = vim.fn.system({ "file", "-b", parser_path })
-  if vim.v.shell_error ~= 0 then
-    return
+  if host_machine:find("arm64", 1, true) then
+    return parser_info:find("arm64", 1, true) or parser_info:find("arm64e", 1, true)
   end
 
-  if info:find("x86_64", 1, true) then
-    if vim.fn.delete(parser_path) == 0 then
-      vim.notify("Removed incompatible vim.so (x86_64): " .. parser_path, vim.log.levels.WARN)
+  if host_machine:find("x86_64", 1, true) then
+    return parser_info:find("x86_64", 1, true)
+  end
+
+  return true
+end
+
+local function repair_treesitter_parsers()
+  local parser_dir = vim.fn.stdpath("data") .. "/site/parser"
+  local host_machine = vim.loop.os_uname().machine
+  local parsers_to_repair = {}
+
+  for _, parser_name in ipairs({ "vim", "r" }) do
+    local parser_path = parser_dir .. "/" .. parser_name .. ".so"
+    if vim.fn.filereadable(parser_path) == 1 then
+      local info = vim.fn.system({ "file", "-b", parser_path })
+      if vim.v.shell_error == 0 and not parser_is_compatible_with_host(info, host_machine) then
+        if vim.fn.delete(parser_path) == 0 then
+          vim.notify("Removed incompatible tree-sitter parser: " .. parser_path, vim.log.levels.WARN)
+          table.insert(parsers_to_repair, parser_name)
+        end
+      end
     end
-
-    vim.schedule(function()
-      vim.notify("Reinstalling vim treesitter parser for current architecture", vim.log.levels.INFO)
-      vim.cmd("silent! TSInstall vim")
-    end)
   end
+
+  if #parsers_to_repair == 0 then
+    return
+  end
+
+  vim.schedule(function()
+    vim.notify("Reinstalling parser(s) for current architecture: " .. table.concat(parsers_to_repair, ", "), vim.log.levels.INFO)
+    for _, parser_name in ipairs(parsers_to_repair) do
+      vim.cmd("silent! TSInstall " .. parser_name)
+    end
+  end)
 end
 
 return {
@@ -120,7 +143,7 @@ return {
     -- add more treesitter parsers
     {
         "nvim-treesitter/nvim-treesitter",
-        init = repair_vim_treesitter_parser,
+        init = repair_treesitter_parsers,
         opts = {
             ensure_installed = {
                 "bash",
@@ -133,6 +156,7 @@ return {
                 "python",
                 "query",
                 "regex",
+                "r",
                 "tsx",
                 "typescript",
                 "vim",
