@@ -106,6 +106,26 @@ Common Vim key bindings:
 * `<C-w>m` creates a horizontal split
 * `<C-w>l` creates a vertical split
 
+## Neovim Completion Notes
+
+`../nvim/plugin.lua` configures completion sources in this order:
+
+1. `cmp_tabnine` with highest priority
+2. `cmp_omni` for ALE-backed completion
+3. `cmp_emoji` as an additional fallback source
+
+To avoid the previous `cmp-r` warning:
+
+* `R-nvim/cmp-r` is explicitly disabled
+* any existing `cmp_r` source entries are filtered from default nvim-cmp sources
+
+If stale plugin state remains, run:
+
+```sh
+:Lazy sync
+:Lazy clean
+```
+
 ## Neovim
 
 Neovim configuration is maintained in `../nvim`.
@@ -113,7 +133,7 @@ Neovim configuration is maintained in `../nvim`.
 The Neovim setup uses `lazy.nvim` and LazyVim. The main files are:
 
 * `../nvim/lazy.lua`: bootstraps `lazy.nvim` and loads LazyVim
-* `../nvim/plugin.lua`: adds or overrides plugins, including Gruvbox, Telescope, Pyright, Treesitter parsers, Mason tools, ALE, NERDTree, Tagbar, CSV support, and Vim Autoformat
+* `../nvim/plugin.lua`: adds or overrides plugins, including Gruvbox, Telescope, Pyright, Treesitter parsers, completion setup (TabNine + cmp-omni), Mason tools, ALE, NERDTree, Tagbar, CSV support, and Vim Autoformat
 * `../nvim/options.lua`: editor options such as indentation, clipboard, line numbers, wrapping, search, backup, and status line settings
 * `../nvim/keymaps.lua`: custom key bindings for splits and buffer navigation
 * `../nvim/autocmds.lua`: automatic reload and split-resize behavior
@@ -192,4 +212,4 @@ Package purpose:
 
 ## Last Updated
 
-- 2026-07-29
+- 2026-07-30
