@@ -4,6 +4,30 @@
 -- * add extra plugins
 -- * disable/enabled LazyVim plugins
 -- * override the configuration of LazyVim plugins
+
+local function repair_vim_treesitter_parser()
+  local parser_path = vim.fn.stdpath("data") .. "/site/parser/vim.so"
+  if vim.fn.filereadable(parser_path) ~= 1 then
+    return
+  end
+
+  local info = vim.fn.system({ "file", "-b", parser_path })
+  if vim.v.shell_error ~= 0 then
+    return
+  end
+
+  if info:find("x86_64", 1, true) then
+    if vim.fn.delete(parser_path) == 0 then
+      vim.notify("Removed incompatible vim.so (x86_64): " .. parser_path, vim.log.levels.WARN)
+    end
+
+    vim.schedule(function()
+      vim.notify("Reinstalling vim treesitter parser for current architecture", vim.log.levels.INFO)
+      vim.cmd("silent! TSInstall vim")
+    end)
+  end
+end
+
 return {
     -- add gruvbox
     { "ellisonleao/gruvbox.nvim" },
@@ -30,8 +54,33 @@ return {
     {
         "hrsh7th/nvim-cmp",
         opts = function(_, opts)
+            opts.sources = opts.sources or {}
+            opts.sources = vim.tbl_filter(function(source)
+                return source.name ~= "cmp_r"
+            end, opts.sources)
+            table.insert(opts.sources, 1, { name = "cmp_tabnine", priority = 1000 })
+            table.insert(opts.sources, 2, { name = "omni", keyword_length = 3 })
             table.insert(opts.sources, { name = "emoji" })
         end,
+    },
+
+    -- disable deprecated cmp-r source (R.nvim LSP completions are handled by cmp-omni / TabNine setup)
+    {
+        "R-nvim/cmp-r",
+        enabled = false,
+    },
+
+    -- prioritize TabNine in nvim-cmp completions, then use omni completions (ALE-backed)
+    {
+        "tzachar/cmp-tabnine",
+        build = "./install.sh",
+        dependencies = { "hrsh7th/nvim-cmp" },
+    },
+
+    -- allow ALE omni completion to be used through cmp-omni source
+    {
+        "hrsh7th/cmp-omni",
+        dependencies = { "hrsh7th/nvim-cmp" },
     },
 
     -- change some telescope options and a keymap to browse plugin files
@@ -71,6 +120,7 @@ return {
     -- add more treesitter parsers
     {
         "nvim-treesitter/nvim-treesitter",
+        init = repair_vim_treesitter_parser,
         opts = {
             ensure_installed = {
                 "bash",
@@ -172,8 +222,9 @@ return {
 
             vim.g.ale_python_ruff_options = "--select E,F,W,N --ignore E501"
             vim.g.ale_python_mypy_options = "--ignore-missing-imports --install-types --non-interactive"
-            vim.g.ale_disable_lsp = 1
-            vim.g.le_completion_enabled = 0
+            vim.g.ale_disable_lsp = 0
+            vim.g.ale_completion_enabled = 1
+            vim.g.ale_completion_delay = 250
         end,
     },
 

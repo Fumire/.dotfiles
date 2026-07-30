@@ -71,8 +71,11 @@ autocmd FileType vim,tex let g:autoformat_autoindent=0
 let g:ale_linters = {'make': ['checkmake'], 'python': ['ruff', 'mypy'], 'sh': ['language_server'], 'R': ['lintr'], 'vim': ['vint']}
 let g:ale_python_ruff_options = '--select E,F,W,N --ignore E501'
 let g:ale_python_mypy_options = '--ignore-missing-imports --install-types --non-interactive'
-let g:ale_disable_lsp = 1
-let g:ale_completion_enabled = 0
+let g:ale_disable_lsp = 0
+let g:ale_completion_enabled = 1
+let g:ale_completion_delay = 350
+set completeopt=menu,menuone,noinsert,noselect
+set omnifunc=ale#completion#OmniFunc
 
 " indent and tab settings
 filetype indent plugin on

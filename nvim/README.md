@@ -74,6 +74,8 @@ Custom key bindings added by this config:
 
 This directory does not include a standalone `init.lua`. The LazyVim starter provides the entry point that loads `lua/config/lazy.lua`, so use the starter layout for new machines.
 
+On Apple Silicon, if you see an architecture mismatch error for `vim.so`, this config now auto-cleans an incompatible `x86_64` parser and reinstalls the `vim` tree-sitter parser on next startup.
+
 
 ## Last Updated
 
