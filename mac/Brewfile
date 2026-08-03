@@ -85,8 +85,6 @@ cask "bartender"
 cask "bibdesk", args: { appdir: "/Applications" }
 # OpenAI's official ChatGPT desktop app
 cask "chatgpt"
-# OpenAI's previous ChatGPT desktop app
-cask "chatgpt-classic"
 # Remotely access another computer through the Google Chrome browser
 cask "chrome-remote-desktop-host", args: { appdir: "/Applications" }
 # Free app that makes your Internet safer
@@ -94,7 +92,9 @@ cask "cloudflare-warp"
 # OpenAI's coding agent that runs in your terminal
 cask "codex"
 # Voice and text chat software
-cask "discord", args: { appdir: "/Applications" }
+cask "discord"
+# App to build and share containerised applications and microservices
+cask "docker-desktop"
 # Client for the Dropbox cloud storage service
 cask "dropbox"
 cask "font-0xproto-nerd-font"
@@ -110,6 +110,10 @@ cask "ifunbox"
 cask "istat-menus", args: { appdir: "/Applications" }
 # Full TeX Live distribution with GUI applications
 cask "mactex"
+# Provides updates to various Microsoft products
+cask "microsoft-auto-update"
+# Re-mounts write-protected NTFS volumes
+cask "mounty"
 # App to write, plan, collaborate, and get organised
 cask "notion", args: { appdir: "/Applications" }
 # Knowledge base that works on top of a local folder of plain text Markdown files
@@ -120,8 +124,6 @@ cask "steam", args: { appdir: "/Applications" }
 cask "tex-live-utility", args: { appdir: "/Applications" }
 # LaTeX editor
 cask "texstudio", args: { appdir: "/Applications" }
-# Multimedia player
-cask "vlc", args: { appdir: "/Applications" }
 # Open-source version of the X.Org X Window System
 cask "xquartz", args: { appdir: "/Applications" }
 # Video communication and virtual meeting platform
@@ -131,19 +133,22 @@ cask "zotero", args: { appdir: "/Applications" }
 
 mas "Bandizip", id: 1265704574
 mas "Cinebench", id: 1438772273
+mas "Color Picker", id: 641027709
 mas "FileZilla Pro", id: 1298486723
 mas "Goodnotes", id: 1444383602
 mas "Ivory", id: 6444602274
 mas "KakaoTalk", id: 869223134
 mas "Keynote", id: 409183694
 mas "Magnet", id: 441258766
+mas "Microsoft Excel", id: 462058435
+mas "Microsoft PowerPoint", id: 462062816
+mas "Microsoft Word", id: 462054704
 mas "MsgFiler 4", id: 6478043112
 mas "Notability", id: 360593530
 mas "nPlayer", id: 1451273814
 mas "PiPifier", id: 1160374471
 mas "Redacted", id: 984968384
 mas "Reeder", id: 1529448980
-mas "RunCat", id: 1429033973
 mas "RunCatNeo", id: 6757801838
 mas "Slack", id: 803453959
 mas "Telegram", id: 747648890
