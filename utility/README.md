@@ -154,6 +154,7 @@ The migration scripts create `md5.txt` and `tree.txt` manifests in the working d
 `check_system.sh` sends CPU, memory, temperature, and GPU alerts to `root@compbio.unist.ac.kr` by default. `CHECK_SYSTEM_ALERT_RECIPIENT` changes that default, and `--alert-recipient ADDRESS` overrides both for one invocation. CPU and temperature alerts include the configured number of busiest CPU processes with PID, process name, user, UID, CPU%, memory GB, and memory %. Memory alerts include the configured number of largest memory users with the same process fields. Temperature checks use the first readable `/sys/class/thermal/thermal_zone*/temp` file and are skipped on hosts without one. GPU alerts include the configured number of largest reported GPU compute processes with PID, process name, user, UID, GPU%, and GPU memory. GPU checks run only when `nvidia-smi` is available and can communicate with the NVIDIA driver; hosts without a usable NVIDIA driver skip GPU monitoring.
 
 
+
 ## Last Updated
 
-- 2026-07-29
+- 2026-07-30

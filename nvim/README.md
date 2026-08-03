@@ -84,6 +84,7 @@ nvim --headless +'TSInstall vim r' +qa
 ```
 
 
+
 ## Last Updated
 
 - 2026-07-30

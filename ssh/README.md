@@ -84,6 +84,7 @@ Do not commit private keys. Public key files matching `*.pub` are also ignored i
 If `~/.ssh/config` already exists and is not a symlink, the Makefile backs it up before linking. Review SSH backups carefully because they may contain host-specific settings.
 
 
+
 ## Last Updated
 
-- 2026-07-29
+- 2026-07-30

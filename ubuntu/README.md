@@ -47,6 +47,7 @@ The R `Makevars` command is intentionally simple and always writes the current f
 If you want a different `MAKEFLAGS` value, edit `setup_r_makevars.sh` (or adjust the script and rerun `make`).
 
 
+
 ## Last Updated
 
-- 2026-07-29
+- 2026-07-30

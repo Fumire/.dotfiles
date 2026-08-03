@@ -138,6 +138,7 @@ The Makefile includes a `brew` target for installing Homebrew, but the package t
 Several files in this folder are personal-machine specific. Check paths, app lists, Mac App Store IDs, and service configuration before using them on another machine.
 
 
+
 ## Last Updated
 
-- 2026-07-29
+- 2026-07-30
