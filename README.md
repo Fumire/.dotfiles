@@ -66,6 +66,15 @@ These commands install the following files:
 * `make -C vim`: symlinks Vim-related tooling config such as YAPF and TabNine files
 * `make -C zsh`: symlinks `~/.zlogout`
 
+Neovim에서 R 파일 편집 시 ALE 경고(예: indentation/line length)가 출력되지 않도록 아래 설정이 반영되어 있습니다.
+
+- `vim/vimrc`
+- `nvim/plugin.lua`
+
+  - R 파일타입 linter는 소문자 `r`로 등록되어 있습니다.
+  - `lintr`의 `indentation_linter`, `line_length_linter`를 비활성화하여 해당 경고를 억제합니다.
+  - `with_defaults` 또는 구버전 `linters_with_defaults` 모두에서 동작하도록 조건문으로 처리했습니다.
+
 ### macOS
 
 On macOS, install Homebrew first if it is not already available, then run:
@@ -95,4 +104,4 @@ The Ubuntu CI workflow checks the latest Ubuntu environment:
 
 ## Last Updated
 
-- 2026-07-30
+- 2026-08-04
