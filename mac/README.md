@@ -8,7 +8,6 @@ macOS-specific setup files for this dotfiles repository. This folder mainly mana
 | --- | --- |
 | `Brewfile` | Broader Homebrew profile with additional apps and services. |
 | `Brewfile.free` | Core Homebrew profile used by the top-level `make mac_run` target. |
-| `Brewfile.Mac` | Extended Mac profile with extra development tools, casks, Mac App Store apps, VS Code extensions, and taps. |
 | `cloudflared.yml` | Cloudflare DNS-over-HTTPS proxy configuration. |
 | `languageserver.properties` | LanguageTool language server settings. |
 | `languagetool.cfg` | LanguageTool application configuration. |
@@ -55,11 +54,11 @@ Install the broader `Brewfile` profile:
 make -C mac bundle
 ```
 
-Install the extended `Brewfile.Mac` profile manually:
+Install the broader `Brewfile` profile manually:
 
 ```sh
-brew bundle --file=mac/Brewfile.Mac --verbose
-brew bundle check --file=mac/Brewfile.Mac --verbose
+brew bundle --file=mac/Brewfile --verbose
+brew bundle check --file=mac/Brewfile --verbose
 ```
 
 Use one Homebrew profile at a time unless you intentionally want the union of all listed packages and applications.
