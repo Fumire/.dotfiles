@@ -240,10 +240,12 @@ return {
                 make = { "checkmake" },
                 python = { "ruff", "mypy" },
                 sh = { "language_server" },
-                R = { "lintr" },
+                r = { "lintr" },
                 vim = { "vint" },
             }
 
+            vim.g.ale_r_lintr_options =
+                "linters = if (exists('with_defaults')) with_defaults(indentation_linter = NULL, line_length_linter = NULL) else linters_with_defaults(indentation_linter = NULL, line_length_linter = NULL)"
             vim.g.ale_python_ruff_options = "--select E,F,W,N --ignore E501"
             vim.g.ale_python_mypy_options = "--ignore-missing-imports --install-types --non-interactive"
             vim.g.ale_disable_lsp = 0
