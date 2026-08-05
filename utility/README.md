@@ -69,10 +69,14 @@ Leave `WHISPER_VAD_MODEL` unset, or set it to `auto`, to scan `WHISPER_VAD_MODEL
 
 VAD tuning variables map directly to whisper-cli options: `WHISPER_VAD_THRESHOLD`, `WHISPER_VAD_MIN_SPEECH_DURATION_MS`, `WHISPER_VAD_MIN_SILENCE_DURATION_MS`, `WHISPER_VAD_MAX_SPEECH_DURATION_S`, `WHISPER_VAD_SPEECH_PAD_MS`, and `WHISPER_VAD_SAMPLES_OVERLAP`.
 
-If `SUBTITLE=true`, whisper.sh muxes the generated `.srt` into the original MP4 file as a soft subtitle track (`mov_text`) after transcription. This avoids re-encoding (`-c copy`) and overwrites the original MP4:
+If `SUBTITLE=true`, whisper.sh muxes the generated `.srt` into the original MP4 file as a soft subtitle track (`mov_text`) after transcription. It preserves existing video/audio/subtitle tracks by remuxing streams with `copy`, overwrites the original MP4, and removes the temporary `.srt` after successful muxing.  
+If the generated `.srt` is empty (`0 byte`), whisper.sh skips mp4 muxing and only removes the `.srt` file.
 
 ```sh
-ffmpeg -i input.mp4 -i input.srt -c copy -c:s mov_text output.mp4
+ffmpeg -i input.mp4 -i input.srt -map 0 -map 1 \
+  -c:v copy -c:a copy \
+  -c:s copy -c:s:<subtitle_index> mov_text \
+  output.mp4
 ```
 
 (`output.mp4` is the temporary muxed file that is renamed back to the input path.)

@@ -77,7 +77,7 @@ Environment:
   WHISPER_VAD_MAX_SPEECH_DURATION_S     whisper-cli --vad-max-speech-duration-s
   WHISPER_VAD_SPEECH_PAD_MS             whisper-cli --vad-speech-pad-ms
   WHISPER_VAD_SAMPLES_OVERLAP           whisper-cli --vad-samples-overlap
-  SUBTITLE                              Set to true to mux generated SRT as soft subtitle track in MP4 (mov_text) and overwrite the input MP4
+  SUBTITLE                              Set to true to mux generated SRT as soft subtitle track in MP4 (mov_text), overwrite the input MP4, and remove the generated SRT
 
 AAC decode errors:
   If ffmpeg fails while decoding corrupt AAC packets, whisper.sh retries the
@@ -380,9 +380,25 @@ process_media_file() {
             rm -fv "$mp3_file"
 
             if [[ "${SUBTITLE:-false}" == "true" ]]; then
-                local tmp_mp4="${stem}.subtitle_tmp.mp4"
-                ffmpeg -y -i "$source_file" -i "$srt_file" -c copy -c:s mov_text "$tmp_mp4"
-                mv -fv "$tmp_mp4" "$source_file"
+                if [[ ! -s "$srt_file" ]]; then
+                    rm -fv "$srt_file"
+                else
+                    local tmp_mp4="${stem}.subtitle_tmp.mp4"
+                    local existing_subtitle_count
+                    existing_subtitle_count="$(ffprobe -v error -select_streams s -show_entries stream=index -of csv=p=0 "$source_file" | wc -l | tr -d '[:space:]')"
+                    local new_subtitle_index="$existing_subtitle_count"
+
+                    ffmpeg -y -i "$source_file" -i "$srt_file" \
+                        -map 0 \
+                        -map 1 \
+                        -c:v copy \
+                        -c:a copy \
+                        -c:s copy \
+                        -c:s:"$new_subtitle_index" mov_text \
+                        "$tmp_mp4"
+                    mv -fv "$tmp_mp4" "$source_file"
+                    rm -fv "$srt_file"
+                fi
             fi
             ;;
         *.avi | *.mkv | *.m4a | *.aac)
