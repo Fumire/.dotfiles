@@ -41,6 +41,7 @@ utility/pdf2jpg.sh --help
 utility/pdf2jpg.sh document.pdf
 utility/pdf2jpg.sh document.pdf scans/document.pdf
 lang=en utility/whisper.sh audio.mp3 video.mp4
+SUBTITLE=true utility/whisper.sh video.mp4
 WHISPER_MODEL=turbo lang=en utility/whisper.sh audio.mp3
 WHISPER_MODEL_PATH=/path/to/model.bin utility/whisper.sh audio.mp3
 WHISPER_VAD=0 utility/whisper.sh audio.mp3
@@ -67,6 +68,14 @@ WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
 Leave `WHISPER_VAD_MODEL` unset, or set it to `auto`, to scan `WHISPER_VAD_MODEL_DIR` for the newest matching Silero VAD model. Set `WHISPER_VAD_MODEL_DIR` to scan a different directory. Explicit choices such as `WHISPER_VAD_MODEL=v5.1.2`, path values in `WHISPER_VAD_MODEL`, and `WHISPER_VAD_MODEL_PATH` still override auto-detection.
 
 VAD tuning variables map directly to whisper-cli options: `WHISPER_VAD_THRESHOLD`, `WHISPER_VAD_MIN_SPEECH_DURATION_MS`, `WHISPER_VAD_MIN_SILENCE_DURATION_MS`, `WHISPER_VAD_MAX_SPEECH_DURATION_S`, `WHISPER_VAD_SPEECH_PAD_MS`, and `WHISPER_VAD_SAMPLES_OVERLAP`.
+
+If `SUBTITLE=true`, whisper.sh muxes the generated `.srt` into the original MP4 file as a soft subtitle track (`mov_text`) after transcription. This avoids re-encoding (`-c copy`) and overwrites the original MP4:
+
+```sh
+ffmpeg -i input.mp4 -i input.srt -c copy -c:s mov_text output.mp4
+```
+
+(`output.mp4` is the temporary muxed file that is renamed back to the input path.)
 
 For MP4, AVI, MKV, M4A, and AAC inputs, `whisper.sh` extracts the audio to MP3 with `ffmpeg -i INPUT -vn -q:a 0 -map a OUTPUT.mp3` before running `whisper-cli`.
 
@@ -147,7 +156,7 @@ Dependencies vary by script:
 
 ## Notes
 
-Most shell scripts use `set -euo pipefail`, so they stop when a command fails or an expected variable is missing. Some scripts require or accept environment variables, such as `PORT` for `reporting.sh`, `CHECK_SYSTEM_ALERT_RECIPIENT` for the default `check_system.sh` alert recipient, `lang` for overriding the default Whisper language in `whisper.sh`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, or `WHISPER_MODEL_PATH` for overriding Whisper model selection, and `WHISPER_VAD_MODEL`, `WHISPER_VAD_MODEL_DIR`, or `WHISPER_VAD_MODEL_PATH` for VAD transcription.
+Most shell scripts use `set -euo pipefail`, so they stop when a command fails or an expected variable is missing. Some scripts require or accept environment variables, such as `PORT` for `reporting.sh`, `CHECK_SYSTEM_ALERT_RECIPIENT` for the default `check_system.sh` alert recipient, `lang` for overriding the default Whisper language in `whisper.sh`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, or `WHISPER_MODEL_PATH` for overriding Whisper model selection, `WHISPER_VAD_MODEL`, `WHISPER_VAD_MODEL_DIR`, or `WHISPER_VAD_MODEL_PATH` for VAD transcription, and `SUBTITLE=true` for soft subtitle muxing in MP4 files.
 
 The migration scripts create `md5.txt` and `tree.txt` manifests in the working directory. Both manifests exclude themselves and legacy `*.md5sum` sidecars so `migration_check.sh` can reproduce the same inputs after transfer. `migration_arrange.sh` and `migration_store.sh` delete empty files before creating the manifests. `migration_store.sh` uses `rsync --remove-source-files` to move transferred files to `root@kimura.kogic.kr:/BiO/Archive/` through SSH port `3030`, so run it only after confirming the destination and command behavior.
 
@@ -157,4 +166,4 @@ The migration scripts create `md5.txt` and `tree.txt` manifests in the working d
 
 ## Last Updated
 
-- 2026-07-30
+- 2026-08-05
