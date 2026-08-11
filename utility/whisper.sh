@@ -13,7 +13,7 @@ readonly DEFAULT_WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropb
 readonly LARGE_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3.bin"
 readonly TURBO_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3-turbo.bin"
 readonly DEFAULT_WHISPER_SUBTITLE_MAX_WORDS=7
-readonly WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model/ggml-silero-v6.2.0.bin"
+readonly WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model"
 readonly SILERO_VAD_MODEL_V5_1_2="${WHISPER_VAD_MODEL_DIR}/ggml-silero-v5.1.2.bin"
 readonly SILERO_VAD_MODEL_V6_2_0="${WHISPER_VAD_MODEL_DIR}/ggml-silero-v6.2.0.bin"
 
@@ -428,15 +428,7 @@ process_media_file() {
                     existing_subtitle_count="$(ffprobe -v error -select_streams s -show_entries stream=index -of csv=p=0 "$source_file" | wc -l | tr -d '[:space:]')"
                     local new_subtitle_index="$existing_subtitle_count"
 
-                    ffmpeg -y -i "$source_file" -i "$srt_file" \
-                        -map 0 \
-                        -map 1 \
-                        -c:v copy \
-                        -c:a copy \
-                        -c:s copy \
-                        -c:s:"$new_subtitle_index" mov_text \
-                        -metadata:s:s:"$new_subtitle_index" "language=${lang:-ko}" \
-                        "$tmp_mp4"
+                    ffmpeg -y -i "$source_file" -i "$srt_file" -map 0 -map 1 -c:v copy -c:a copy -c:s copy -c:s:"$new_subtitle_index" mov_text -metadata:s:s:"$new_subtitle_index" "language=${lang:-ko}" "$tmp_mp4"
                     mv -fv "$tmp_mp4" "$source_file"
                     rm -fv "$srt_file"
                 fi
