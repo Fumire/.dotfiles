@@ -12,7 +12,8 @@ readonly DEFAULT_WHISPER_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/3
 readonly DEFAULT_WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model"
 readonly LARGE_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3.bin"
 readonly TURBO_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3-turbo.bin"
-readonly WHISPER_VAD_MODEL_DIR="${WHISPER_VAD_MODEL_DIR:-$DEFAULT_WHISPER_VAD_MODEL_DIR}"
+readonly DEFAULT_WHISPER_SUBTITLE_MAX_WORDS=7
+readonly WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model/ggml-silero-v6.2.0.bin"
 readonly SILERO_VAD_MODEL_V5_1_2="${WHISPER_VAD_MODEL_DIR}/ggml-silero-v5.1.2.bin"
 readonly SILERO_VAD_MODEL_V6_2_0="${WHISPER_VAD_MODEL_DIR}/ggml-silero-v6.2.0.bin"
 
@@ -63,6 +64,7 @@ VAD model selection:
 
 Environment:
   lang                                  Spoken language passed to whisper-cli; default: ko
+  WHISPER_SUBTITLE_MAX_WORDS            Maximum words per subtitle line; 0 disables; default: 7
   WHISPER_MODEL                         Model choice: large or turbo; default: large
   WHISPER_MODEL_CHOICE                  Alias for WHISPER_MODEL
   WHISPER_MODEL_PATH                    Explicit Whisper model file path
@@ -71,12 +73,6 @@ Environment:
   WHISPER_VAD_MODEL_CHOICE              Alias for WHISPER_VAD_MODEL
   WHISPER_VAD_MODEL_PATH                Explicit VAD model file path
   WHISPER_VAD_MODEL_DIR                 VAD model directory scanned by auto; default: $DEFAULT_WHISPER_VAD_MODEL_DIR
-  WHISPER_VAD_THRESHOLD                 whisper-cli --vad-threshold
-  WHISPER_VAD_MIN_SPEECH_DURATION_MS    whisper-cli --vad-min-speech-duration-ms
-  WHISPER_VAD_MIN_SILENCE_DURATION_MS   whisper-cli --vad-min-silence-duration-ms
-  WHISPER_VAD_MAX_SPEECH_DURATION_S     whisper-cli --vad-max-speech-duration-s
-  WHISPER_VAD_SPEECH_PAD_MS             whisper-cli --vad-speech-pad-ms
-  WHISPER_VAD_SAMPLES_OVERLAP           whisper-cli --vad-samples-overlap
   SUBTITLE                              Set to true to mux generated SRT as soft subtitle track in MP4 (mov_text), overwrite the input MP4, and remove the generated SRT
 
 AAC decode errors:
@@ -253,25 +249,68 @@ append_whisper_vad_args() {
     fi
 
     WHISPER_ARGS+=("--vad" "--vad-model" "$vad_model_path")
+}
 
-    if [[ -n "${WHISPER_VAD_THRESHOLD:-}" ]]; then
-        WHISPER_ARGS+=("--vad-threshold" "$WHISPER_VAD_THRESHOLD")
-    fi
-    if [[ -n "${WHISPER_VAD_MIN_SPEECH_DURATION_MS:-}" ]]; then
-        WHISPER_ARGS+=("--vad-min-speech-duration-ms" "$WHISPER_VAD_MIN_SPEECH_DURATION_MS")
-    fi
-    if [[ -n "${WHISPER_VAD_MIN_SILENCE_DURATION_MS:-}" ]]; then
-        WHISPER_ARGS+=("--vad-min-silence-duration-ms" "$WHISPER_VAD_MIN_SILENCE_DURATION_MS")
-    fi
-    if [[ -n "${WHISPER_VAD_MAX_SPEECH_DURATION_S:-}" ]]; then
-        WHISPER_ARGS+=("--vad-max-speech-duration-s" "$WHISPER_VAD_MAX_SPEECH_DURATION_S")
-    fi
-    if [[ -n "${WHISPER_VAD_SPEECH_PAD_MS:-}" ]]; then
-        WHISPER_ARGS+=("--vad-speech-pad-ms" "$WHISPER_VAD_SPEECH_PAD_MS")
-    fi
-    if [[ -n "${WHISPER_VAD_SAMPLES_OVERLAP:-}" ]]; then
-        WHISPER_ARGS+=("--vad-samples-overlap" "$WHISPER_VAD_SAMPLES_OVERLAP")
-    fi
+normalize_srt_phrase_length() {
+    local srt_file="$1"
+    local max_words="${2:-$DEFAULT_WHISPER_SUBTITLE_MAX_WORDS}"
+    local temp_file="${srt_file}.words.$$"
+
+    [[ "$max_words" =~ ^[1-9][0-9]*$ ]] || return 0
+
+    awk -v max_words="$max_words" '
+        BEGIN { RS = ""; ORS = "\n\n" }
+
+        function wrap_text(line,   n, i, count, output, token, words) {
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+            if (line == "") {
+                return ""
+            }
+
+            n = split(line, words, /[[:space:]]+/)
+            output = ""
+            count = 0
+            for (i = 1; i <= n; i++) {
+                token = words[i]
+                if (token == "") {
+                    continue
+                }
+                if (count == 0) {
+                    output = token
+                    count = 1
+                } else if (count < max_words) {
+                    output = output " " token
+                    count++
+                } else {
+                    output = output "\n" token
+                    count = 1
+                }
+            }
+            return output
+        }
+
+        {
+            n = split($0, lines, "\n")
+            if (n < 3) {
+                printf "%s\n", $0
+                next
+            }
+
+            printf "%s\n%s\n", lines[1], lines[2]
+            for (i = 3; i <= n; i++) {
+                if (lines[i] == "") {
+                    continue
+                }
+                wrapped = wrap_text(lines[i])
+                if (wrapped != "") {
+                    printf "%s\n", wrapped
+                }
+            }
+            printf "\n"
+        }
+    ' "$srt_file" > "$temp_file" || return 1
+
+    mv -f "$temp_file" "$srt_file"
 }
 
 run_whisper() {
@@ -295,6 +334,7 @@ run_whisper() {
 
     whisper-cli "${WHISPER_ARGS[@]}"
     mv -v "${input_file}.srt" "$output_srt"
+    normalize_srt_phrase_length "$output_srt" "${WHISPER_SUBTITLE_MAX_WORDS:-$DEFAULT_WHISPER_SUBTITLE_MAX_WORDS}"
 }
 
 run_ffmpeg_conversion() {
@@ -395,6 +435,7 @@ process_media_file() {
                         -c:a copy \
                         -c:s copy \
                         -c:s:"$new_subtitle_index" mov_text \
+                        -metadata:s:s:"$new_subtitle_index" "language=${lang:-ko}" \
                         "$tmp_mp4"
                     mv -fv "$tmp_mp4" "$source_file"
                     rm -fv "$srt_file"

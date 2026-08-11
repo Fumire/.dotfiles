@@ -67,7 +67,7 @@ WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
 
 Leave `WHISPER_VAD_MODEL` unset, or set it to `auto`, to scan `WHISPER_VAD_MODEL_DIR` for the newest matching Silero VAD model. Set `WHISPER_VAD_MODEL_DIR` to scan a different directory. Explicit choices such as `WHISPER_VAD_MODEL=v5.1.2`, path values in `WHISPER_VAD_MODEL`, and `WHISPER_VAD_MODEL_PATH` still override auto-detection.
 
-VAD tuning variables map directly to whisper-cli options: `WHISPER_VAD_THRESHOLD`, `WHISPER_VAD_MIN_SPEECH_DURATION_MS`, `WHISPER_VAD_MIN_SILENCE_DURATION_MS`, `WHISPER_VAD_MAX_SPEECH_DURATION_S`, `WHISPER_VAD_SPEECH_PAD_MS`, and `WHISPER_VAD_SAMPLES_OVERLAP`.
+Subtitle line wrapping is limited to `WHISPER_SUBTITLE_MAX_WORDS` words per line (default: 7). Set `WHISPER_SUBTITLE_MAX_WORDS=0` to disable post-processing wrapping.
 
 If `SUBTITLE=true`, whisper.sh muxes the generated `.srt` into the original MP4 file as a soft subtitle track (`mov_text`) after transcription. It preserves existing video/audio/subtitle tracks by remuxing streams with `copy`, overwrites the original MP4, and removes the temporary `.srt` after successful muxing.  
 If the generated `.srt` is empty (`0 byte`), whisper.sh skips mp4 muxing and only removes the `.srt` file.
