@@ -13,6 +13,7 @@ macOS-specific setup files for this dotfiles repository. This folder mainly mana
 | `languagetool.cfg` | LanguageTool application configuration. |
 | `mackup.cfg` | Mackup configuration using Dropbox storage while ignoring dotfiles already managed by this repository. |
 | `Makefile` | Provides targets for Homebrew bundle installation, macOS defaults, and selected config symlinks. |
+| `static_ip.sh` | Applies the supplied static IPv4, DNS, and search-domain settings to the USB LAN service. |
 | `starting.sh` | Applies macOS defaults for Finder, Dock, Safari, Terminal, screenshots, keyboard, trackpad, date/time, and related settings. |
 
 ## Requirements
@@ -111,6 +112,44 @@ The `starting.sh` script applies these macOS settings:
 | App restart | Restarts affected apps such as Dock, Finder, Safari, Mail, Calendar, Contacts, and SystemUIServer so settings take effect. |
 
 Review `starting.sh` before running it on a machine that already has customized macOS preferences.
+
+## Static Ethernet IP
+
+`static_ip.sh` applies the following settings to the `USB 10/100/1000 LAN`
+network service:
+
+| Setting | Value |
+| --- | --- |
+| IPv4 address | `172.27.35.<last octet>` |
+| Subnet mask | `255.255.255.0` |
+| Router | `172.27.35.254` |
+| DNS servers | `203.237.32.100`, `203.237.32.101`, `1.1.1.1`, `1.0.0.1` |
+| Search domain | `gist.ac.kr` |
+| IPv6 | Automatically |
+
+Run it with the last octet as an argument:
+
+```sh
+bash mac/static_ip.sh 23
+```
+
+Show usage:
+
+```sh
+bash mac/static_ip.sh --help
+```
+
+The script checks that the exact network-service name exists, prints the
+current values, applies the settings, and prints the resulting values. The
+service name can be overridden when macOS displays a different name:
+
+```sh
+NETWORK_SERVICE="Ethernet" bash mac/static_ip.sh 24
+```
+
+Changing network settings can interrupt the current connection. The
+`USB 10/100/1000 LAN` service may still display `Not connected` until the
+Ethernet adapter and cable have a physical link.
 
 ## Config Symlinks
 

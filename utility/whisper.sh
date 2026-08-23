@@ -258,7 +258,7 @@ normalize_srt_phrase_length() {
 
     [[ "$max_words" =~ ^[1-9][0-9]*$ ]] || return 0
 
-    awk -v max_words="$max_words" '
+    LC_ALL=C awk -v max_words="$max_words" '
         BEGIN { RS = ""; ORS = "\n\n" }
 
         function wrap_text(line,   n, i, count, output, token, words) {
