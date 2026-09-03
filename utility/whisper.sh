@@ -13,67 +13,82 @@ readonly DEFAULT_WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropb
 readonly LARGE_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3.bin"
 readonly TURBO_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3-turbo.bin"
 readonly DEFAULT_WHISPER_SUBTITLE_MAX_WORDS=7
-readonly WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model"
-readonly SILERO_VAD_MODEL_V5_1_2="${WHISPER_VAD_MODEL_DIR}/ggml-silero-v5.1.2.bin"
-readonly SILERO_VAD_MODEL_V6_2_0="${WHISPER_VAD_MODEL_DIR}/ggml-silero-v6.2.0.bin"
+readonly SILERO_VAD_MODEL_V5_1_2_SUFFIX="/ggml-silero-v5.1.2.bin"
+readonly SILERO_VAD_MODEL_V6_2_0_SUFFIX="/ggml-silero-v6.2.0.bin"
+
+declare -a INPUT_FILES=()
+whisper_lang="${lang:-ko}"
+whisper_model_path="${WHISPER_MODEL_PATH:-}"
+whisper_model_choice="${WHISPER_MODEL_CHOICE:-${WHISPER_MODEL:-large}}"
+whisper_vad="${WHISPER_VAD:-}"
+whisper_vad_model_path="${WHISPER_VAD_MODEL_PATH:-}"
+whisper_vad_model_choice="${WHISPER_VAD_MODEL_CHOICE:-${WHISPER_VAD_MODEL:-auto}}"
+whisper_vad_model_dir="${WHISPER_VAD_MODEL_DIR:-$DEFAULT_WHISPER_VAD_MODEL_DIR}"
+whisper_subtitle="${SUBTITLE:-false}"
+whisper_subtitle_max_words="${WHISPER_SUBTITLE_MAX_WORDS:-$DEFAULT_WHISPER_SUBTITLE_MAX_WORDS}"
 
 show_help() {
     cat <<EOF
 Usage:
-  utility/whisper.sh [FILE ...]
+  utility/whisper.sh [OPTIONS]... [FILE ...]
 
 Generate .srt subtitle files from mp4, avi, mkv, m4a, aac, or mp3 inputs.
 Files with an existing matching .srt are skipped.
 Each input is announced as (current/total) before processing.
-VAD is enabled by default; set WHISPER_VAD=0 to disable it.
+VAD is enabled by default; use --no-vad to disable it.
 
 Examples:
   utility/whisper.sh video.mp4 audio.mp3
-  lang=en utility/whisper.sh audio.mp3
-  WHISPER_MODEL=turbo utility/whisper.sh audio.mp3
-  WHISPER_VAD=0 utility/whisper.sh audio.mp3
-  WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
+  utility/whisper.sh --lang en audio.mp3
+  utility/whisper.sh --model turbo audio.mp3
+  utility/whisper.sh --no-vad audio.mp3
+  utility/whisper.sh --vad-model v5.1.2 audio.mp3
 
 Model selection:
   Default and recommended:
-    WHISPER_MODEL=large
+  --model large
     $LARGE_WHISPER_MODEL
 
   Faster turbo model:
-    WHISPER_MODEL=turbo
+    --model turbo
     $TURBO_WHISPER_MODEL
 
   Explicit model path override:
-    WHISPER_MODEL_PATH=/path/to/model.bin
+    --model-path /path/to/model.bin
 
 VAD model selection:
   Default auto-detected VAD model:
-    WHISPER_VAD_MODEL=auto
-    newest ggml-silero-v*.bin in $WHISPER_VAD_MODEL_DIR
-    fallback: $SILERO_VAD_MODEL_V6_2_0
+  --vad-model auto
+    newest ggml-silero-v*.bin in $DEFAULT_WHISPER_VAD_MODEL_DIR
+    fallback: $DEFAULT_WHISPER_VAD_MODEL_DIR/ggml-silero-v6.2.0.bin
 
   Explicit VAD model choices:
-    WHISPER_VAD_MODEL=v6.2.0
-    $SILERO_VAD_MODEL_V6_2_0
+    --vad-model v6.2.0
+    $DEFAULT_WHISPER_VAD_MODEL_DIR/ggml-silero-v6.2.0.bin
 
-    WHISPER_VAD_MODEL=v5.1.2
-    $SILERO_VAD_MODEL_V5_1_2
+    --vad-model v5.1.2
+    $DEFAULT_WHISPER_VAD_MODEL_DIR/ggml-silero-v5.1.2.bin
 
   Explicit VAD model path override:
-    WHISPER_VAD_MODEL_PATH=/path/to/vad-model.bin
+    --vad-model-path /path/to/vad-model.bin
 
 Environment:
-  lang                                  Spoken language passed to whisper-cli; default: ko
-  WHISPER_SUBTITLE_MAX_WORDS            Maximum words per subtitle line; 0 disables; default: 7
-  WHISPER_MODEL                         Model choice: large or turbo; default: large
-  WHISPER_MODEL_CHOICE                  Alias for WHISPER_MODEL
-  WHISPER_MODEL_PATH                    Explicit Whisper model file path
-  WHISPER_VAD                           Disable VAD when set to 0, false, no, or off
-  WHISPER_VAD_MODEL                     VAD model choice: auto, v6.2.0, v5.1.2, or path; default: auto
-  WHISPER_VAD_MODEL_CHOICE              Alias for WHISPER_VAD_MODEL
-  WHISPER_VAD_MODEL_PATH                Explicit VAD model file path
-  WHISPER_VAD_MODEL_DIR                 VAD model directory scanned by auto; default: $DEFAULT_WHISPER_VAD_MODEL_DIR
-  SUBTITLE                              Set to true to mux generated SRT as soft subtitle track in MP4 (mov_text), overwrite the input MP4, and remove the generated SRT
+  --lang                               Spoken language passed to whisper-cli; default: ko
+  --subtitle-max-words                 Maximum words per subtitle line; 0 disables; default: 7
+  --model                              Model choice: large or turbo; default: large
+  --model-choice                       Alias for --model
+  --model-path                         Explicit Whisper model file path
+  --vad                                Enable/disable VAD; false/no/off/0 disables
+  --vad-model                          VAD model choice: auto, v6.2.0, v5.1.2, or path; default: auto
+  --vad-model-choice                   Alias for --vad-model
+  --vad-model-path                     Explicit VAD model file path
+  --vad-model-dir                      VAD model directory scanned by auto; default: $DEFAULT_WHISPER_VAD_MODEL_DIR
+  --subtitle                           Set to true to mux generated SRT as soft subtitle track in MP4 (mov_text), overwrite the input MP4, and remove the generated SRT
+
+Legacy env vars (still supported):
+  WHISPER_MODEL, WHISPER_MODEL_CHOICE, WHISPER_MODEL_PATH, WHISPER_VAD,
+  WHISPER_VAD_MODEL, WHISPER_VAD_MODEL_CHOICE, WHISPER_VAD_MODEL_PATH, WHISPER_VAD_MODEL_DIR,
+  WHISPER_SUBTITLE_MAX_WORDS, lang, SUBTITLE
 
 AAC decode errors:
   If ffmpeg fails while decoding corrupt AAC packets, whisper.sh retries the
@@ -84,10 +99,163 @@ Options:
 EOF
 }
 
-if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-    show_help
-    exit 0
-fi
+parse_args() {
+    local -a file_args=()
+    local key
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h | --help)
+                show_help
+                exit 0
+                ;;
+            --lang)
+                if [[ $# -lt 2 || "${2:0:1}" == "-" ]]; then
+                    echo "Missing value for --lang" >&2
+                    exit 1
+                fi
+                whisper_lang="$2"
+                shift 2
+                ;;
+            --lang=*)
+                whisper_lang="${1#*=}"
+                shift
+                ;;
+            --model | --model-choice)
+                if [[ $# -lt 2 || "${2:0:1}" == "-" ]]; then
+                    echo "Missing value for $1" >&2
+                    exit 1
+                fi
+                whisper_model_choice="$2"
+                shift 2
+                ;;
+            --model=*)
+                whisper_model_choice="${1#*=}"
+                shift
+                ;;
+            --model-path)
+                if [[ $# -lt 2 || "${2:0:1}" == "-" ]]; then
+                    echo "Missing value for --model-path" >&2
+                    exit 1
+                fi
+                whisper_model_path="$2"
+                shift 2
+                ;;
+            --model-path=*)
+                whisper_model_path="${1#*=}"
+                shift
+                ;;
+            --vad)
+                if [[ $# -ge 2 && "${2:0:1}" != "-" ]]; then
+                    whisper_vad="$2"
+                    shift 2
+                else
+                    whisper_vad="1"
+                    shift
+                fi
+                ;;
+            --vad=*)
+                whisper_vad="${1#*=}"
+                shift
+                ;;
+            --no-vad)
+                whisper_vad="0"
+                shift
+                ;;
+            --vad-model | --vad-model-choice)
+                if [[ $# -lt 2 || "${2:0:1}" == "-" ]]; then
+                    echo "Missing value for $1" >&2
+                    exit 1
+                fi
+                whisper_vad_model_choice="$2"
+                shift 2
+                ;;
+            --vad-model=*)
+                whisper_vad_model_choice="${1#*=}"
+                shift
+                ;;
+            --vad-model-path)
+                if [[ $# -lt 2 || "${2:0:1}" == "-" ]]; then
+                    echo "Missing value for --vad-model-path" >&2
+                    exit 1
+                fi
+                whisper_vad_model_path="$2"
+                shift 2
+                ;;
+            --vad-model-path=*)
+                whisper_vad_model_path="${1#*=}"
+                shift
+                ;;
+            --vad-model-dir)
+                if [[ $# -lt 2 || "${2:0:1}" == "-" ]]; then
+                    echo "Missing value for --vad-model-dir" >&2
+                    exit 1
+                fi
+                whisper_vad_model_dir="$2"
+                shift 2
+                ;;
+            --vad-model-dir=*)
+                whisper_vad_model_dir="${1#*=}"
+                shift
+                ;;
+            --subtitle)
+                if [[ $# -ge 2 && "${2:0:1}" != "-" ]]; then
+                    whisper_subtitle="$2"
+                    shift 2
+                else
+                    whisper_subtitle="true"
+                    shift
+                fi
+                ;;
+            --subtitle=*)
+                whisper_subtitle="${1#*=}"
+                shift
+                ;;
+            --no-subtitle)
+                whisper_subtitle="false"
+                shift
+                ;;
+            --subtitle-max-words)
+                if [[ $# -lt 2 || "${2:0:1}" == "-" ]]; then
+                    echo "Missing value for --subtitle-max-words" >&2
+                    exit 1
+                fi
+                whisper_subtitle_max_words="$2"
+                shift 2
+                ;;
+            --subtitle-max-words=*)
+                whisper_subtitle_max_words="${1#*=}"
+                shift
+                ;;
+            --)
+                shift
+                for key in "$@"; do
+                    file_args+=("$key")
+                done
+                break
+                ;;
+            --*)
+                echo "Unknown option: $1" >&2
+                show_help
+                exit 1
+                ;;
+            *)
+                file_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    if (( ${#file_args[@]} == 0 )); then
+        echo "No input files were provided." >&2
+        show_help
+        exit 1
+    fi
+
+    INPUT_FILES=("${file_args[@]}")
+}
+
+parse_args "$@"
 
 if [[ $(uname -s) != "Darwin" ]]; then
     echo "whisper.sh is only supported on macOS." >&2
@@ -97,12 +265,12 @@ fi
 export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 
 resolve_whisper_model() {
-    if [[ -n "${WHISPER_MODEL_PATH:-}" ]]; then
-        printf '%s\n' "$WHISPER_MODEL_PATH"
+    if [[ -n "${whisper_model_path}" ]]; then
+        printf '%s\n' "$whisper_model_path"
         return
     fi
 
-    local model_choice="${WHISPER_MODEL_CHOICE:-${WHISPER_MODEL:-large}}"
+    local model_choice="${whisper_model_choice}"
     case "$model_choice" in
         large | LARGE)
             printf '%s\n' "$LARGE_WHISPER_MODEL"
@@ -114,7 +282,7 @@ resolve_whisper_model() {
             printf '%s\n' "$model_choice"
             ;;
         *)
-            echo "Unknown Whisper model choice: ${model_choice}. Use large, turbo, or set WHISPER_MODEL_PATH to a model file." >&2
+            echo "Unknown Whisper model choice: ${model_choice}. Use large, turbo, or set --model-path to a model file." >&2
             exit 1
             ;;
     esac
@@ -134,7 +302,7 @@ is_falsey() {
 }
 
 whisper_vad_enabled() {
-    if is_falsey "${WHISPER_VAD:-}"; then
+    if is_falsey "${whisper_vad}"; then
         return 1
     fi
 
@@ -192,7 +360,7 @@ detect_newest_whisper_vad_model() {
     local newest_model=""
     local newest_version=""
 
-    for model_file in "${WHISPER_VAD_MODEL_DIR}"/ggml-silero-v*.bin; do
+    for model_file in "${whisper_vad_model_dir}"/ggml-silero-v*.bin; do
         [[ -e "$model_file" ]] || continue
 
         if ! model_version="$(extract_whisper_vad_model_version "$model_file")"; then
@@ -214,27 +382,29 @@ detect_newest_whisper_vad_model() {
 }
 
 resolve_whisper_vad_model() {
-    if [[ -n "${WHISPER_VAD_MODEL_PATH:-}" ]]; then
-        printf '%s\n' "$WHISPER_VAD_MODEL_PATH"
+    if [[ -n "${whisper_vad_model_path}" ]]; then
+        printf '%s\n' "$whisper_vad_model_path"
         return
     fi
 
-    local vad_model_choice="${WHISPER_VAD_MODEL_CHOICE:-${WHISPER_VAD_MODEL:-auto}}"
+    local vad_model_choice="${whisper_vad_model_choice}"
+    local v5_1_2_model="${whisper_vad_model_dir%/}${SILERO_VAD_MODEL_V5_1_2_SUFFIX}"
+    local v6_2_0_model="${whisper_vad_model_dir%/}${SILERO_VAD_MODEL_V6_2_0_SUFFIX}"
     case "$vad_model_choice" in
         auto | AUTO)
-            detect_newest_whisper_vad_model || printf '%s\n' "$SILERO_VAD_MODEL_V6_2_0"
+            detect_newest_whisper_vad_model || printf '%s\n' "$v6_2_0_model"
             ;;
         v6.2.0 | 6.2.0 | v6 | V6)
-            printf '%s\n' "$SILERO_VAD_MODEL_V6_2_0"
+            printf '%s\n' "$v6_2_0_model"
             ;;
         v5.1.2 | 5.1.2 | v5 | V5)
-            printf '%s\n' "$SILERO_VAD_MODEL_V5_1_2"
+            printf '%s\n' "$v5_1_2_model"
             ;;
         /* | ./* | ../*)
             printf '%s\n' "$vad_model_choice"
             ;;
         *)
-            echo "Unknown VAD model choice: ${vad_model_choice}. Use auto, v6.2.0, v5.1.2, or set WHISPER_VAD_MODEL_PATH to a model file." >&2
+            echo "Unknown VAD model choice: ${vad_model_choice}. Use auto, v6.2.0, v5.1.2, or set --vad-model-path to a model file." >&2
             exit 1
             ;;
     esac
@@ -244,7 +414,7 @@ append_whisper_vad_args() {
     local vad_model_path
 
     if ! vad_model_path="$(resolve_whisper_vad_model)"; then
-        echo "VAD is enabled, but no VAD model was found. Set WHISPER_VAD_MODEL to auto, v6.2.0, or v5.1.2, or set WHISPER_VAD_MODEL_PATH." >&2
+        echo "VAD is enabled, but no VAD model was found. Set --vad-model to auto, v6.2.0, or v5.1.2, or set --vad-model-path." >&2
         exit 1
     fi
 
@@ -319,12 +489,16 @@ run_whisper() {
     local WHISPER_ARGS=(
         "-m" "$WHISPER_MODEL_PATH"
         "--output-srt"
-        "--language" "${lang:-ko}"
+        "--language" "${whisper_lang}"
         "--threads" "8"
         "--processors" "8"
         "--print-colors"
         "--print-confidence"
     )
+
+    if ! [[ "$whisper_subtitle_max_words" =~ ^[0-9]+$ ]]; then
+        whisper_subtitle_max_words="$DEFAULT_WHISPER_SUBTITLE_MAX_WORDS"
+    fi
 
     if whisper_vad_enabled; then
         append_whisper_vad_args
@@ -334,7 +508,7 @@ run_whisper() {
 
     whisper-cli "${WHISPER_ARGS[@]}"
     mv -v "${input_file}.srt" "$output_srt"
-    normalize_srt_phrase_length "$output_srt" "${WHISPER_SUBTITLE_MAX_WORDS:-$DEFAULT_WHISPER_SUBTITLE_MAX_WORDS}"
+    normalize_srt_phrase_length "$output_srt" "$whisper_subtitle_max_words"
 }
 
 run_ffmpeg_conversion() {
@@ -419,7 +593,7 @@ process_media_file() {
             run_whisper "$mp3_file" "$srt_file"
             rm -fv "$mp3_file"
 
-            if [[ "${SUBTITLE:-false}" == "true" ]]; then
+            if [[ "${whisper_subtitle}" == "true" ]]; then
                 if [[ ! -s "$srt_file" ]]; then
                     rm -fv "$srt_file"
                 else
@@ -428,7 +602,7 @@ process_media_file() {
                     existing_subtitle_count="$(ffprobe -v error -select_streams s -show_entries stream=index -of csv=p=0 "$source_file" | wc -l | tr -d '[:space:]')"
                     local new_subtitle_index="$existing_subtitle_count"
 
-                    ffmpeg -y -i "$source_file" -i "$srt_file" -map 0 -map 1 -c:v copy -c:a copy -c:s copy -c:s:"$new_subtitle_index" mov_text -metadata:s:s:"$new_subtitle_index" "language=${lang:-ko}" "$tmp_mp4"
+                    ffmpeg -y -i "$source_file" -i "$srt_file" -map 0 -map 1 -c:v copy -c:a copy -c:s copy -c:s:"$new_subtitle_index" mov_text -metadata:s:s:"$new_subtitle_index" "language=${whisper_lang}" "$tmp_mp4"
                     mv -fv "$tmp_mp4" "$source_file"
                     rm -fv "$srt_file"
                 fi
@@ -445,10 +619,10 @@ process_media_file() {
     esac
 }
 
-total_input_files="$#"
+total_input_files="${#INPUT_FILES[@]}"
 current_input_file=0
 
-for f in "$@"; do
+for f in "${INPUT_FILES[@]}"; do
     current_input_file=$((current_input_file + 1))
     printf '(%d/%d) %s\n' "$current_input_file" "$total_input_files" "$f"
     process_media_file "$f"

@@ -40,24 +40,24 @@ utility/whisper.sh --help
 utility/pdf2jpg.sh --help
 utility/pdf2jpg.sh document.pdf
 utility/pdf2jpg.sh document.pdf scans/document.pdf
-lang=en utility/whisper.sh audio.mp3 video.mp4
-SUBTITLE=true utility/whisper.sh video.mp4
-WHISPER_MODEL=turbo lang=en utility/whisper.sh audio.mp3
-WHISPER_MODEL_PATH=/path/to/model.bin utility/whisper.sh audio.mp3
-WHISPER_VAD=0 utility/whisper.sh audio.mp3
-WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
+utility/whisper.sh --lang en audio.mp3 video.mp4
+utility/whisper.sh --subtitle true video.mp4
+utility/whisper.sh --model turbo --lang en audio.mp3
+utility/whisper.sh --model-path /path/to/model.bin audio.mp3
+utility/whisper.sh --no-vad audio.mp3
+utility/whisper.sh --vad-model v5.1.2 audio.mp3
 ```
 
 `pdf2jpg.sh` requires at least one PDF file and writes JPEGs next to each PDF, using the original input path without the trailing `.pdf` as the `pdftoppm` output prefix.
 
-`whisper.sh` announces each input as `(current/total) FILE`, skips files that already have a matching `.srt`, uses Korean by default (`lang=ko`), and recommends the large model as the default. Set `WHISPER_MODEL=turbo` or `WHISPER_MODEL_CHOICE=turbo` to use the turbo model. Set `WHISPER_MODEL_PATH` for a specific model file.
+`whisper.sh` announces each input as `(current/total) FILE`, skips files that already have a matching `.srt`, uses Korean by default (`--lang ko`), and recommends the large model as the default. Set `--model turbo` or `--model-choice turbo` to use the turbo model. Set `--model-path` for a specific model file.
 
 | Choice | Model path |
 | --- | --- |
 | `large` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3.bin` |
 | `turbo` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3-turbo.bin` |
 
-`whisper-cli` Voice Activity Detection is enabled by default. Set `WHISPER_VAD=0`, `false`, `no`, or `off` to disable it. VAD auto-detects the newest available Silero model by default and falls back to the v6.2.0 path when no matching model is found. Set `WHISPER_VAD_MODEL=v5.1.2` for the previous model, `WHISPER_VAD_MODEL=v6.2.0` for the current fallback model explicitly, or `WHISPER_VAD_MODEL_PATH` for a specific VAD model file.
+`whisper-cli` Voice Activity Detection is enabled by default. Set `--no-vad` or `--vad 0`, `false`, `no`, or `off` to disable it. VAD auto-detects the newest available Silero model by default and falls back to the v6.2.0 path when no matching model is found. Set `--vad-model v5.1.2` for the previous model, `--vad-model v6.2.0` for the current fallback model explicitly, or `--vad-model-path` for a specific VAD model file.
 
 | VAD choice | Model path |
 | --- | --- |
@@ -65,11 +65,11 @@ WHISPER_VAD_MODEL=v5.1.2 utility/whisper.sh audio.mp3
 | `v6.2.0` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model/ggml-silero-v6.2.0.bin` |
 | `v5.1.2` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model/ggml-silero-v5.1.2.bin` |
 
-Leave `WHISPER_VAD_MODEL` unset, or set it to `auto`, to scan `WHISPER_VAD_MODEL_DIR` for the newest matching Silero VAD model. Set `WHISPER_VAD_MODEL_DIR` to scan a different directory. Explicit choices such as `WHISPER_VAD_MODEL=v5.1.2`, path values in `WHISPER_VAD_MODEL`, and `WHISPER_VAD_MODEL_PATH` still override auto-detection.
+Leave `--vad-model` unset, or set it to `auto`, to scan `--vad-model-dir` for the newest matching Silero VAD model. Set `--vad-model-dir` to scan a different directory. Explicit choices such as `--vad-model=v5.1.2`, path values in `--vad-model`, and `--vad-model-path` still override auto-detection.
 
-Subtitle line wrapping is limited to `WHISPER_SUBTITLE_MAX_WORDS` words per line (default: 7). Set `WHISPER_SUBTITLE_MAX_WORDS=0` to disable post-processing wrapping.
+Subtitle line wrapping is limited to `--subtitle-max-words` words per line (default: 7). Set `--subtitle-max-words 0` to disable post-processing wrapping.
 
-If `SUBTITLE=true`, whisper.sh muxes the generated `.srt` into the original MP4 file as a soft subtitle track (`mov_text`) after transcription. It preserves existing video/audio/subtitle tracks by remuxing streams with `copy`, overwrites the original MP4, and removes the temporary `.srt` after successful muxing.  
+If `--subtitle true`, whisper.sh muxes the generated `.srt` into the original MP4 file as a soft subtitle track (`mov_text`) after transcription. It preserves existing video/audio/subtitle tracks by remuxing streams with `copy`, overwrites the original MP4, and removes the temporary `.srt` after successful muxing.  
 If the generated `.srt` is empty (`0 byte`), whisper.sh skips mp4 muxing and only removes the `.srt` file.
 
 ```sh
@@ -160,7 +160,9 @@ Dependencies vary by script:
 
 ## Notes
 
-Most shell scripts use `set -euo pipefail`, so they stop when a command fails or an expected variable is missing. Some scripts require or accept environment variables, such as `PORT` for `reporting.sh`, `CHECK_SYSTEM_ALERT_RECIPIENT` for the default `check_system.sh` alert recipient, `lang` for overriding the default Whisper language in `whisper.sh`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, or `WHISPER_MODEL_PATH` for overriding Whisper model selection, `WHISPER_VAD_MODEL`, `WHISPER_VAD_MODEL_DIR`, or `WHISPER_VAD_MODEL_PATH` for VAD transcription, and `SUBTITLE=true` for soft subtitle muxing in MP4 files.
+Most shell scripts use `set -euo pipefail`, so they stop when a command fails or an expected variable is missing. Some scripts require or accept environment variables, such as `PORT` for `reporting.sh`, `CHECK_SYSTEM_ALERT_RECIPIENT` for the default `check_system.sh` alert recipient.
+
+For `whisper.sh`, command arguments are preferred (`--lang`, `--model`, `--vad-model`, `--subtitle`, etc.), while environment variables (`lang`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, `WHISPER_MODEL_PATH`, `WHISPER_VAD`, `WHISPER_VAD_MODEL`, `WHISPER_VAD_MODEL_CHOICE`, `WHISPER_VAD_MODEL_PATH`, `WHISPER_VAD_MODEL_DIR`, `WHISPER_SUBTITLE_MAX_WORDS`, `SUBTITLE`) are still supported for compatibility.
 
 The migration scripts create `md5.txt` and `tree.txt` manifests in the working directory. Both manifests exclude themselves and legacy `*.md5sum` sidecars so `migration_check.sh` can reproduce the same inputs after transfer. `migration_arrange.sh` and `migration_store.sh` delete empty files before creating the manifests. `migration_store.sh` uses `rsync --remove-source-files` to move transferred files to `root@kimura.kogic.kr:/BiO/Archive/` through SSH port `3030`, so run it only after confirming the destination and command behavior.
 
