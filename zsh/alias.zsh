@@ -26,7 +26,7 @@ if [[ $(uname) == "Darwin" ]]; then
     function copyssh() {
         local key_path
 
-        for key_path in "$HOME/.ssh/id_ed25519.pub" "$HOME/.ssh/id_rsa.pub"; do
+        for key_path in "$HOME/.ssh/id_rsa.pub" "$HOME/.ssh/id_ed25519.pub"; do
             if [[ -f "$key_path" ]]; then
                 pbcopy < "$key_path"
                 return
