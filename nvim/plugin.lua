@@ -51,6 +51,26 @@ local function repair_treesitter_parsers()
   end)
 end
 
+local pyright_diagnostics = vim.api.nvim_create_augroup("PyrightDiagnostics", { clear = true })
+vim.api.nvim_create_autocmd("LspAttach", {
+  group = pyright_diagnostics,
+  callback = function(event)
+    local client = vim.lsp.get_client_by_id(event.data.client_id)
+    if not client or client.name ~= "pyright" then
+      return
+    end
+
+    local namespace = vim.lsp.diagnostic.get_namespace(client.id)
+    vim.diagnostic.config({
+      severity = {
+        vim.diagnostic.severity.ERROR,
+        vim.diagnostic.severity.INFO,
+        vim.diagnostic.severity.HINT,
+      },
+    }, namespace)
+  end,
+})
+
 return {
     -- add gruvbox
     { "ellisonleao/gruvbox.nvim" },
@@ -135,7 +155,15 @@ return {
         opts = {
             servers = {
                 -- pyright will be automatically installed with mason and loaded with lspconfig
-                pyright = {},
+                pyright = {
+                    settings = {
+                        python = {
+                            analysis = {
+                                typeCheckingMode = "off",
+                            },
+                        },
+                    },
+                },
             },
         },
     },

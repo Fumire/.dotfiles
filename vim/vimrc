@@ -74,7 +74,7 @@ let g:ale_python_ruff_options = '--select E,F,W,N --ignore E501'
 let g:ale_python_mypy_options = '--ignore-missing-imports --install-types --non-interactive'
 let g:ale_disable_lsp = 0
 let g:ale_completion_enabled = 1
-let g:ale_completion_delay = 350
+let g:ale_completion_delay = 100
 set completeopt=menu,menuone,noinsert,noselect
 set omnifunc=ale#completion#OmniFunc
 
