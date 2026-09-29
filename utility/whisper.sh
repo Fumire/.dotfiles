@@ -521,7 +521,7 @@ run_ffmpeg_conversion() {
 
     case "$conversion_type" in
         video)
-            if ffmpeg -y -i "$source_file" -q:a 0 -map a "$mp3_file"; then
+            if ffmpeg -y -i "$source_file" -q:a 0 -map 0:a:0 "$mp3_file"; then
                 return
             fi
             ;;
@@ -545,7 +545,7 @@ run_ffmpeg_conversion() {
 
     case "$conversion_type" in
         video)
-            ffmpeg -y -fflags +discardcorrupt -err_detect ignore_err -i "$source_file" -q:a 0 -map a -max_error_rate 1 "$mp3_file"
+            ffmpeg -y -fflags +discardcorrupt -err_detect ignore_err -i "$source_file" -q:a 0 -map 0:a:0 -max_error_rate 1 "$mp3_file"
             ;;
         m4a)
             ffmpeg -y -fflags +discardcorrupt -err_detect ignore_err -i "$source_file" -c:v copy -c:a libmp3lame -q:a 4 -max_error_rate 1 "$mp3_file"
