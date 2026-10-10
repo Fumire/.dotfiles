@@ -107,6 +107,9 @@ defaults write com.apple.iCal "Show Week Numbers" -bool true
 # Calendar: start weeks on Monday
 defaults write com.apple.iCal "first day of week" -int 1
 
+# Disable the redesigned text cursor in UIKit-based apps
+defaults write /Library/Preferences/FeatureFlags/Domain/UIKit.plist redesigned_text_cursor -dict-add Enabled -bool NO
+
 ###############################################################################
 # Kill affected applications                                                  #
 ###############################################################################
