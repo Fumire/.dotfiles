@@ -84,7 +84,7 @@ function gi() {
 }
 
 # Background execute
-function bkr() { (nohup "$@" 1>"$@-$(uuid).txt" 2>&1 &) ;}
+function bkr() { (nohup "$@" 1>"$(uuid).txt" 2>&1 &) ;}
 
 # Count files & directories
 function count() { printf '%s\n' "$#" ;}

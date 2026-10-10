@@ -90,26 +90,18 @@ __git_prompt_git () {
     GIT_OPTIONAL_LOCKS=0 command timeout 1.0s git "$@"
 }
 
-# Generate UUID
+# Generate a UUID from an operating-system random source
 uuid () {
-    C="89ab"
+    local uuid_value
 
-    for ((N=0;N<16;++N)); do
-        B="$((RANDOM%256))"
+    if command -v uuidgen > /dev/null 2>&1; then
+        uuid_value=$(command uuidgen) || return
+    elif [[ -r /proc/sys/kernel/random/uuid ]]; then
+        IFS= read -r uuid_value < /proc/sys/kernel/random/uuid || return
+    else
+        printf '%s\n' 'uuid: uuidgen or /proc/sys/kernel/random/uuid is required' >&2
+        return 127
+    fi
 
-        case "$N" in
-            6)  printf '4%x' "$((B%16))" ;;
-            8)  printf '%c%x' "${C:$RANDOM%${#C}:1}" "$((B%16))" ;;
-
-            3|5|7|9)
-                printf '%02x-' "$B"
-            ;;
-
-            *)
-                printf '%02x' "$B"
-            ;;
-        esac
-    done
-
-    printf '\n'
+    printf '%s\n' "${uuid_value:l}"
 }
