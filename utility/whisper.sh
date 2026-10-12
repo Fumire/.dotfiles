@@ -264,6 +264,35 @@ fi
 
 export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 
+resolve_input_files() {
+    local input_file
+    local input_path
+    local absolute_path
+    local -a absolute_input_files=()
+
+    if ! command -v realpath > /dev/null 2>&1; then
+        echo "realpath is required to resolve input file paths." >&2
+        return 127
+    fi
+
+    for input_file in "${INPUT_FILES[@]}"; do
+        input_path="$input_file"
+        if [[ "$input_path" != /* ]]; then
+            input_path="./$input_path"
+        fi
+
+        if ! absolute_path="$(realpath "$input_path")"; then
+            echo "Could not resolve input file: $input_file" >&2
+            return 1
+        fi
+        absolute_input_files+=("$absolute_path")
+    done
+
+    INPUT_FILES=("${absolute_input_files[@]}")
+}
+
+resolve_input_files
+
 resolve_whisper_model() {
     if [[ -n "${whisper_model_path}" ]]; then
         printf '%s\n' "$whisper_model_path"
