@@ -23,10 +23,19 @@ plugins=(
 )
 
 # editors
+_path_prepend_once() {
+    local entry="$1"
+    if [[ ":${PATH}:" != *":${entry}:"* ]]; then
+        PATH="${entry}:${PATH}"
+    fi
+}
+
 if [[ $(uname) == "Darwin" ]]; then
     export EDITOR=$(which nvim)
     export VISUAL=$(which nvim)
-    export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+    _path_prepend_once /opt/homebrew/sbin
+    _path_prepend_once /opt/homebrew/bin
+    export PATH
 else
     export EDITOR=$(which vim)
     export VISUAL=$(which vim)
@@ -68,9 +77,11 @@ bindkey "^xe" edit-command-line
 bindkey "^x^e" edit-command-line
 
 # PATH settings
-export PATH="/usr/local/sbin:${PATH}"
-export PATH="${ZDOTDIR:-$HOME}/.local/bin:${PATH}"
-export PATH="${ZDOTDIR:-$HOME}/go/bin:${PATH}"
+_path_prepend_once /usr/local/sbin
+_path_prepend_once "${ZDOTDIR:-$HOME}/.local/bin"
+_path_prepend_once "${ZDOTDIR:-$HOME}/go/bin"
+export PATH
+unfunction _path_prepend_once
 
 # gpg settings
 export GPG_TTY=$(tty)
