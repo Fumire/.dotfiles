@@ -33,6 +33,8 @@ _path_prepend_once() {
 if [[ $(uname) == "Darwin" ]]; then
     export EDITOR=$(which nvim)
     export VISUAL=$(which nvim)
+
+    _path_prepend_once /usr/local/sbin
     _path_prepend_once /opt/homebrew/sbin
     _path_prepend_once /opt/homebrew/bin
     export PATH
@@ -77,7 +79,6 @@ bindkey "^xe" edit-command-line
 bindkey "^x^e" edit-command-line
 
 # PATH settings
-_path_prepend_once /usr/local/sbin
 _path_prepend_once "${ZDOTDIR:-$HOME}/.local/bin"
 _path_prepend_once "${ZDOTDIR:-$HOME}/go/bin"
 export PATH
@@ -116,3 +117,8 @@ uuid () {
 
     printf '%s\n' "${uuid_value:l}"
 }
+
+# Brew setting
+if [[ $(uname) == "Darwin" ]]; then
+    eval "$(brew shellenv)"
+fi
