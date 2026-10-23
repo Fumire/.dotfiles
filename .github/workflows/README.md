@@ -36,16 +36,17 @@ This workflow verifies that the core ZSH, oh-my-zsh, and Vim symlink/install tar
 `mac.yml` validates the macOS setup without installing the full bundle:
 
 1. Checks out the repository without persisting credentials.
-2. Syntax-checks `mac/Brewfile.Mac` with Ruby.
+2. Syntax-checks the configured `mac/Brewfile` with Ruby.
 3. Uses `brew bundle list` to validate Brewfile entries.
-4. Checks Homebrew metadata for listed formulae and casks.
-5. Writes package counts to the GitHub Actions step summary.
-6. Runs `zsh -n` against ZSH config files.
-7. Runs `make zsh_run`.
-8. Runs `make -C oh-my-zsh -n` as a dry run.
-9. Runs `make vim_run`.
+4. Runs `brew update` to refresh formula and cask metadata.
+5. Checks Homebrew metadata for listed formulae and casks.
+6. Writes package counts to the GitHub Actions step summary.
+7. Runs `zsh -n` against ZSH config files.
+8. Runs `make zsh_run`.
+9. Runs `make -C oh-my-zsh -n` as a dry run.
+10. Runs `make vim_run`.
 
-The workflow sets Homebrew environment variables to avoid upgrades, auto-update, and install cleanup during validation.
+The workflow disables implicit Homebrew auto-updates, upgrades, and install cleanup. It explicitly refreshes metadata before checking formula and cask names.
 
 ## CodeQL
 
@@ -65,4 +66,4 @@ These workflows intentionally focus on smoke checks and static validation. They 
 
 ## Last Updated
 
-- 2026-07-30
+- 2026-10-23

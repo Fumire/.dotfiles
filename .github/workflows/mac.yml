@@ -29,6 +29,9 @@ jobs:
           ruby -c "$HOMEBREW_BUNDLE_FILE"
           brew bundle list --all --file "$HOMEBREW_BUNDLE_FILE" > /dev/null
 
+      - name: update Homebrew metadata
+        run: brew update
+
       - name: check Homebrew metadata
         run: |
           formulae="$(brew bundle list --formula --file "$HOMEBREW_BUNDLE_FILE")"
