@@ -15,6 +15,7 @@ diar_model="${NEMO_DIAR_MODEL:-nemotron-3-diarization}"
 vad_model="${NEMO_VAD_MODEL:-$DEFAULT_NEMO_VAD_MODEL}"
 nmt_model="${NEMO_NMT_MODEL:-$DEFAULT_NEMO_NMT_MODEL}"
 language="${NEMO_LANGUAGE:-auto}"
+translate_enabled=1
 vad_enabled=0
 declare -a input_files=()
 
@@ -24,8 +25,8 @@ Usage:
   $(basename "$0") [OPTIONS] MEDIA_FILE [MEDIA_FILE ...]
 
 Convert audio or video inputs to 16 kHz mono PCM WAV, transcribe them, and
-write speaker-labeled SRT files beside the inputs. If the selected or detected
-source language is not Korean, also write a Korean SRT as <name>.ko.srt.
+write speaker-labeled SRT files beside the inputs. When translation is enabled,
+also write a Korean SRT as <name>.ko.srt if the source language is not Korean.
 Existing output files are replaced after their new results are ready.
 
 Options:
@@ -34,18 +35,21 @@ Options:
   --vad                  Enable VAD with the default model; default: off
   --vad-model PATH       Enable VAD with a specific GGUF model
   --no-vad               Disable VAD
+  -t, --translate BOOL   Translate to Korean; true or false (default: true)
   --nmt-model PATH       Translation GGUF model; default: ${nmt_model##*/}
   -l, --language, --lang CODE
                          Language code or prompt; default: $language
   -h, --help             Show this help
   --                     Treat all following arguments as input file paths
 
-Speaker IDs are retained in both SRT files. With --language auto, the detected
-language in the structured ASR result determines whether translation is needed.
-The installed transcribe command only supports --translate-to with text or JSON
-output. This script translates each subtitle cue separately so the Korean SRT
-keeps the original cue times and speaker labels. Non-English sources are routed
-through English because supported Riva-Translate pairs include English.
+Speaker IDs are retained in the source and translated SRT files. Set
+--translate false to write only the source SRT. With --language auto, the
+detected language in the structured ASR result determines whether translation
+is needed. If translation is enabled, the installed transcribe command only
+supports --translate-to with text or JSON output. This script translates each
+subtitle cue separately so the Korean SRT keeps the original cue times and
+speaker labels. Non-English sources are routed through English because
+supported Riva-Translate pairs include English.
 
 VAD is off by default. The configured legacy whisper.cpp ggml .bin file is not
 accepted by this nemo-speech build. Use --vad-model with a runtime-compatible
@@ -54,6 +58,7 @@ GGUF model to enable VAD.
 Examples:
   $(basename "$0") meeting.mp4
   $(basename "$0") --language en meeting.m4a
+  $(basename "$0") --translate false meeting.wav
   $(basename "$0") --vad-model /path/to/silero-v6.2.0.gguf meeting.wav
   $(basename "$0") --no-vad meeting.mp3
 EOF
@@ -96,6 +101,22 @@ while [[ $# -gt 0 ]]; do
         --no-vad)
             vad_enabled=0
             shift
+            ;;
+        -t | --translate)
+            need_value "$1" "${2:-}"
+            case "$2" in
+                true)
+                    translate_enabled=1
+                    ;;
+                false)
+                    translate_enabled=0
+                    ;;
+                *)
+                    printf 'Error: %s must be either true or false.\n' "$1" >&2
+                    exit 2
+                    ;;
+            esac
+            shift 2
             ;;
         --nmt-model)
             need_value "$1" "${2:-}"
@@ -216,6 +237,12 @@ for input_file in "${input_files[@]}"; do
 
     mv -f "$temp_srt" "$output_srt"
     printf 'Saved: %s\n' "$output_srt"
+
+    if (( translate_enabled == 0 )); then
+        printf 'Translation is disabled; skipping Korean SRT generation.\n'
+        rm -f -- "$wav_file" "$json_file" "$cue_metadata" "$translation_input"
+        continue
+    fi
 
     source_language="$(python3 "$nemo_helper" get-language --metadata "$cue_metadata")"
     if [[ "$source_language" == "ko" ]]; then

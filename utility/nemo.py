@@ -235,9 +235,20 @@ def build_translation(args):
         raise ValueError("The subtitle metadata contains no cues.")
 
     try:
-        translations = Path(args.translation).read_text(encoding="utf-8").splitlines()
-    except (OSError, UnicodeError) as exc:
+        translated_bytes = Path(args.translation).read_bytes()
+    except OSError as exc:
         raise ValueError(f"Could not read translated cue text: {exc}") from exc
+
+    try:
+        translated_text = translated_bytes.decode("utf-8")
+    except UnicodeDecodeError:
+        translated_text = translated_bytes.decode("utf-8", errors="replace")
+        print(
+            "Warning: translated cue text contained invalid UTF-8 bytes; "
+            "invalid sequences were replaced with U+FFFD.",
+            file=sys.stderr,
+        )
+    translations = translated_text.splitlines()
 
     if len(translations) != len(cues):
         raise ValueError(
