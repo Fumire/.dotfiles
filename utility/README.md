@@ -19,6 +19,8 @@ These scripts are intentionally environment-specific. Review each script before 
 | `migration_arrange.sh` | Prepares a directory for migration by deleting empty files and writing consistent `md5.txt` and `tree.txt` manifests. |
 | `migration_check.sh` | Verifies a migrated directory against `tree.txt` and `md5.txt`. |
 | `migration_store.sh` | Prepares checksums, stores a tree listing, transfers the directory with `rsync --remove-source-files`, and removes transferred source files after success. |
+| `nemo.py` | Python helper used by `nemo.sh` for model compatibility checks and speaker-aware SRT generation. |
+| `nemo.sh` | Converts audio or video with `ffmpeg`, transcribes it with `nemo-speech`, and writes speaker-labeled source SRTs with optional Korean translations. |
 | `nologin.txt` | Login-disabled message for server account administration. |
 | `pdf2jpg.sh` | Converts PDF pages to 600 DPI JPEG images with `pdftoppm` and JPEG quality 100. |
 | `r-freeze.R` | Backs up the active R package environment into `renv.lock`, `requirements.txt`, and package/session metadata files, including remote-source and Bioconductor release metadata when available. |
@@ -37,10 +39,15 @@ Run media scripts directly from this directory or by path:
 
 ```sh
 utility/whisper.sh --help
+utility/nemo.sh --help
 utility/pdf2jpg.sh --help
 utility/pdf2jpg.sh document.pdf
 utility/pdf2jpg.sh document.pdf scans/document.pdf
 utility/whisper.sh --lang en audio.mp3 video.mp4
+utility/nemo.sh meeting.mp4
+utility/nemo.sh -l en meeting.m4a
+utility/nemo.sh --translate false meeting.wav
+utility/nemo.sh --vad-model /path/to/silero-v6.2.0.gguf meeting.wav
 utility/whisper.sh --subtitle true video.mp4
 utility/whisper.sh --model turbo --lang en audio.mp3
 utility/whisper.sh --model-path /path/to/model.bin audio.mp3
@@ -49,6 +56,27 @@ utility/whisper.sh --vad-model v5.1.2 audio.mp3
 ```
 
 `pdf2jpg.sh` requires at least one PDF file and writes JPEGs next to each PDF, using the original input path without the trailing `.pdf` as the `pdftoppm` output prefix.
+
+#### NeMo Speech Transcription
+
+`nemo.sh` accepts one or more audio or video files supported by `ffmpeg`. It extracts the first audio stream, converts it to 16 kHz mono PCM WAV, and writes a speaker-labeled `<input-name>.srt` beside each input. Existing source SRTs are overwritten. `nemo.py` is the helper for runtime model checks, language metadata, and building the source and translated SRT files.
+
+Translation is enabled by default. If the selected or detected source language is not Korean, the script writes `<input-name>.ko.srt` with the same cue times and speaker IDs as the source SRT. Set `-t true` or `--translate true` to enable translation explicitly; use `-t false` or `--translate false` to skip translated SRT generation for that run. Any existing `.ko.srt` is left untouched when translation is disabled. With `--language auto` (the default), the detected language determines whether translation is needed. Use `-l`, `--language`, or the existing `--lang` alias to select a source language. Non-English sources are translated through English before Korean.
+
+| Option | Purpose | Default |
+| --- | --- | --- |
+| `--model MODEL` | ASR model | `nemotron-3.5` |
+| `--diar-model MODEL` | Speaker diarization model | `nemotron-3-diarization` |
+| `-t, --translate BOOL` | Translate eligible inputs to Korean; accepts `true` or `false` | `true` |
+| `--nmt-model PATH` | Translation GGUF model | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/translation-model/Riva-Translate-4B-Instruct-v2-Q4_K_M.gguf` |
+| `-l, --language, --lang CODE` | Language code or prompt | `auto` |
+| `--vad` | Enable VAD with the configured model | Off |
+| `--vad-model PATH` | Enable VAD with the specified model | Off |
+| `--no-vad` | Disable VAD | Off |
+| `-h, --help` | Show command help | — |
+| `--` | Treat remaining arguments as input paths | — |
+
+`nemo-speech` defaults to `$HOME/.local/bin/nemo-speech`. Set `NEMO_BIN`, `NEMO_MODEL`, `NEMO_DIAR_MODEL`, `NEMO_VAD_MODEL`, `NEMO_NMT_MODEL`, or `NEMO_LANGUAGE` to change the corresponding defaults. VAD is off unless `--vad` or `--vad-model PATH` is supplied; `--no-vad` disables it. The configured default VAD path is the legacy whisper.cpp `ggml-silero-v6.2.0.bin` model and is not accepted by this `nemo-speech` runtime. Use `--vad-model PATH` with a runtime-compatible VAD GGUF to enable VAD successfully.
 
 `whisper.sh` announces each input as `(current/total) FILE`, skips files that already have a matching `.srt`, uses Korean by default (`--lang ko`), and recommends the large model as the default. Set `--model turbo` or `--model-choice turbo` to use the turbo model. Set `--model-path` for a specific model file.
 
@@ -151,7 +179,7 @@ utility/check_system.sh --alert-recipient ops@example.org
 
 Dependencies vary by script:
 
-* Media helpers: `ffmpeg`, `whisper-cli`, `pdftoppm`, `yt-dlp`
+* Media helpers: `ffmpeg`, `whisper-cli`, `nemo-speech`, `python3`, `pdftoppm`, `yt-dlp`
 * macOS helper: `dot_clean`
 * R environment helpers: `Rscript`, `renv`, `remotes`, optional `BiocManager`
 * Linux/server helpers: `mail`, `top`, `ps`, `free`, `bc`, `nvidia-smi`, `tar`, `gpg`, `adduser`, `gpasswd`
@@ -164,6 +192,8 @@ Most shell scripts use `set -euo pipefail`, so they stop when a command fails or
 
 For `whisper.sh`, command arguments are preferred (`--lang`, `--model`, `--vad-model`, `--subtitle`, etc.), while environment variables (`lang`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, `WHISPER_MODEL_PATH`, `WHISPER_VAD`, `WHISPER_VAD_MODEL`, `WHISPER_VAD_MODEL_CHOICE`, `WHISPER_VAD_MODEL_PATH`, `WHISPER_VAD_MODEL_DIR`, `WHISPER_SUBTITLE_MAX_WORDS`, `SUBTITLE`) are still supported for compatibility.
 
+For `nemo.sh`, translation defaults to `true` and is controlled with `-t` or `--translate`, followed by `true` or `false`. The language option accepts `-l`, `--language`, or `--lang`. Model and executable defaults can be overridden with `NEMO_BIN`, `NEMO_MODEL`, `NEMO_DIAR_MODEL`, `NEMO_VAD_MODEL`, `NEMO_NMT_MODEL`, and `NEMO_LANGUAGE`.
+
 The migration scripts create `md5.txt` and `tree.txt` manifests in the working directory. Both manifests exclude themselves and legacy `*.md5sum` sidecars so `migration_check.sh` can reproduce the same inputs after transfer. `migration_arrange.sh` and `migration_store.sh` delete empty files before creating the manifests. `migration_store.sh` uses `rsync --remove-source-files` to move transferred files to `root@kimura.kogic.kr:/BiO/Archive/` through SSH port `3030`, so run it only after confirming the destination and command behavior.
 
 `check_system.sh` sends CPU, memory, temperature, and GPU alerts to `root@compbio.unist.ac.kr` by default. `CHECK_SYSTEM_ALERT_RECIPIENT` changes that default, and `--alert-recipient ADDRESS` overrides both for one invocation. CPU and temperature alerts include the configured number of busiest CPU processes with PID, process name, user, UID, CPU%, memory GB, and memory %. Memory alerts include the configured number of largest memory users with the same process fields. Temperature checks use the first readable `/sys/class/thermal/thermal_zone*/temp` file and are skipped on hosts without one. GPU alerts include the configured number of largest reported GPU compute processes with PID, process name, user, UID, GPU%, and GPU memory. GPU checks run only when `nvidia-smi` is available and can communicate with the NVIDIA driver; hosts without a usable NVIDIA driver skip GPU monitoring.
@@ -172,4 +202,4 @@ The migration scripts create `md5.txt` and `tree.txt` manifests in the working d
 
 ## Last Updated
 
-- 2026-08-05
+- 2026-10-29
