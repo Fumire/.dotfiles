@@ -10,12 +10,48 @@ import subprocess
 import sys
 from pathlib import Path
 
+ASR_RESULT_KEYS = (
+    "data",
+    "result",
+    "results",
+    "transcript",
+    "transcription",
+    "transcriptions",
+    "output",
+    "hypothesis",
+    "hypotheses",
+    "utterance",
+    "utterances",
+    "audio",
+    "payload",
+)
+ASR_TEXT_KEYS = ("text", "transcript", "transcription", "pred_text", "hypothesis", "result")
+
+
+class NoTranscriptError(Exception):
+    """Raised when an ASR result has no content from which to build subtitles."""
+
 
 def read_json(path):
     try:
         return json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ValueError(f"Could not read valid JSON from {path}: {exc}") from exc
+
+
+def result_objects(data):
+    """Yield result dictionaries nested under common ASR wrapper fields."""
+    stack = [data]
+    while stack:
+        value = stack.pop()
+        if isinstance(value, dict):
+            yield value
+            for key in reversed(ASR_RESULT_KEYS):
+                nested = value.get(key)
+                if isinstance(nested, (dict, list)):
+                    stack.append(nested)
+        elif isinstance(value, list):
+            stack.extend(reversed(value))
 
 
 def check_model(args):
@@ -86,12 +122,9 @@ def get_source_language(data, words, requested_language):
         return selected
 
     candidates = []
-    for key in ("languages", "language", "language_code"):
-        candidates.extend(language_candidates(data.get(key)))
-
-    transcript = data.get("transcript")
-    if isinstance(transcript, dict):
-        candidates.extend(language_candidates(transcript))
+    for result in result_objects(data):
+        for key in ("languages", "language", "language_code", "detected_language"):
+            candidates.extend(language_candidates(result.get(key)))
 
     for item in words:
         if isinstance(item, dict):
@@ -102,6 +135,89 @@ def get_source_language(data, words, requested_language):
         (code for candidate in candidates if (code := base_language(candidate))),
         None,
     )
+
+
+def record_text(item):
+    for key in ("word", "text", "token", "transcript"):
+        value = item.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def record_number(item, keys):
+    for key in keys:
+        try:
+            number = float(item[key])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if math.isfinite(number):
+            return number
+    return None
+
+
+def record_speaker(item):
+    for key in ("speaker", "speaker_id", "speakerId", "spk_id"):
+        value = item.get(key)
+        if value not in (None, 0, ""):
+            return value
+    return None
+
+
+def is_timed_text_record(item):
+    return (
+        isinstance(item, dict)
+        and bool(record_text(item))
+        and record_number(item, ("start", "start_time", "begin")) is not None
+        and record_number(item, ("end", "end_time", "stop")) is not None
+    )
+
+
+def timestamped_records(data):
+    result_dicts = list(result_objects(data))
+    for result in result_dicts:
+        for key in ("words", "word_timestamps", "word_segments"):
+            records = result.get(key)
+            if isinstance(records, list):
+                usable = [record for record in records if is_timed_text_record(record)]
+                if usable:
+                    return usable, "words"
+
+    for result in result_dicts:
+        for key in ("segments", "utterances"):
+            records = result.get(key)
+            if isinstance(records, list):
+                usable = [record for record in records if is_timed_text_record(record)]
+                if usable:
+                    return usable, "segments"
+    return [], None
+
+
+def transcript_text(data):
+    for result in result_objects(data):
+        for key in ASR_TEXT_KEYS:
+            value = result.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+
+    for result in result_objects(data):
+        for key in ("segments", "utterances"):
+            records = result.get(key)
+            if isinstance(records, list):
+                parts = [record_text(record) for record in records if isinstance(record, dict)]
+                parts = [part for part in parts if part]
+                if parts:
+                    return " ".join(parts)
+    return None
+
+
+def result_duration(data):
+    for result in result_objects(data):
+        for key in ("duration", "audio_duration", "duration_seconds"):
+            duration = record_number(result, (key,))
+            if duration is not None and duration > 0:
+                return duration
+    return None
 
 
 def timestamp(seconds):
@@ -130,6 +246,10 @@ def join_words(items):
 def speaker_label(speaker):
     if isinstance(speaker, int) and speaker > 0:
         return f"Speaker {speaker}"
+    if isinstance(speaker, str):
+        match = re.search(r"(?:speaker|spk)[_\s-]*(\d+)", speaker, re.IGNORECASE)
+        if match and int(match.group(1)) > 0:
+            return f"Speaker {match.group(1)}"
     return "Speaker Unknown"
 
 
@@ -138,32 +258,60 @@ def build_source(args):
     if not isinstance(data, dict):
         raise ValueError("The transcription JSON root must be an object.")
 
-    words = data.get("words", [])
-    if not isinstance(words, list) or not words:
-        raise ValueError("The transcription JSON contains no timestamped words.")
+    word_records, record_kind = timestamped_records(data)
+    transcript_fallback = not word_records
+    if transcript_fallback:
+        recognized_text = transcript_text(data)
+        if not isinstance(recognized_text, str) or not recognized_text.strip():
+            fields = ", ".join(sorted(str(key) for key in data)) or "none"
+            error = data.get("error")
+            detail = f" NeMo-Speech reported: {error}." if isinstance(error, str) and error.strip() else ""
+            raise NoTranscriptError(
+                "The transcription JSON contains no recognized text or timestamped words/segments. "
+                f"Top-level fields: {fields}.{detail}"
+            )
+        duration = result_duration(data)
+        if duration is None:
+            raise ValueError(
+                "The transcription JSON has recognized text but no valid audio duration."
+            )
+        word_records = [{
+            "word": recognized_text,
+            "start": 0.0,
+            "end": duration,
+            "speaker": None,
+        }]
+        print(
+            "Warning: no word timestamps were returned; created one full-duration cue "
+            "labeled Speaker Unknown.",
+            file=sys.stderr,
+        )
+    elif record_kind == "segments":
+        print(
+            "Warning: word-level timestamps were not returned; using timestamped segments.",
+            file=sys.stderr,
+        )
 
-    word_records = [word for word in words if isinstance(word, dict)]
-    if not any(word.get("speaker") not in (None, 0, "") for word in word_records):
+    if record_kind == "words" and not any(record_speaker(word) is not None for word in word_records):
         raise ValueError("The transcription JSON contains no speaker tags.")
 
     source_language = get_source_language(data, word_records, args.language)
     items = []
     for item in word_records:
-        word = str(item.get("word", "")).strip()
+        word = record_text(item)
         if not word:
             continue
-        try:
-            start = float(item["start"])
-            end = float(item["end"])
-        except (KeyError, TypeError, ValueError) as exc:
-            raise ValueError(f"A word has invalid timestamps: {exc}") from exc
+        start = record_number(item, ("start", "start_time", "begin"))
+        end = record_number(item, ("end", "end_time", "stop"))
+        if start is None or end is None:
+            raise ValueError("A transcription record has invalid timestamps.")
         if not (math.isfinite(start) and math.isfinite(end)):
             raise ValueError("A word has a non-finite timestamp.")
         items.append({
             "word": word,
             "start": max(0, start),
             "end": max(start, end),
-            "speaker": item.get("speaker"),
+            "speaker": record_speaker(item),
         })
 
     items.sort(key=lambda item: item["start"])
@@ -253,7 +401,7 @@ def build_translation(args):
     if len(translations) != len(cues):
         raise ValueError(
             "The number of translated cues does not match the source cues; "
-            "the existing Korean SRT was left unchanged."
+            "the existing translated SRT was left unchanged."
         )
 
     lines = []
@@ -261,7 +409,7 @@ def build_translation(args):
         translated = translated.strip()
         if not translated:
             raise ValueError(
-                f"Translation for cue {index} is empty; the existing Korean SRT was left unchanged."
+                f"Translation for cue {index} is empty; the existing translated SRT was left unchanged."
             )
         lines.extend([
             str(index),
@@ -273,7 +421,7 @@ def build_translation(args):
     try:
         Path(args.output).write_text("\n".join(lines), encoding="utf-8")
     except OSError as exc:
-        raise ValueError(f"Could not write the Korean SRT: {exc}") from exc
+        raise ValueError(f"Could not write the translated SRT: {exc}") from exc
 
 
 def build_parser():
@@ -312,6 +460,9 @@ def main():
     args = parser.parse_args()
     try:
         args.func(args)
+    except NoTranscriptError as exc:
+        print(f"Warning: {exc}", file=sys.stderr)
+        return 3
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
