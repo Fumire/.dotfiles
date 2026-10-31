@@ -3,6 +3,8 @@ set -euo pipefail
 IFS=$'\n\t'
 
 readonly DEFAULT_NEMO_BIN="${HOME}/.local/bin/nemo-speech"
+readonly DEFAULT_NEMO_MODEL_SOURCE="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model"
+readonly DEFAULT_NEMO_MODEL_CACHE="${HOME}/Library/Caches/NeMoSpeech/models/nvidia"
 readonly DEFAULT_NEMO_VAD_MODEL="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model/ggml-silero-v6.2.0.bin"
 readonly DEFAULT_NEMO_NMT_MODEL="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/translation-model/Riva-Translate-4B-Instruct-v2-Q4_K_M.gguf"
 
@@ -18,6 +20,7 @@ language="${NEMO_LANGUAGE:-auto}"
 translate_enabled=1
 vad_enabled=0
 subtitle_enabled=0
+force_enabled=0
 declare -a input_files=()
 
 show_help() {
@@ -29,12 +32,16 @@ Convert audio or video inputs to 16 kHz mono PCM WAV, transcribe them, and
 write speaker-labeled source SRT files beside the inputs. With translation
 enabled, English sources also get <name>.ko.srt, Korean sources get
 <name>.en.srt, and other sources get both <name>.en.srt and <name>.ko.srt.
-Existing output files are replaced after their new results are ready.
+Inputs with an existing source or translated SRT are skipped unless -f or
+--force is provided. With force enabled, generated SRT files are replaced.
+Before inference, cached NVIDIA model entries are refreshed as symbolic links
+to the files in the configured NeMo Speech model folder.
 For MP4 inputs, -s or --subtitle adds the generated source and translated SRTs as
 soft subtitle tracks (mov_text), replaces the input MP4 after a successful
 remux, and removes those generated SRT files. Subtitle muxing is off by default.
 When -s or --subtitle is provided, MP4 inputs that already contain a subtitle
 track are skipped without transcription, SRT generation, or remuxing.
+This embedded-subtitle check still applies when -f or --force is provided.
 
 Options:
   --model MODEL          ASR model; default: $asr_model
@@ -43,6 +50,7 @@ Options:
   --vad-model PATH       Enable VAD with a specific GGUF model
   --no-vad               Disable VAD
   -t, --translate BOOL   Generate translated SRTs; true or false (default: true)
+  -f, --force            Regenerate and replace existing SRT outputs
   --nmt-model PATH       Translation GGUF model; default: ${nmt_model##*/}
   -s, --subtitle         Mux generated SRTs into MP4 inputs when provided
   -l, --language, --lang CODE
@@ -74,6 +82,7 @@ Examples:
   $(basename "$0") --language en meeting.m4a
   $(basename "$0") -l de meeting.mp4
   $(basename "$0") --translate false meeting.wav
+  $(basename "$0") -f meeting.mp4
   $(basename "$0") --vad-model /path/to/silero-v6.2.0.gguf meeting.wav
   $(basename "$0") --no-vad meeting.mp3
 EOF
@@ -84,6 +93,39 @@ need_value() {
     if [[ $# -lt 2 || -z "$2" || "$2" == -* ]]; then
         printf 'Error: %s requires a value.\n' "$option" >&2
         exit 2
+    fi
+}
+
+prepare_nemo_model_links() {
+    local model_path
+    local -a model_paths=()
+
+    if [[ ! -d "$DEFAULT_NEMO_MODEL_SOURCE" ]]; then
+        printf 'Error: NeMo model source directory not found: %s\n' "$DEFAULT_NEMO_MODEL_SOURCE" >&2
+        return 1
+    fi
+
+    for model_path in "$DEFAULT_NEMO_MODEL_SOURCE"/*; do
+        if [[ -e "$model_path" || -L "$model_path" ]]; then
+            model_paths+=("$model_path")
+        fi
+    done
+    if (( ${#model_paths[@]} == 0 )); then
+        printf 'Error: no model files found in: %s\n' "$DEFAULT_NEMO_MODEL_SOURCE" >&2
+        return 1
+    fi
+
+    if ! mkdir -p "$DEFAULT_NEMO_MODEL_CACHE"; then
+        printf 'Error: could not create NeMo model cache directory: %s\n' "$DEFAULT_NEMO_MODEL_CACHE" >&2
+        return 1
+    fi
+    if ! rm -rf "$DEFAULT_NEMO_MODEL_CACHE"/*; then
+        printf 'Error: could not clear NeMo model cache directory: %s\n' "$DEFAULT_NEMO_MODEL_CACHE" >&2
+        return 1
+    fi
+    if ! ln -sfv "${model_paths[@]}" "$DEFAULT_NEMO_MODEL_CACHE"; then
+        printf 'Error: could not create NeMo model cache symlinks in: %s\n' "$DEFAULT_NEMO_MODEL_CACHE" >&2
+        return 1
     fi
 }
 
@@ -116,6 +158,14 @@ while [[ $# -gt 0 ]]; do
         --no-vad)
             vad_enabled=0
             shift
+            ;;
+        -f | --force)
+            force_enabled=1
+            shift
+            ;;
+        --force=*)
+            printf 'Error: --force is a flag and does not take a value.\n' >&2
+            exit 2
             ;;
         -t | --translate)
             need_value "$1" "${2:-}"
@@ -199,6 +249,8 @@ if [[ ! -r "$nemo_helper" ]]; then
     printf 'Error: Python helper not found or unreadable: %s\n' "$nemo_helper" >&2
     exit 1
 fi
+
+prepare_nemo_model_links
 
 if (( vad_enabled )); then
     python3 "$nemo_helper" check-model \
@@ -326,6 +378,23 @@ for input_file in "${input_files[@]}"; do
         exit 1
     fi
 
+    input_dir="$(dirname "$input_file")"
+    input_name="$(basename "$input_file")"
+    stem="${input_name%.*}"
+    [[ -n "$stem" ]] || stem="$input_name"
+
+    output_srt="$input_dir/$stem.srt"
+    output_en_srt="$input_dir/$stem.en.srt"
+    output_ko_srt="$input_dir/$stem.ko.srt"
+    if (( force_enabled == 0 )); then
+        for existing_srt in "$output_srt" "$output_en_srt" "$output_ko_srt"; do
+            if [[ -e "$existing_srt" || -L "$existing_srt" ]]; then
+                printf 'Skipping: SRT output already exists (use --force to overwrite): %s\n' "$existing_srt"
+                continue 2
+            fi
+        done
+    fi
+
     if (( subtitle_enabled )) && is_mp4_file "$input_file"; then
         if ! embedded_subtitle_streams="$(
             ffprobe -v error -select_streams s -show_entries stream=index -of csv=p=0 "$input_file"
@@ -339,14 +408,6 @@ for input_file in "${input_files[@]}"; do
         fi
     fi
 
-    input_dir="$(dirname "$input_file")"
-    input_name="$(basename "$input_file")"
-    stem="${input_name%.*}"
-    [[ -n "$stem" ]] || stem="$input_name"
-
-    output_srt="$input_dir/$stem.srt"
-    output_en_srt="$input_dir/$stem.en.srt"
-    output_ko_srt="$input_dir/$stem.ko.srt"
     wav_file="$work_dir/input.wav"
     json_file="$work_dir/transcript.json"
     temp_srt="$work_dir/transcript.srt"
