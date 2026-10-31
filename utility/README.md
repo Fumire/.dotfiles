@@ -19,8 +19,8 @@ These scripts are intentionally environment-specific. Review each script before 
 | `migration_arrange.sh` | Prepares a directory for migration by deleting empty files and writing consistent `md5.txt` and `tree.txt` manifests. |
 | `migration_check.sh` | Verifies a migrated directory against `tree.txt` and `md5.txt`. |
 | `migration_store.sh` | Prepares checksums, stores a tree listing, transfers the directory with `rsync --remove-source-files`, and removes transferred source files after success. |
-| `nemo.py` | Python helper used by `nemo.sh` for model compatibility checks and speaker-aware SRT generation. |
-| `nemo.sh` | Refreshes NeMo model cache symlinks, converts audio or video with `ffmpeg`, transcribes it with `nemo-speech`, writes speaker-labeled source and translated SRTs, and can mux them into MP4 subtitle tracks. |
+| `nemo.py` | Python helper used by `nemo.sh` for model compatibility checks, speaker-aware SRT generation, and timestamp-free playbook creation. |
+| `nemo.sh` | Converts audio or video with `ffmpeg`, passes direct local ASR and diarization model paths to `nemo-speech`, writes speaker-labeled source and translated SRTs, and can mux them into MP4 subtitle tracks. |
 | `nologin.txt` | Login-disabled message for server account administration. |
 | `pdf2jpg.sh` | Converts PDF pages to 600 DPI JPEG images with `pdftoppm` and JPEG quality 100. |
 | `r-freeze.R` | Backs up the active R package environment into `renv.lock`, `requirements.txt`, and package/session metadata files, including remote-source and Bioconductor release metadata when available. |
@@ -48,6 +48,7 @@ utility/nemo.sh meeting.mp4
 utility/nemo.sh --subtitle meeting.mp4
 utility/nemo.sh -s meeting.mp4
 utility/nemo.sh -f meeting.mp4
+utility/nemo.sh -p meeting.mp4
 utility/nemo.sh -l en meeting.m4a
 utility/nemo.sh --translate false meeting.wav
 utility/nemo.sh --vad-model /path/to/silero-v6.2.0.gguf meeting.wav
@@ -62,9 +63,9 @@ utility/whisper.sh --vad-model v5.1.2 audio.mp3
 
 #### NeMo Speech Transcription
 
-`nemo.sh` accepts one or more audio or video files supported by `ffmpeg`. It extracts the first audio stream, converts it to 16 kHz mono PCM WAV, and writes a speaker-labeled `<input-name>.srt` beside each input. By default, it skips an input if a matching source or translated SRT (`.srt`, `.en.srt`, or `.ko.srt`) already exists. Use `-f` or `--force` to regenerate and replace SRT outputs. `nemo.py` is the helper for runtime model checks, language metadata, and building the source and translated SRT files.
+`nemo.sh` accepts one or more audio or video files supported by `ffmpeg`. It extracts the first audio stream, converts it to 16 kHz mono PCM WAV, and writes a speaker-labeled `<input-name>.srt` beside each input. By default, it skips an input if a matching source or translated SRT (`.srt`, `.en.srt`, or `.ko.srt`) already exists. Use `-f` or `--force` to regenerate and replace SRT outputs. Use `-p` or `--playbook` to write a matching `.txt` file for each source or translated SRT, without timestamps and with consecutive cues combined into speaker turns. When an existing SRT triggers the default skip, `--playbook` still creates its matching text file from that SRT. `nemo.py` is the helper for runtime model checks, language metadata, SRT generation, and playbook creation.
 
-Before processing inputs, `nemo.sh` removes the existing non-hidden entries in `$HOME/Library/Caches/NeMoSpeech/models/nvidia` and creates symbolic links there for every entry in `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model`. It stops with an English error before clearing the cache if the Dropbox source folder is missing or empty.
+`nemo.sh` passes local GGUF model files directly to `nemo-speech`, so it does not clear or depend on symbolic links in the NeMo model cache. Its default ASR and diarization model arguments point to the `.gguf` files inside their versioned model directories, not to the parent directories.
 
 `nemo.py` reads transcript text and timestamped words from top-level or nested ASR JSON results, and also accepts timestamped segments. If recognized text has no word timestamps, it writes one cue spanning the full audio duration, labels it `Speaker Unknown`, and prints a warning. If the result has no recognized text, `nemo.sh` prints a warning with the JSON's top-level fields, skips SRT creation and MP4 subtitle embedding for that input, and continues to the next input. If recognized text has no valid audio duration, it reports an error.
 
@@ -72,10 +73,11 @@ Translation is enabled by default. English sources keep the original `<input-nam
 
 | Option | Purpose | Default |
 | --- | --- | --- |
-| `--model MODEL` | ASR model | `nemotron-3.5` |
-| `--diar-model MODEL` | Speaker diarization model | `nemotron-3-diarization` |
+| `--model MODEL` | ASR GGUF path or indexed HF repo | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/nemotron-3.5-asr-streaming-0.6b/1c8deaecc64b91f034d73e08dd8b64625eb3395d/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf` |
+| `--diar-model MODEL` | Speaker diarization model path or indexed HF repo | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/Nemotron-3-Diarization/f667ed73aee57d40cc39428eb768b4fd87a0a29e/Nemotron-3-Diarization.q8_0.gguf` |
 | `-t, --translate BOOL` | Translate eligible inputs; accepts `true` or `false` | `true` |
 | `-f, --force` | Regenerate inputs with existing source or translated SRT files | Off unless provided |
+| `-p, --playbook` | Write timestamp-free TXT transcripts for generated or existing SRT files | Off unless provided |
 | `--nmt-model PATH` | Translation GGUF model | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/translation-model/Riva-Translate-4B-Instruct-v2-Q4_K_M.gguf` |
 | `-s, --subtitle` | Mux generated SRTs into an MP4 as soft subtitle tracks when provided | Off unless provided |
 | `-l, --language, --lang CODE` | Language code or prompt | `auto` |

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Helpers for nemo.sh: model checks and speaker-aware SRT generation."""
+"""Helpers for nemo.sh: model checks, speaker-aware SRTs, and timestamp-free playbooks."""
 
 import argparse
 import json
@@ -424,6 +424,56 @@ def build_translation(args):
         raise ValueError(f"Could not write the translated SRT: {exc}") from exc
 
 
+def build_playbook(args):
+    try:
+        srt_text = Path(args.srt).read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise ValueError(f"Could not read the SRT file as UTF-8: {exc}") from exc
+
+    timestamp_line = re.compile(r"^\s*\d+:\d{2}:\d{2}[,.]\d{3}\s*-->")
+    cue_texts = []
+    for block in re.split(r"\r?\n(?:[ \t]*\r?\n)+", srt_text.strip()):
+        lines = block.splitlines()
+        timestamp_index = next(
+            (index for index, line in enumerate(lines) if timestamp_line.match(line)),
+            None,
+        )
+        if timestamp_index is None:
+            continue
+
+        text = " ".join(line.strip() for line in lines[timestamp_index + 1:] if line.strip())
+        if not text:
+            continue
+
+        speaker_match = re.match(r"^\[([^\]]+)\]\s*(.*)$", text)
+        if speaker_match:
+            speaker, text = speaker_match.groups()
+            text = text.strip()
+        else:
+            speaker = None
+        if text:
+            cue_texts.append((speaker, text))
+
+    if not cue_texts:
+        raise ValueError(f"No timestamped subtitle cues were found in: {args.srt}")
+
+    turns = []
+    for speaker, text in cue_texts:
+        if turns and turns[-1][0] == speaker:
+            turns[-1][1] += " " + text
+        else:
+            turns.append([speaker, text])
+
+    playbook_lines = [
+        f"{speaker}: {text}" if speaker else text
+        for speaker, text in turns
+    ]
+    try:
+        Path(args.output).write_text("\n\n".join(playbook_lines) + "\n", encoding="utf-8")
+    except OSError as exc:
+        raise ValueError(f"Could not write the playbook to {args.output}: {exc}") from exc
+
+
 def build_parser():
     parser = argparse.ArgumentParser(description="Support utilities for nemo.sh.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -451,6 +501,13 @@ def build_parser():
     translation_parser.add_argument("--translation", required=True)
     translation_parser.add_argument("--output", required=True)
     translation_parser.set_defaults(func=build_translation)
+
+    playbook_parser = subparsers.add_parser(
+        "build-playbook", help="Build a timestamp-free speaker script from an SRT file."
+    )
+    playbook_parser.add_argument("--srt", required=True)
+    playbook_parser.add_argument("--output", required=True)
+    playbook_parser.set_defaults(func=build_playbook)
 
     return parser
 

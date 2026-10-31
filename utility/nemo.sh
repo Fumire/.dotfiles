@@ -3,8 +3,8 @@ set -euo pipefail
 IFS=$'\n\t'
 
 readonly DEFAULT_NEMO_BIN="${HOME}/.local/bin/nemo-speech"
-readonly DEFAULT_NEMO_MODEL_SOURCE="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model"
-readonly DEFAULT_NEMO_MODEL_CACHE="${HOME}/Library/Caches/NeMoSpeech/models/nvidia"
+readonly DEFAULT_NEMO_MODEL="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/nemotron-3.5-asr-streaming-0.6b/1c8deaecc64b91f034d73e08dd8b64625eb3395d/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf"
+readonly DEFAULT_NEMO_DIAR_MODEL="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/Nemotron-3-Diarization/f667ed73aee57d40cc39428eb768b4fd87a0a29e/Nemotron-3-Diarization.q8_0.gguf"
 readonly DEFAULT_NEMO_VAD_MODEL="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model/ggml-silero-v6.2.0.bin"
 readonly DEFAULT_NEMO_NMT_MODEL="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/translation-model/Riva-Translate-4B-Instruct-v2-Q4_K_M.gguf"
 
@@ -12,8 +12,8 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 nemo_helper="/Users/fumire/.dotfiles/utility/nemo.py"
 
 nemo_bin="${NEMO_BIN:-$DEFAULT_NEMO_BIN}"
-asr_model="${NEMO_MODEL:-nemotron-3.5}"
-diar_model="${NEMO_DIAR_MODEL:-nemotron-3-diarization}"
+asr_model="${NEMO_MODEL:-$DEFAULT_NEMO_MODEL}"
+diar_model="${NEMO_DIAR_MODEL:-$DEFAULT_NEMO_DIAR_MODEL}"
 vad_model="${NEMO_VAD_MODEL:-$DEFAULT_NEMO_VAD_MODEL}"
 nmt_model="${NEMO_NMT_MODEL:-$DEFAULT_NEMO_NMT_MODEL}"
 language="${NEMO_LANGUAGE:-auto}"
@@ -21,6 +21,7 @@ translate_enabled=1
 vad_enabled=0
 subtitle_enabled=0
 force_enabled=0
+playbook_enabled=0
 declare -a input_files=()
 
 show_help() {
@@ -34,8 +35,10 @@ enabled, English sources also get <name>.ko.srt, Korean sources get
 <name>.en.srt, and other sources get both <name>.en.srt and <name>.ko.srt.
 Inputs with an existing source or translated SRT are skipped unless -f or
 --force is provided. With force enabled, generated SRT files are replaced.
-Before inference, cached NVIDIA model entries are refreshed as symbolic links
-to the files in the configured NeMo Speech model folder.
+With -p or --playbook, each generated SRT also gets a matching timestamp-free
+TXT transcript in speaker-turn format. Existing SRTs are converted before skip.
+The ASR and diarization defaults are direct paths to local model folders; the
+script passes these paths to nemo-speech without preparing cache symlinks.
 For MP4 inputs, -s or --subtitle adds the generated source and translated SRTs as
 soft subtitle tracks (mov_text), replaces the input MP4 after a successful
 remux, and removes those generated SRT files. Subtitle muxing is off by default.
@@ -51,6 +54,7 @@ Options:
   --no-vad               Disable VAD
   -t, --translate BOOL   Generate translated SRTs; true or false (default: true)
   -f, --force            Regenerate and replace existing SRT outputs
+  -p, --playbook         Write timestamp-free TXT transcripts from SRT files
   --nmt-model PATH       Translation GGUF model; default: ${nmt_model##*/}
   -s, --subtitle         Mux generated SRTs into MP4 inputs when provided
   -l, --language, --lang CODE
@@ -83,6 +87,7 @@ Examples:
   $(basename "$0") -l de meeting.mp4
   $(basename "$0") --translate false meeting.wav
   $(basename "$0") -f meeting.mp4
+  $(basename "$0") -p meeting.mp4
   $(basename "$0") --vad-model /path/to/silero-v6.2.0.gguf meeting.wav
   $(basename "$0") --no-vad meeting.mp3
 EOF
@@ -96,37 +101,12 @@ need_value() {
     fi
 }
 
-prepare_nemo_model_links() {
-    local model_path
-    local -a model_paths=()
+write_playbook_from_srt() {
+    local srt_path="$1"
+    local txt_path="${srt_path%.srt}.txt"
 
-    if [[ ! -d "$DEFAULT_NEMO_MODEL_SOURCE" ]]; then
-        printf 'Error: NeMo model source directory not found: %s\n' "$DEFAULT_NEMO_MODEL_SOURCE" >&2
-        return 1
-    fi
-
-    for model_path in "$DEFAULT_NEMO_MODEL_SOURCE"/*; do
-        if [[ -e "$model_path" || -L "$model_path" ]]; then
-            model_paths+=("$model_path")
-        fi
-    done
-    if (( ${#model_paths[@]} == 0 )); then
-        printf 'Error: no model files found in: %s\n' "$DEFAULT_NEMO_MODEL_SOURCE" >&2
-        return 1
-    fi
-
-    if ! mkdir -p "$DEFAULT_NEMO_MODEL_CACHE"; then
-        printf 'Error: could not create NeMo model cache directory: %s\n' "$DEFAULT_NEMO_MODEL_CACHE" >&2
-        return 1
-    fi
-    if ! rm -rf "$DEFAULT_NEMO_MODEL_CACHE"/*; then
-        printf 'Error: could not clear NeMo model cache directory: %s\n' "$DEFAULT_NEMO_MODEL_CACHE" >&2
-        return 1
-    fi
-    if ! ln -sfv "${model_paths[@]}" "$DEFAULT_NEMO_MODEL_CACHE"; then
-        printf 'Error: could not create NeMo model cache symlinks in: %s\n' "$DEFAULT_NEMO_MODEL_CACHE" >&2
-        return 1
-    fi
+    python3 "$nemo_helper" build-playbook --srt "$srt_path" --output "$txt_path"
+    printf 'Saved: %s\n' "$txt_path"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -165,6 +145,18 @@ while [[ $# -gt 0 ]]; do
             ;;
         --force=*)
             printf 'Error: --force is a flag and does not take a value.\n' >&2
+            exit 2
+            ;;
+        -p | --playbook)
+            if [[ "${2:-}" == true || "${2:-}" == false ]]; then
+                printf 'Error: --playbook is a flag and does not take a value.\n' >&2
+                exit 2
+            fi
+            playbook_enabled=1
+            shift
+            ;;
+        --playbook=*)
+            printf 'Error: --playbook is a flag and does not take a value.\n' >&2
             exit 2
             ;;
         -t | --translate)
@@ -249,8 +241,6 @@ if [[ ! -r "$nemo_helper" ]]; then
     printf 'Error: Python helper not found or unreadable: %s\n' "$nemo_helper" >&2
     exit 1
 fi
-
-prepare_nemo_model_links
 
 if (( vad_enabled )); then
     python3 "$nemo_helper" check-model \
@@ -386,14 +376,6 @@ for input_file in "${input_files[@]}"; do
     output_srt="$input_dir/$stem.srt"
     output_en_srt="$input_dir/$stem.en.srt"
     output_ko_srt="$input_dir/$stem.ko.srt"
-    if (( force_enabled == 0 )); then
-        for existing_srt in "$output_srt" "$output_en_srt" "$output_ko_srt"; do
-            if [[ -e "$existing_srt" || -L "$existing_srt" ]]; then
-                printf 'Skipping: SRT output already exists (use --force to overwrite): %s\n' "$existing_srt"
-                continue 2
-            fi
-        done
-    fi
 
     if (( subtitle_enabled )) && is_mp4_file "$input_file"; then
         if ! embedded_subtitle_streams="$(
@@ -406,6 +388,22 @@ for input_file in "${input_files[@]}"; do
             printf 'Skipping: MP4 already contains embedded subtitle track(s): %s\n' "$input_file"
             continue
         fi
+    fi
+
+    existing_srt_files=()
+    for existing_srt in "$output_srt" "$output_en_srt" "$output_ko_srt"; do
+        if [[ -e "$existing_srt" || -L "$existing_srt" ]]; then
+            existing_srt_files+=("$existing_srt")
+        fi
+    done
+    if (( force_enabled == 0 && ${#existing_srt_files[@]} > 0 )); then
+        if (( playbook_enabled )); then
+            for existing_srt in "${existing_srt_files[@]}"; do
+                write_playbook_from_srt "$existing_srt"
+            done
+        fi
+        printf 'Skipping: SRT output already exists (use --force to overwrite): %s\n' "${existing_srt_files[0]}"
+        continue
     fi
 
     wav_file="$work_dir/input.wav"
@@ -465,6 +463,9 @@ for input_file in "${input_files[@]}"; do
 
     mv -f "$temp_srt" "$output_srt"
     printf 'Saved: %s\n' "$output_srt"
+    if (( playbook_enabled )); then
+        write_playbook_from_srt "$output_srt"
+    fi
 
     source_language="$(python3 "$nemo_helper" get-language --metadata "$cue_metadata")"
     case "$source_language" in
@@ -520,6 +521,9 @@ for input_file in "${input_files[@]}"; do
 
         mv -f "$temp_ko_srt" "$output_ko_srt"
         printf 'Saved: %s\n' "$output_ko_srt"
+        if (( playbook_enabled )); then
+            write_playbook_from_srt "$output_ko_srt"
+        fi
         generated_srt_files+=("$output_ko_srt")
         generated_srt_languages+=(ko)
     elif [[ "$source_language" == "ko" ]]; then
@@ -543,6 +547,9 @@ for input_file in "${input_files[@]}"; do
 
         mv -f "$temp_en_srt" "$output_en_srt"
         printf 'Saved: %s\n' "$output_en_srt"
+        if (( playbook_enabled )); then
+            write_playbook_from_srt "$output_en_srt"
+        fi
         generated_srt_files+=("$output_en_srt")
         generated_srt_languages+=(en)
     else
@@ -586,6 +593,10 @@ for input_file in "${input_files[@]}"; do
         mv -f "$temp_ko_srt" "$output_ko_srt"
         printf 'Saved: %s\n' "$output_en_srt"
         printf 'Saved: %s\n' "$output_ko_srt"
+        if (( playbook_enabled )); then
+            write_playbook_from_srt "$output_en_srt"
+            write_playbook_from_srt "$output_ko_srt"
+        fi
         generated_srt_files+=("$output_en_srt" "$output_ko_srt")
         generated_srt_languages+=(en ko)
     fi
