@@ -312,9 +312,9 @@ unbind C-a
 unbind C-b
 set -g prefix C-a
 bind C-a send-prefix
-bind E select-layout -E
-set-hook -g after-split-window 'select-layout -E'
-set-hook -g window-resized 'select-layout -E'
+bind E select-layout -E \; select-layout -E
+set-hook -g after-split-window 'select-layout -E \; select-layout -E'
+set-hook -g window-resized 'select-layout -E \; select-layout -E'
 
 # move status line to top
 #set -g status-position top
