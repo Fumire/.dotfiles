@@ -37,14 +37,17 @@ Inputs with an existing source or translated SRT are skipped unless -f or
 --force is provided. With force enabled, generated SRT files are replaced.
 With -p or --playbook, each generated SRT also gets a matching timestamp-free
 TXT transcript in speaker-turn format. Existing SRTs are converted before skip.
+Each subtitle cue contains no more than one sentence and is limited to 80
+characters including the speaker label. Longer sentences are split at spaces;
+when word timestamps are unavailable, sub-cue times are estimated by text length.
 The ASR and diarization defaults are direct paths to local model folders; the
 script passes these paths to nemo-speech without preparing cache symlinks.
 For MP4 inputs, -s or --subtitle adds the generated source and translated SRTs as
 soft subtitle tracks (mov_text), replaces the input MP4 after a successful
 remux, and removes those generated SRT files. Subtitle muxing is off by default.
-When -s or --subtitle is provided, MP4 inputs that already contain a subtitle
-track are skipped without transcription, SRT generation, or remuxing.
-This embedded-subtitle check still applies when -f or --force is provided.
+With -s or --subtitle, MP4 inputs that already contain a subtitle track are
+skipped unless -f or --force is provided. Force replaces the embedded tracks
+with the newly generated source and translated subtitle tracks.
 
 Options:
   --model MODEL          ASR model; default: $asr_model
@@ -66,14 +69,16 @@ Speaker IDs are retained in the source and translated SRT files. Set
 --translate false to skip translated SRT generation. With --language auto, the
 detected language in the structured ASR result determines whether translation
 is needed. If translation is enabled, this script translates each subtitle cue separately
-so translated SRTs keep the original cue times and speaker labels. Sources
+so translated SRTs keep the original cue times and speaker labels. If a translated
+cue needs splitting for the 80-character limit, its time span is divided by text length. Sources
 other than English or Korean are translated to both English and Korean through
 English because supported Riva-Translate pairs include English.
 English and Korean sources receive the other language when translation is enabled.
 With -s or --subtitle, the source language and any generated English and Korean
 translations are embedded as separate MP4 subtitle tracks. Existing video and
 audio streams are preserved, and generated sidecar SRT files are removed after a
-successful mux. MP4 inputs with embedded subtitles are skipped unchanged.
+successful mux. MP4 inputs with embedded subtitles are skipped unless --force is
+provided; force replaces those tracks with the generated subtitle tracks.
 
 VAD is off by default. The configured legacy whisper.cpp ggml .bin file is not
 accepted by this nemo-speech build. Use --vad-model with a runtime-compatible
@@ -327,7 +332,16 @@ mux_subtitles_into_mp4() {
         ffmpeg_args+=(-i "${subtitle_files[$i]}")
     done
 
-    ffmpeg_args+=(-map 0)
+    if (( force_enabled )); then
+        if (( existing_subtitle_count > 0 )); then
+            ffmpeg_args+=(-map 0 -map -0:s)
+        else
+            ffmpeg_args+=(-map 0)
+        fi
+        existing_subtitle_count=0
+    else
+        ffmpeg_args+=(-map 0)
+    fi
     for ((i = 0; i < ${#subtitle_files[@]}; i++)); do
         ffmpeg_args+=(-map "${input_index}:0")
         input_index=$((input_index + 1))
@@ -384,9 +398,11 @@ for input_file in "${input_files[@]}"; do
             printf 'Error: could not inspect embedded subtitle tracks in: %s\n' "$input_file" >&2
             exit 1
         fi
-        if [[ -n "$embedded_subtitle_streams" ]]; then
+        if [[ -n "$embedded_subtitle_streams" ]] && (( force_enabled == 0 )); then
             printf 'Skipping: MP4 already contains embedded subtitle track(s): %s\n' "$input_file"
             continue
+        elif [[ -n "$embedded_subtitle_streams" ]]; then
+            printf 'Replacing existing embedded subtitle track(s) in: %s\n' "$input_file"
         fi
     fi
 

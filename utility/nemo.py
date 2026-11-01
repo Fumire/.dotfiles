@@ -26,6 +26,7 @@ ASR_RESULT_KEYS = (
     "payload",
 )
 ASR_TEXT_KEYS = ("text", "transcript", "transcription", "pred_text", "hypothesis", "result")
+MAX_SUBTITLE_CUE_CHARS = 80
 
 
 class NoTranscriptError(Exception):
@@ -243,6 +244,67 @@ def join_words(items):
     return result
 
 
+def split_subtitle_text(text, max_chars):
+    """Split text at sentence boundaries, then at nearby spaces when needed."""
+    text = re.sub(r"\s+", " ", text).strip()
+    if not text:
+        return []
+
+    sentence_ends = set(".!?。！？")
+    closing_chars = set("\"'”’」』）)]}")
+    sentences = []
+    start = 0
+    index = 0
+    while index < len(text):
+        char = text[index]
+        is_sentence_end = char in "!?。！？"
+        if char == ".":
+            previous_is_digit = index > 0 and text[index - 1].isdigit()
+            next_is_digit = index + 1 < len(text) and text[index + 1].isdigit()
+            next_is_boundary = (
+                index + 1 == len(text)
+                or text[index + 1].isspace()
+                or text[index + 1] in closing_chars
+            )
+            is_sentence_end = not (previous_is_digit and next_is_digit) and next_is_boundary
+
+        if not is_sentence_end:
+            index += 1
+            continue
+
+        end = index + 1
+        while end < len(text) and (text[end] in sentence_ends or text[end] in closing_chars):
+            end += 1
+        sentence = text[start:end].strip()
+        if sentence:
+            sentences.append(sentence)
+        start = end
+        while start < len(text) and text[start].isspace():
+            start += 1
+        index = start
+
+    remainder = text[start:].strip()
+    if remainder:
+        sentences.append(remainder)
+
+    chunks = []
+    for sentence in sentences:
+        remaining = sentence
+        while len(remaining) > max_chars:
+            split_at = remaining.rfind(" ", 0, max_chars + 1)
+            if split_at <= 0:
+                split_at = max_chars
+            chunk = remaining[:split_at].strip()
+            if not chunk:
+                split_at = max_chars
+                chunk = remaining[:split_at].strip()
+            chunks.append(chunk)
+            remaining = remaining[split_at:].strip()
+        if remaining:
+            chunks.append(remaining)
+    return chunks
+
+
 def speaker_label(speaker):
     if isinstance(speaker, int) and speaker > 0:
         return f"Speaker {speaker}"
@@ -251,6 +313,42 @@ def speaker_label(speaker):
         if match and int(match.group(1)) > 0:
             return f"Speaker {match.group(1)}"
     return "Speaker Unknown"
+
+
+def cue_text_limit(speaker):
+    """Keep the complete displayed cue, including its speaker label, within the limit."""
+    label_length = len(f"[{speaker_label(speaker)}] ")
+    return max(1, MAX_SUBTITLE_CUE_CHARS - label_length)
+
+
+def ends_sentence(text):
+    closing_chars = "\"'”’」』）)]}"
+    text = text.rstrip(closing_chars)
+    return text.endswith((".", "!", "?", "。", "！", "？"))
+
+
+def split_timed_text(text, start, end, speaker):
+    """Split a timed record and estimate sub-cue times by each text chunk's length."""
+    chunks = split_subtitle_text(text, cue_text_limit(speaker))
+    if not chunks:
+        return []
+
+    weights = [max(1, len(chunk)) for chunk in chunks]
+    total_weight = sum(weights)
+    duration = max(0.0, end - start)
+    elapsed_weight = 0
+    records = []
+    for chunk, weight in zip(chunks, weights):
+        chunk_start = start + duration * elapsed_weight / total_weight
+        elapsed_weight += weight
+        chunk_end = start + duration * elapsed_weight / total_weight
+        records.append({
+            "word": chunk,
+            "start": chunk_start,
+            "end": chunk_end,
+            "speaker": speaker,
+        })
+    return records
 
 
 def build_source(args):
@@ -282,8 +380,8 @@ def build_source(args):
             "speaker": None,
         }]
         print(
-            "Warning: no word timestamps were returned; created one full-duration cue "
-            "labeled Speaker Unknown.",
+            "Warning: no word timestamps were returned; split the transcript into "
+            "sentence- or phrase-sized cues with estimated timestamps and labeled Speaker Unknown.",
             file=sys.stderr,
         )
     elif record_kind == "segments":
@@ -307,12 +405,13 @@ def build_source(args):
             raise ValueError("A transcription record has invalid timestamps.")
         if not (math.isfinite(start) and math.isfinite(end)):
             raise ValueError("A word has a non-finite timestamp.")
-        items.append({
-            "word": word,
-            "start": max(0, start),
-            "end": max(start, end),
-            "speaker": record_speaker(item),
-        })
+        speaker = record_speaker(item)
+        items.extend(split_timed_text(
+            word,
+            max(0, start),
+            max(start, end),
+            speaker,
+        ))
 
     items.sort(key=lambda item: item["start"])
     cues = []
@@ -336,12 +435,18 @@ def build_source(args):
             speaker_changed = word["speaker"] != current[-1]["speaker"]
             pause = word["start"] - current[-1]["end"]
             duration = word["end"] - current[0]["start"]
-            length = len(join_words(current)) + len(word["word"])
-            if speaker_changed or pause > 0.8 or duration > 6.0 or length > 80:
+            candidate_text = join_words([*current, word])
+            text_limit = cue_text_limit(current[0]["speaker"])
+            if (
+                speaker_changed
+                or pause > 0.8
+                or duration > 6.0
+                or len(candidate_text) > text_limit
+            ):
                 flush()
 
         current.append(word)
-        if len(current) >= 4 and re.search(r"[.!?。！？]$", word["word"]):
+        if ends_sentence(word["word"]):
             flush()
 
     flush()
@@ -405,18 +510,28 @@ def build_translation(args):
         )
 
     lines = []
+    cue_index = 0
     for index, (cue, translated) in enumerate(zip(cues, translations), 1):
         translated = translated.strip()
         if not translated:
             raise ValueError(
                 f"Translation for cue {index} is empty; the existing translated SRT was left unchanged."
             )
-        lines.extend([
-            str(index),
-            f"{timestamp(cue['start'])} --> {timestamp(max(cue['start'] + 0.001, cue['end']))}",
-            f"[{speaker_label(cue.get('speaker'))}] {translated}",
-            "",
-        ])
+        translated_chunks = split_timed_text(
+            translated,
+            cue["start"],
+            cue["end"],
+            cue.get("speaker"),
+        )
+        for translated_cue in translated_chunks:
+            cue_index += 1
+            lines.extend([
+                str(cue_index),
+                f"{timestamp(translated_cue['start'])} --> "
+                f"{timestamp(max(translated_cue['start'] + 0.001, translated_cue['end']))}",
+                f"[{speaker_label(translated_cue.get('speaker'))}] {translated_cue['word']}",
+                "",
+            ])
 
     try:
         Path(args.output).write_text("\n".join(lines), encoding="utf-8")
