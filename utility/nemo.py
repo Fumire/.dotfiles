@@ -2,6 +2,7 @@
 """Helpers for nemo.sh: model checks, speaker-aware SRTs, and timestamp-free playbooks."""
 
 import argparse
+import ctypes
 import json
 import math
 import os
@@ -9,6 +10,8 @@ import re
 import select
 import subprocess
 import sys
+import wave
+from array import array
 from pathlib import Path
 
 ASR_RESULT_KEYS = (
@@ -45,6 +48,75 @@ def parse_cue_chars(value):
 
 class NoTranscriptError(Exception):
     """Raised when an ASR result has no content from which to build subtitles."""
+
+
+class _AsrBackendConfig(ctypes.Structure):
+    _fields_ = [("size", ctypes.c_size_t), ("gpu", ctypes.c_int32)]
+
+
+class _AsrModelConfig(ctypes.Structure):
+    _fields_ = [
+        ("size", ctypes.c_size_t),
+        ("path", ctypes.c_char_p),
+        ("name", ctypes.c_char_p),
+    ]
+
+
+class _AsrVadConfig(ctypes.Structure):
+    _fields_ = [
+        ("size", ctypes.c_size_t),
+        ("model_path", ctypes.c_char_p),
+        ("enable_masking", ctypes.c_bool),
+        ("onset", ctypes.c_float),
+        ("offset", ctypes.c_float),
+    ]
+
+
+class _AsrDiarConfig(ctypes.Structure):
+    _fields_ = [
+        ("size", ctypes.c_size_t),
+        ("model_path", ctypes.c_char_p),
+        ("chunk_frames", ctypes.c_int32),
+        ("right_context_frames", ctypes.c_int32),
+        ("left_context_frames", ctypes.c_int32),
+        ("fifo_frames", ctypes.c_int32),
+        ("spkcache_frames", ctypes.c_int32),
+        ("update_period_frames", ctypes.c_int32),
+    ]
+
+
+class _AsrRecognizerConfig(ctypes.Structure):
+    _fields_ = [
+        ("size", ctypes.c_size_t),
+        ("backend", ctypes.POINTER(_AsrBackendConfig)),
+        ("model", ctypes.POINTER(_AsrModelConfig)),
+        ("streaming", ctypes.c_void_p),
+        ("decoder", ctypes.c_void_p),
+        ("vad", ctypes.POINTER(_AsrVadConfig)),
+        ("endpointing", ctypes.c_void_p),
+        ("postproc", ctypes.c_void_p),
+        ("diar", ctypes.POINTER(_AsrDiarConfig)),
+        ("batching", ctypes.c_void_p),
+    ]
+
+
+class _AsrRecognitionOptions(ctypes.Structure):
+    _fields_ = [
+        ("size", ctypes.c_size_t),
+        ("request_id", ctypes.c_char_p),
+        ("language_code", ctypes.c_char_p),
+        ("interim_results", ctypes.c_bool),
+        ("enable_word_time_offsets", ctypes.c_bool),
+        ("enable_automatic_punctuation", ctypes.c_bool),
+        ("verbatim_transcripts", ctypes.c_bool),
+        ("profanity_filter", ctypes.c_bool),
+        ("stop_history_eou_ms", ctypes.c_int32),
+        ("speech_contexts", ctypes.c_void_p),
+        ("speech_context_count", ctypes.c_size_t),
+        ("max_alternatives", ctypes.c_int32),
+        ("enable_speaker_diarization", ctypes.c_bool),
+        ("max_speaker_count", ctypes.c_int32),
+    ]
 
 
 def read_json(path):
@@ -605,6 +677,326 @@ def build_playbook(args):
         raise ValueError(f"Could not write the playbook to {args.output}: {exc}") from exc
 
 
+def _load_asr_sdk(nemo_bin):
+    try:
+        executable = Path(nemo_bin).expanduser().resolve(strict=True)
+    except OSError as exc:
+        raise ValueError(f"Could not resolve the nemo-speech executable: {exc}") from exc
+
+    install_root = executable.parent.parent
+    library_paths = (
+        install_root / "lib" / "libnemo_speech_asr_c.dylib",
+        install_root / "lib" / "libnemo_speech_asr_c.1.dylib",
+        install_root / "lib" / "libnemo_speech_asr_c.so",
+        install_root / "lib" / "libnemo_speech_asr_c.so.1",
+    )
+    library_path = next((path for path in library_paths if path.is_file()), None)
+    if library_path is None:
+        expected = ", ".join(str(path) for path in library_paths)
+        raise ValueError(f"NeMo-Speech ASR SDK library was not found. Checked: {expected}")
+
+    try:
+        library = ctypes.CDLL(str(library_path))
+    except OSError as exc:
+        raise ValueError(f"Could not load the NeMo-Speech ASR SDK library at {library_path}: {exc}") from exc
+
+    pointer = ctypes.c_void_p
+    library.nemo_speech_asr_create.argtypes = [
+        ctypes.POINTER(_AsrRecognizerConfig),
+        ctypes.POINTER(pointer),
+    ]
+    library.nemo_speech_asr_create.restype = ctypes.c_int
+    library.nemo_speech_asr_destroy.argtypes = [pointer]
+    library.nemo_speech_asr_destroy.restype = None
+    library.nemo_speech_asr_streaming_recognize.argtypes = [
+        pointer,
+        ctypes.POINTER(_AsrRecognitionOptions),
+        ctypes.POINTER(pointer),
+    ]
+    library.nemo_speech_asr_streaming_recognize.restype = ctypes.c_int
+    library.nemo_speech_asr_stream_push_f32.argtypes = [
+        pointer,
+        ctypes.POINTER(ctypes.c_float),
+        ctypes.c_size_t,
+        ctypes.c_int32,
+    ]
+    library.nemo_speech_asr_stream_push_f32.restype = ctypes.c_int
+    library.nemo_speech_asr_stream_finish.argtypes = [pointer]
+    library.nemo_speech_asr_stream_finish.restype = ctypes.c_int
+    library.nemo_speech_asr_stream_next.argtypes = [pointer, ctypes.POINTER(pointer)]
+    library.nemo_speech_asr_stream_next.restype = ctypes.c_int
+    library.nemo_speech_asr_stream_close.argtypes = [pointer]
+    library.nemo_speech_asr_stream_close.restype = None
+    library.nemo_speech_asr_last_error.argtypes = []
+    library.nemo_speech_asr_last_error.restype = ctypes.c_char_p
+
+    library.nemo_speech_asr_result_is_final.argtypes = [pointer]
+    library.nemo_speech_asr_result_is_final.restype = ctypes.c_bool
+    library.nemo_speech_asr_result_audio_processed.argtypes = [pointer]
+    library.nemo_speech_asr_result_audio_processed.restype = ctypes.c_float
+    library.nemo_speech_asr_result_alternative_count.argtypes = [pointer]
+    library.nemo_speech_asr_result_alternative_count.restype = ctypes.c_size_t
+    library.nemo_speech_asr_result_transcript.argtypes = [pointer, ctypes.c_size_t]
+    library.nemo_speech_asr_result_transcript.restype = ctypes.c_char_p
+    library.nemo_speech_asr_result_word_count.argtypes = [pointer, ctypes.c_size_t]
+    library.nemo_speech_asr_result_word_count.restype = ctypes.c_size_t
+    library.nemo_speech_asr_result_word_text.argtypes = [
+        pointer,
+        ctypes.c_size_t,
+        ctypes.c_size_t,
+    ]
+    library.nemo_speech_asr_result_word_text.restype = ctypes.c_char_p
+    library.nemo_speech_asr_result_word_start_time.argtypes = [
+        pointer,
+        ctypes.c_size_t,
+        ctypes.c_size_t,
+    ]
+    library.nemo_speech_asr_result_word_start_time.restype = ctypes.c_int32
+    library.nemo_speech_asr_result_word_end_time.argtypes = [
+        pointer,
+        ctypes.c_size_t,
+        ctypes.c_size_t,
+    ]
+    library.nemo_speech_asr_result_word_end_time.restype = ctypes.c_int32
+    library.nemo_speech_asr_result_word_speaker_tag.argtypes = [
+        pointer,
+        ctypes.c_size_t,
+        ctypes.c_size_t,
+    ]
+    library.nemo_speech_asr_result_word_speaker_tag.restype = ctypes.c_int32
+    library.nemo_speech_asr_result_language_count.argtypes = [pointer, ctypes.c_size_t]
+    library.nemo_speech_asr_result_language_count.restype = ctypes.c_size_t
+    library.nemo_speech_asr_result_language_code.argtypes = [
+        pointer,
+        ctypes.c_size_t,
+        ctypes.c_size_t,
+    ]
+    library.nemo_speech_asr_result_language_code.restype = ctypes.c_char_p
+    library.nemo_speech_asr_result_destroy.argtypes = [pointer]
+    library.nemo_speech_asr_result_destroy.restype = None
+    return library
+
+
+def _emit_progress_event(name, seconds=None):
+    event = name if seconds is None else f"{name} {max(0.0, seconds):.6f}"
+    try:
+        os.write(3, f"{event}\n".encode("ascii"))
+    except OSError:
+        pass
+
+
+def _decode_sdk_text(value):
+    return value.decode("utf-8", errors="replace") if value else ""
+
+
+def transcribe_stream(args):
+    try:
+        audio = wave.open(args.wav, "rb")
+    except (OSError, wave.Error) as exc:
+        raise ValueError(f"Could not read the converted WAV file {args.wav}: {exc}") from exc
+
+    with audio:
+        channels = audio.getnchannels()
+        sample_width = audio.getsampwidth()
+        sample_rate = audio.getframerate()
+        total_frames = audio.getnframes()
+        if channels != 1 or sample_width != 2:
+            raise ValueError("The converted WAV must contain mono 16-bit PCM audio.")
+        if sample_rate <= 0 or total_frames <= 0:
+            raise ValueError("The converted WAV contains no audio frames.")
+        duration = total_frames / float(sample_rate)
+
+        _emit_progress_event("asr-start", duration)
+        library = None
+        recognizer = ctypes.c_void_p()
+        stream = ctypes.c_void_p()
+        processed_seconds = 0.0
+        completed = False
+        try:
+            library = _load_asr_sdk(args.nemo_bin)
+
+            backend = _AsrBackendConfig(ctypes.sizeof(_AsrBackendConfig), 0)
+            model_path = os.fsencode(args.model)
+            model = _AsrModelConfig(ctypes.sizeof(_AsrModelConfig), model_path, None)
+            diar_path = os.fsencode(args.diar_model) if args.diar_model else None
+            diar = _AsrDiarConfig(
+                ctypes.sizeof(_AsrDiarConfig), diar_path, 0, 0, -1, 0, 0, 0
+            )
+            vad_path = os.fsencode(args.vad_model) if args.vad_model else None
+            vad = _AsrVadConfig(
+                ctypes.sizeof(_AsrVadConfig), vad_path, bool(vad_path), 0.5, 0.3
+            )
+            config = _AsrRecognizerConfig()
+            config.size = ctypes.sizeof(_AsrRecognizerConfig)
+            config.backend = ctypes.pointer(backend)
+            config.model = ctypes.pointer(model)
+            config.vad = ctypes.pointer(vad) if vad_path else None
+            config.diar = ctypes.pointer(diar) if diar_path else None
+
+            options = _AsrRecognitionOptions()
+            options.size = ctypes.sizeof(_AsrRecognitionOptions)
+            language = args.language.strip()
+            options.language_code = (
+                language.encode("utf-8") if language and language.lower() != "auto" else None
+            )
+            options.interim_results = True
+            options.enable_word_time_offsets = True
+            options.enable_automatic_punctuation = True
+            options.enable_speaker_diarization = bool(diar_path)
+            options.max_alternatives = 1
+
+            status = library.nemo_speech_asr_create(ctypes.byref(config), ctypes.byref(recognizer))
+            if status != 0 or not recognizer.value:
+                detail = _decode_sdk_text(library.nemo_speech_asr_last_error()) or f"status {status}"
+                raise ValueError(f"NeMo-Speech ASR initialization failed: {detail}")
+
+            status = library.nemo_speech_asr_streaming_recognize(
+                recognizer, ctypes.byref(options), ctypes.byref(stream)
+            )
+            if status != 0 or not stream.value:
+                detail = _decode_sdk_text(library.nemo_speech_asr_last_error()) or f"status {status}"
+                raise ValueError(f"NeMo-Speech streaming recognition could not start: {detail}")
+
+            transcript_parts = []
+            words = []
+            languages = set()
+
+            def accept_final_result(result_handle):
+                alternatives = library.nemo_speech_asr_result_alternative_count(result_handle)
+                if alternatives == 0:
+                    return
+                alternative = 0
+                text = _decode_sdk_text(
+                    library.nemo_speech_asr_result_transcript(result_handle, alternative)
+                ).strip()
+                if text:
+                    transcript_parts.append(text)
+
+                word_count = library.nemo_speech_asr_result_word_count(result_handle, alternative)
+                for index in range(word_count):
+                    word = _decode_sdk_text(
+                        library.nemo_speech_asr_result_word_text(result_handle, alternative, index)
+                    ).strip()
+                    if not word:
+                        continue
+                    start_ms = library.nemo_speech_asr_result_word_start_time(
+                        result_handle, alternative, index
+                    )
+                    end_ms = library.nemo_speech_asr_result_word_end_time(
+                        result_handle, alternative, index
+                    )
+                    speaker = library.nemo_speech_asr_result_word_speaker_tag(
+                        result_handle, alternative, index
+                    )
+                    words.append({
+                        "word": word,
+                        "start": start_ms / 1000.0,
+                        "end": end_ms / 1000.0,
+                        "speaker": speaker if speaker > 0 else None,
+                    })
+
+                language_count = library.nemo_speech_asr_result_language_count(
+                    result_handle, alternative
+                )
+                for index in range(language_count):
+                    language_code = _decode_sdk_text(
+                        library.nemo_speech_asr_result_language_code(
+                            result_handle, alternative, index
+                        )
+                    ).strip()
+                    if language_code:
+                        languages.add(language_code)
+
+            def drain_results(finishing=False):
+                nonlocal processed_seconds
+                while True:
+                    result = ctypes.c_void_p()
+                    status = library.nemo_speech_asr_stream_next(stream, ctypes.byref(result))
+                    if status != 0:
+                        detail = _decode_sdk_text(library.nemo_speech_asr_last_error()) or f"status {status}"
+                        raise ValueError(f"NeMo-Speech streaming transcription failed: {detail}")
+                    if not result.value:
+                        return
+                    try:
+                        result_seconds = library.nemo_speech_asr_result_audio_processed(result)
+                        if math.isfinite(result_seconds):
+                            processed_seconds = max(
+                                processed_seconds, min(duration, max(0.0, result_seconds))
+                            )
+                            _emit_progress_event("asr-progress", processed_seconds)
+                        is_final = library.nemo_speech_asr_result_is_final(result)
+                        if is_final:
+                            accept_final_result(result)
+                        elif not finishing:
+                            return
+                    finally:
+                        library.nemo_speech_asr_result_destroy(result)
+
+            chunk_frames = max(1, sample_rate * 160 // 1000)
+            while True:
+                raw_samples = audio.readframes(chunk_frames)
+                if not raw_samples:
+                    break
+                pcm_samples = array("h")
+                pcm_samples.frombytes(raw_samples)
+                if sys.byteorder != "little":
+                    pcm_samples.byteswap()
+                float_samples = array("f", (sample / 32768.0 for sample in pcm_samples))
+                float_buffer = (ctypes.c_float * len(float_samples)).from_buffer(float_samples)
+                status = library.nemo_speech_asr_stream_push_f32(
+                    stream, float_buffer, len(float_samples), sample_rate
+                )
+                if status != 0:
+                    detail = _decode_sdk_text(library.nemo_speech_asr_last_error()) or f"status {status}"
+                    raise ValueError(f"NeMo-Speech could not process an audio chunk: {detail}")
+                drain_results()
+
+            status = library.nemo_speech_asr_stream_finish(stream)
+            if status != 0:
+                detail = _decode_sdk_text(library.nemo_speech_asr_last_error()) or f"status {status}"
+                raise ValueError(f"NeMo-Speech could not finish streaming transcription: {detail}")
+            drain_results(finishing=True)
+
+            transcript = ""
+            attaches_to_previous = set(",.!?;:%)]}»’”、。，！？；：…")
+            for part in transcript_parts:
+                if transcript and part and part[0] not in attaches_to_previous:
+                    transcript += " "
+                transcript += part
+
+            payload = {
+                "text": transcript,
+                "duration": duration,
+                "languages": sorted(languages),
+                "words": words,
+            }
+            try:
+                Path(args.json).write_text(
+                    json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+            except OSError as exc:
+                raise ValueError(f"Could not write transcription JSON to {args.json}: {exc}") from exc
+
+            processed_seconds = duration
+            _emit_progress_event("asr-progress", processed_seconds)
+            completed = True
+        finally:
+            if library is not None:
+                if stream.value:
+                    library.nemo_speech_asr_stream_close(stream)
+                if recognizer.value:
+                    library.nemo_speech_asr_destroy(recognizer)
+            _emit_progress_event("asr-stop", duration if completed else processed_seconds)
+
+
+def _format_media_time(seconds):
+    seconds = max(0, int(seconds))
+    hours, remaining = divmod(seconds, 3600)
+    minutes, seconds = divmod(remaining, 60)
+    return f"{hours:02}:{minutes:02}:{seconds:02}"
+
+
 def show_progress(args):
     try:
         from tqdm import tqdm
@@ -621,8 +1013,6 @@ def show_progress(args):
         file=sys.stderr,
     )
     asr_bar = None
-    spinner_frames = ("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏")
-    spinner_index = 0
     pending = b""
     input_fd = sys.stdin.fileno()
     try:
@@ -638,26 +1028,44 @@ def show_progress(args):
                     event = raw_event.decode("utf-8", errors="replace").strip()
                     if event == "1":
                         files_bar.update(1)
-                    elif event == "asr-start":
+                    elif event.startswith("asr-start "):
+                        try:
+                            duration = max(0.0, float(event.split(maxsplit=1)[1]))
+                        except (IndexError, ValueError):
+                            duration = 0.0
                         if asr_bar is not None:
                             asr_bar.close()
                         asr_bar = tqdm(
-                            total=None,
+                            total=duration,
                             desc="Transcribing",
-                            bar_format="{desc}: {postfix} [{elapsed} elapsed]",
+                            unit="s",
+                            bar_format="{desc}: {bar} {percentage:3.0f}% | {postfix} [{elapsed} elapsed, ETA {remaining}]",
                             dynamic_ncols=True,
                             file=sys.stderr,
                             position=1,
                             leave=False,
                         )
-                    elif event == "asr-stop" and asr_bar is not None:
+                        asr_bar.set_postfix_str(
+                            f"{_format_media_time(0)} / {_format_media_time(duration)} media time",
+                            refresh=True,
+                        )
+                    elif event.startswith("asr-progress ") and asr_bar is not None:
+                        try:
+                            processed = max(0.0, float(event.split(maxsplit=1)[1]))
+                        except (IndexError, ValueError):
+                            continue
+                        if asr_bar.total is not None:
+                            processed = min(processed, asr_bar.total)
+                        if processed > asr_bar.n:
+                            asr_bar.update(processed - asr_bar.n)
+                        total = asr_bar.total or 0.0
+                        asr_bar.set_postfix_str(
+                            f"{_format_media_time(processed)} / {_format_media_time(total)} media time",
+                            refresh=True,
+                        )
+                    elif event.startswith("asr-stop") and asr_bar is not None:
                         asr_bar.close()
                         asr_bar = None
-
-            if asr_bar is not None:
-                asr_bar.set_postfix_str(spinner_frames[spinner_index], refresh=False)
-                asr_bar.refresh()
-                spinner_index = (spinner_index + 1) % len(spinner_frames)
     finally:
         if asr_bar is not None:
             asr_bar.close()
@@ -710,6 +1118,18 @@ def build_parser():
     )
     progress_parser.add_argument("--total", type=int, required=True)
     progress_parser.set_defaults(func=show_progress)
+
+    asr_parser = subparsers.add_parser(
+        "transcribe-stream", help="Transcribe a WAV file with decoded-audio progress."
+    )
+    asr_parser.add_argument("--nemo-bin", required=True)
+    asr_parser.add_argument("--wav", required=True)
+    asr_parser.add_argument("--json", required=True)
+    asr_parser.add_argument("--model", required=True)
+    asr_parser.add_argument("--language", default="auto")
+    asr_parser.add_argument("--diar-model", default="")
+    asr_parser.add_argument("--vad-model", default="")
+    asr_parser.set_defaults(func=transcribe_stream)
 
     return parser
 

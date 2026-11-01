@@ -43,10 +43,12 @@ characters including the speaker label. Use -c or --cue to adjust this limit
 (minimum: 19 characters). Longer sentences are split at spaces;
 when word timestamps are unavailable, sub-cue times are estimated by text length.
 The terminal shows an overall tqdm progress bar for the input files and a
-per-file transcription status with a live spinner and elapsed time. The overall
-ETA is estimated from files completed so far. Skipped files count as complete.
-The installed nemo-speech CLI does not report an ASR percentage, so the per-file
-status reports activity and elapsed time. Python package tqdm is required.
+per-file transcription bar based on NeMo-Speech's decoded audio position. It
+shows the current media time against the full audio duration, elapsed time, and
+an ETA based on the transcription rate so far.
+The overall ETA is estimated from files completed so far. Skipped files count
+as complete. Python package tqdm and the NeMo-Speech ASR SDK library installed
+alongside nemo-speech are required.
 The ASR and diarization defaults are direct paths to local model folders; the
 script passes these paths to nemo-speech without preparing cache symlinks.
 For MP4 inputs, -s or --subtitle adds the generated source and translated SRTs as
@@ -337,18 +339,6 @@ advance_progress() {
     fi
 }
 
-start_transcription_progress() {
-    if (( progress_fd_open )); then
-        printf 'asr-start\n' >&3 || true
-    fi
-}
-
-stop_transcription_progress() {
-    if (( progress_fd_open )); then
-        printf 'asr-stop\n' >&3 || true
-    fi
-}
-
 is_mp4_file() {
     case "$1" in
         *.[mM][pP]4) return 0 ;;
@@ -538,21 +528,19 @@ for input_file in "${input_files[@]}"; do
         exit "$ffmpeg_status"
     fi
 
-    nemo_args=(
-        transcribe "$wav_file"
+    asr_args=(
+        transcribe-stream
+        --nemo-bin "$nemo_bin"
+        --wav "$wav_file"
+        --json "$json_file"
         --model "$asr_model"
         --language "$language"
-        --format json
-        --output "$json_file"
-        --force
         --diar-model "$diar_model"
     )
     if (( vad_enabled )); then
-        nemo_args+=(--vad-model "$vad_model" --vad-masking)
+        asr_args+=(--vad-model "$vad_model")
     fi
-    start_transcription_progress
-    "$nemo_bin" "${nemo_args[@]}"
-    stop_transcription_progress
+    python3 "$nemo_helper" "${asr_args[@]}"
 
     if python3 "$nemo_helper" build-source \
         --json "$json_file" \
