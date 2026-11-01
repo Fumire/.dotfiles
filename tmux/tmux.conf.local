@@ -312,6 +312,7 @@ unbind C-a
 unbind C-b
 set -g prefix C-a
 bind C-a send-prefix
+bind E select-layout -E
 
 # move status line to top
 #set -g status-position top
