@@ -40,6 +40,11 @@ TXT transcript in speaker-turn format. Existing SRTs are converted before skip.
 Each subtitle cue contains no more than one sentence and is limited to 80
 characters including the speaker label. Longer sentences are split at spaces;
 when word timestamps are unavailable, sub-cue times are estimated by text length.
+The terminal shows an overall tqdm progress bar for the input files and a
+per-file transcription status with a live spinner and elapsed time. The overall
+ETA is estimated from files completed so far. Skipped files count as complete.
+The installed nemo-speech CLI does not report an ASR percentage, so the per-file
+status reports activity and elapsed time. Python package tqdm is required.
 The ASR and diarization defaults are direct paths to local model folders; the
 script passes these paths to nemo-speech without preparing cache symlinks.
 For MP4 inputs, -s or --subtitle adds the generated source and translated SRTs as
@@ -237,6 +242,11 @@ for command_name in ffmpeg python3; do
     fi
 done
 
+if ! python3 -c 'import tqdm' >/dev/null 2>&1; then
+    printf 'Error: Python package tqdm is required; install it with: python3 -m pip install tqdm\n' >&2
+    exit 1
+fi
+
 if [[ ! -x "$nemo_bin" ]]; then
     printf 'Error: nemo-speech executable not found or not executable: %s\n' "$nemo_bin" >&2
     exit 127
@@ -256,13 +266,62 @@ fi
 
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/nemo.XXXXXXXX")"
 subtitle_tmp_file=""
+progress_fifo="$work_dir/progress.fifo"
+progress_pid=""
+progress_fd_open=0
+stop_progress() {
+    if (( progress_fd_open )); then
+        exec 3>&- || true
+        progress_fd_open=0
+    fi
+    if [[ -n "$progress_pid" ]]; then
+        wait "$progress_pid" 2>/dev/null || true
+        progress_pid=""
+    fi
+    if [[ -n "$progress_fifo" ]]; then
+        rm -f -- "$progress_fifo"
+        progress_fifo=""
+    fi
+}
 cleanup() {
+    stop_progress
     if [[ -n "$subtitle_tmp_file" ]]; then
         rm -f -- "$subtitle_tmp_file"
     fi
     rm -rf -- "$work_dir"
 }
 trap cleanup EXIT
+
+start_progress() {
+    if ! mkfifo "$progress_fifo"; then
+        printf 'Error: could not create the progress pipe.\n' >&2
+        return 1
+    fi
+    python3 "$nemo_helper" progress --total "${#input_files[@]}" <"$progress_fifo" &
+    progress_pid=$!
+    exec 3>"$progress_fifo"
+    progress_fd_open=1
+    rm -f -- "$progress_fifo"
+    progress_fifo=""
+}
+
+advance_progress() {
+    if (( progress_fd_open )); then
+        printf '1\n' >&3 || true
+    fi
+}
+
+start_transcription_progress() {
+    if (( progress_fd_open )); then
+        printf 'asr-start\n' >&3 || true
+    fi
+}
+
+stop_transcription_progress() {
+    if (( progress_fd_open )); then
+        printf 'asr-stop\n' >&3 || true
+    fi
+}
 
 is_mp4_file() {
     case "$1" in
@@ -376,6 +435,8 @@ mux_subtitles_into_mp4() {
     printf 'Removed generated SRT files after successful MP4 muxing.\n'
 }
 
+start_progress
+
 for input_file in "${input_files[@]}"; do
     if [[ ! -f "$input_file" || ! -r "$input_file" ]]; then
         printf 'Error: input file not found or unreadable: %s\n' "$input_file" >&2
@@ -400,6 +461,7 @@ for input_file in "${input_files[@]}"; do
         fi
         if [[ -n "$embedded_subtitle_streams" ]] && (( force_enabled == 0 )); then
             printf 'Skipping: MP4 already contains embedded subtitle track(s): %s\n' "$input_file"
+            advance_progress
             continue
         elif [[ -n "$embedded_subtitle_streams" ]]; then
             printf 'Replacing existing embedded subtitle track(s) in: %s\n' "$input_file"
@@ -419,6 +481,7 @@ for input_file in "${input_files[@]}"; do
             done
         fi
         printf 'Skipping: SRT output already exists (use --force to overwrite): %s\n' "${existing_srt_files[0]}"
+        advance_progress
         continue
     fi
 
@@ -453,7 +516,9 @@ for input_file in "${input_files[@]}"; do
     if (( vad_enabled )); then
         nemo_args+=(--vad-model "$vad_model" --vad-masking)
     fi
+    start_transcription_progress
     "$nemo_bin" "${nemo_args[@]}"
+    stop_transcription_progress
 
     if python3 "$nemo_helper" build-source \
         --json "$json_file" \
@@ -467,6 +532,7 @@ for input_file in "${input_files[@]}"; do
         if (( helper_status == 3 )); then
             printf 'Warning: no transcript was recognized; skipping SRT generation and subtitle embedding for: %s\n' "$input_file"
             rm -f -- "$temp_srt" "$wav_file" "$json_file" "$cue_metadata" "$translation_input"
+            advance_progress
             continue
         fi
         exit "$helper_status"
@@ -509,6 +575,7 @@ for input_file in "${input_files[@]}"; do
             fi
         fi
         rm -f -- "$wav_file" "$json_file" "$cue_metadata" "$translation_input"
+        advance_progress
         continue
     fi
 
@@ -630,4 +697,5 @@ for input_file in "${input_files[@]}"; do
     fi
 
     rm -f -- "$wav_file" "$json_file" "$cue_metadata" "$translation_input" "$english_translation" "$korean_translation"
+    advance_progress
 done

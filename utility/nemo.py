@@ -6,6 +6,7 @@ import json
 import math
 import os
 import re
+import select
 import subprocess
 import sys
 from pathlib import Path
@@ -589,6 +590,65 @@ def build_playbook(args):
         raise ValueError(f"Could not write the playbook to {args.output}: {exc}") from exc
 
 
+def show_progress(args):
+    try:
+        from tqdm import tqdm
+    except ImportError as exc:
+        raise ValueError(
+            "Python package tqdm is required. Install it with: python3 -m pip install tqdm"
+        ) from exc
+
+    files_bar = tqdm(
+        total=args.total,
+        desc="Files",
+        unit="file",
+        dynamic_ncols=True,
+        file=sys.stderr,
+    )
+    asr_bar = None
+    spinner_frames = ("⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏")
+    spinner_index = 0
+    pending = b""
+    input_fd = sys.stdin.fileno()
+    try:
+        while True:
+            readable, _, _ = select.select([input_fd], [], [], 0.12)
+            if readable:
+                chunk = os.read(input_fd, 4096)
+                if not chunk:
+                    break
+                pending += chunk
+                while b"\n" in pending:
+                    raw_event, pending = pending.split(b"\n", 1)
+                    event = raw_event.decode("utf-8", errors="replace").strip()
+                    if event == "1":
+                        files_bar.update(1)
+                    elif event == "asr-start":
+                        if asr_bar is not None:
+                            asr_bar.close()
+                        asr_bar = tqdm(
+                            total=None,
+                            desc="Transcribing",
+                            bar_format="{desc}: {postfix} [{elapsed} elapsed]",
+                            dynamic_ncols=True,
+                            file=sys.stderr,
+                            position=1,
+                            leave=False,
+                        )
+                    elif event == "asr-stop" and asr_bar is not None:
+                        asr_bar.close()
+                        asr_bar = None
+
+            if asr_bar is not None:
+                asr_bar.set_postfix_str(spinner_frames[spinner_index], refresh=False)
+                asr_bar.refresh()
+                spinner_index = (spinner_index + 1) % len(spinner_frames)
+    finally:
+        if asr_bar is not None:
+            asr_bar.close()
+        files_bar.close()
+
+
 def build_parser():
     parser = argparse.ArgumentParser(description="Support utilities for nemo.sh.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -623,6 +683,12 @@ def build_parser():
     playbook_parser.add_argument("--srt", required=True)
     playbook_parser.add_argument("--output", required=True)
     playbook_parser.set_defaults(func=build_playbook)
+
+    progress_parser = subparsers.add_parser(
+        "progress", help="Display file and transcription progress with tqdm."
+    )
+    progress_parser.add_argument("--total", type=int, required=True)
+    progress_parser.set_defaults(func=show_progress)
 
     return parser
 
