@@ -27,7 +27,20 @@ ASR_RESULT_KEYS = (
     "payload",
 )
 ASR_TEXT_KEYS = ("text", "transcript", "transcription", "pred_text", "hypothesis", "result")
-MAX_SUBTITLE_CUE_CHARS = 80
+MAX_SUBTITLE_CUE_CHARS = 50
+MIN_SUBTITLE_CUE_CHARS = len("[Speaker Unknown] ") + 1
+
+
+def parse_cue_chars(value):
+    try:
+        cue_chars = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("must be an integer") from exc
+    if cue_chars < MIN_SUBTITLE_CUE_CHARS:
+        raise argparse.ArgumentTypeError(
+            f"must be at least {MIN_SUBTITLE_CUE_CHARS} to fit a speaker label and one character"
+        )
+    return cue_chars
 
 
 class NoTranscriptError(Exception):
@@ -316,10 +329,10 @@ def speaker_label(speaker):
     return "Speaker Unknown"
 
 
-def cue_text_limit(speaker):
+def cue_text_limit(speaker, max_cue_chars=MAX_SUBTITLE_CUE_CHARS):
     """Keep the complete displayed cue, including its speaker label, within the limit."""
     label_length = len(f"[{speaker_label(speaker)}] ")
-    return max(1, MAX_SUBTITLE_CUE_CHARS - label_length)
+    return max(1, max_cue_chars - label_length)
 
 
 def ends_sentence(text):
@@ -328,9 +341,9 @@ def ends_sentence(text):
     return text.endswith((".", "!", "?", "。", "！", "？"))
 
 
-def split_timed_text(text, start, end, speaker):
+def split_timed_text(text, start, end, speaker, max_cue_chars=MAX_SUBTITLE_CUE_CHARS):
     """Split a timed record and estimate sub-cue times by each text chunk's length."""
-    chunks = split_subtitle_text(text, cue_text_limit(speaker))
+    chunks = split_subtitle_text(text, cue_text_limit(speaker, max_cue_chars))
     if not chunks:
         return []
 
@@ -412,6 +425,7 @@ def build_source(args):
             max(0, start),
             max(start, end),
             speaker,
+            args.max_cue_chars,
         ))
 
     items.sort(key=lambda item: item["start"])
@@ -437,7 +451,7 @@ def build_source(args):
             pause = word["start"] - current[-1]["end"]
             duration = word["end"] - current[0]["start"]
             candidate_text = join_words([*current, word])
-            text_limit = cue_text_limit(current[0]["speaker"])
+            text_limit = cue_text_limit(current[0]["speaker"], args.max_cue_chars)
             if (
                 speaker_changed
                 or pause > 0.8
@@ -523,6 +537,7 @@ def build_translation(args):
             cue["start"],
             cue["end"],
             cue.get("speaker"),
+            args.max_cue_chars,
         )
         for translated_cue in translated_chunks:
             cue_index += 1
@@ -665,6 +680,9 @@ def build_parser():
     source_parser.add_argument("--metadata", required=True)
     source_parser.add_argument("--translation-input", required=True)
     source_parser.add_argument("--language", required=True)
+    source_parser.add_argument(
+        "--max-cue-chars", type=parse_cue_chars, default=MAX_SUBTITLE_CUE_CHARS
+    )
     source_parser.set_defaults(func=build_source)
 
     language_parser = subparsers.add_parser("get-language", help="Print the source language code.")
@@ -675,6 +693,9 @@ def build_parser():
     translation_parser.add_argument("--metadata", required=True)
     translation_parser.add_argument("--translation", required=True)
     translation_parser.add_argument("--output", required=True)
+    translation_parser.add_argument(
+        "--max-cue-chars", type=parse_cue_chars, default=MAX_SUBTITLE_CUE_CHARS
+    )
     translation_parser.set_defaults(func=build_translation)
 
     playbook_parser = subparsers.add_parser(

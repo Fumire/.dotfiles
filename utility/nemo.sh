@@ -18,6 +18,7 @@ vad_model="${NEMO_VAD_MODEL:-$DEFAULT_NEMO_VAD_MODEL}"
 nmt_model="${NEMO_NMT_MODEL:-$DEFAULT_NEMO_NMT_MODEL}"
 language="${NEMO_LANGUAGE:-auto}"
 translate_enabled=1
+cue_chars=50
 vad_enabled=0
 subtitle_enabled=0
 force_enabled=0
@@ -37,8 +38,9 @@ Inputs with an existing source or translated SRT are skipped unless -f or
 --force is provided. With force enabled, generated SRT files are replaced.
 With -p or --playbook, each generated SRT also gets a matching timestamp-free
 TXT transcript in speaker-turn format. Existing SRTs are converted before skip.
-Each subtitle cue contains no more than one sentence and is limited to 80
-characters including the speaker label. Longer sentences are split at spaces;
+Each subtitle cue contains no more than one sentence and is limited to $cue_chars
+characters including the speaker label. Use -c or --cue to adjust this limit
+(minimum: 19 characters). Longer sentences are split at spaces;
 when word timestamps are unavailable, sub-cue times are estimated by text length.
 The terminal shows an overall tqdm progress bar for the input files and a
 per-file transcription status with a live spinner and elapsed time. The overall
@@ -60,6 +62,8 @@ Options:
   --vad                  Enable VAD with the default model; default: off
   --vad-model PATH       Enable VAD with a specific GGUF model
   --no-vad               Disable VAD
+  -c, --cue CHARS        Maximum SRT cue length, including speaker label;
+                         default: $cue_chars (minimum: 19)
   -t, --translate BOOL   Generate translated SRTs; true or false (default: true)
   -f, --force            Regenerate and replace existing SRT outputs
   -p, --playbook         Write timestamp-free TXT transcripts from SRT files
@@ -75,7 +79,7 @@ Speaker IDs are retained in the source and translated SRT files. Set
 detected language in the structured ASR result determines whether translation
 is needed. If translation is enabled, this script translates each subtitle cue separately
 so translated SRTs keep the original cue times and speaker labels. If a translated
-cue needs splitting for the 80-character limit, its time span is divided by text length. Sources
+cue needs splitting for the selected cue limit, its time span is divided by text length. Sources
 other than English or Korean are translated to both English and Korean through
 English because supported Riva-Translate pairs include English.
 English and Korean sources receive the other language when translation is enabled.
@@ -96,6 +100,7 @@ Examples:
   $(basename "$0") --language en meeting.m4a
   $(basename "$0") -l de meeting.mp4
   $(basename "$0") --translate false meeting.wav
+  $(basename "$0") -c 40 meeting.mp4
   $(basename "$0") -f meeting.mp4
   $(basename "$0") -p meeting.mp4
   $(basename "$0") --vad-model /path/to/silero-v6.2.0.gguf meeting.wav
@@ -185,6 +190,15 @@ while [[ $# -gt 0 ]]; do
             esac
             shift 2
             ;;
+        -c | --cue)
+            need_value "$1" "${2:-}"
+            if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+                printf 'Error: %s must be an integer greater than or equal to 19.\n' "$1" >&2
+                exit 2
+            fi
+            cue_chars="$2"
+            shift 2
+            ;;
         --nmt-model)
             need_value "$1" "${2:-}"
             nmt_model="$2"
@@ -242,6 +256,11 @@ for command_name in ffmpeg python3; do
     fi
 done
 
+if ! python3 -c 'import sys; sys.exit(0 if int(sys.argv[1]) >= 19 else 1)' "$cue_chars" >/dev/null 2>&1; then
+    printf 'Error: --cue must be an integer greater than or equal to 19.\n' >&2
+    exit 2
+fi
+
 if ! python3 -c 'import tqdm' >/dev/null 2>&1; then
     printf 'Error: Python package tqdm is required; install it with: python3 -m pip install tqdm\n' >&2
     exit 1
@@ -266,6 +285,13 @@ fi
 
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/nemo.XXXXXXXX")"
 subtitle_tmp_file=""
+filter_ffmpeg_diagnostics() {
+    sed -E \
+        -e '/channel element 0\.0 duplicate/d' \
+        -e '/Error submitting packet to decoder: Invalid data found when processing input/d' \
+        "$1" >&2
+}
+
 progress_fifo="$work_dir/progress.fifo"
 progress_pid=""
 progress_fd_open=0
@@ -494,15 +520,23 @@ for input_file in "${input_files[@]}"; do
     korean_translation="$work_dir/translation-ko.txt"
     temp_en_srt="$work_dir/translation-en.srt"
     temp_ko_srt="$work_dir/translation-ko.srt"
+    ffmpeg_log="$work_dir/ffmpeg-convert.log"
 
     printf 'Processing: %s\n' "$input_file"
 
-    ffmpeg -nostdin -hide_banner -loglevel error -y \
+    if ffmpeg -nostdin -hide_banner -loglevel error -y \
         -i "$input_file" \
         -map 0:a:0 -vn \
         -ac 1 -ar 16000 \
         -c:a pcm_s16le \
-        "$wav_file"
+        "$wav_file" 2>"$ffmpeg_log"; then
+        filter_ffmpeg_diagnostics "$ffmpeg_log"
+    else
+        ffmpeg_status=$?
+        filter_ffmpeg_diagnostics "$ffmpeg_log"
+        printf 'Error: ffmpeg failed to convert input audio: %s\n' "$input_file" >&2
+        exit "$ffmpeg_status"
+    fi
 
     nemo_args=(
         transcribe "$wav_file"
@@ -525,7 +559,8 @@ for input_file in "${input_files[@]}"; do
         --srt "$temp_srt" \
         --metadata "$cue_metadata" \
         --translation-input "$translation_input" \
-        --language "$language"; then
+        --language "$language" \
+        --max-cue-chars "$cue_chars"; then
         :
     else
         helper_status=$?
@@ -595,7 +630,8 @@ for input_file in "${input_files[@]}"; do
         python3 "$nemo_helper" build-translation \
             --metadata "$cue_metadata" \
             --translation "$korean_translation" \
-            --output "$temp_ko_srt"
+            --output "$temp_ko_srt" \
+            --max-cue-chars "$cue_chars"
 
         if [[ ! -s "$temp_ko_srt" ]]; then
             printf 'Error: Korean SRT output is empty for input: %s\n' "$input_file" >&2
@@ -621,7 +657,8 @@ for input_file in "${input_files[@]}"; do
         python3 "$nemo_helper" build-translation \
             --metadata "$cue_metadata" \
             --translation "$english_translation" \
-            --output "$temp_en_srt"
+            --output "$temp_en_srt" \
+            --max-cue-chars "$cue_chars"
 
         if [[ ! -s "$temp_en_srt" ]]; then
             printf 'Error: English SRT output is empty for input: %s\n' "$input_file" >&2
@@ -647,7 +684,8 @@ for input_file in "${input_files[@]}"; do
         python3 "$nemo_helper" build-translation \
             --metadata "$cue_metadata" \
             --translation "$english_translation" \
-            --output "$temp_en_srt"
+            --output "$temp_en_srt" \
+            --max-cue-chars "$cue_chars"
 
         if [[ ! -s "$temp_en_srt" ]]; then
             printf 'Error: English SRT output is empty for input: %s\n' "$input_file" >&2
@@ -665,7 +703,8 @@ for input_file in "${input_files[@]}"; do
         python3 "$nemo_helper" build-translation \
             --metadata "$cue_metadata" \
             --translation "$korean_translation" \
-            --output "$temp_ko_srt"
+            --output "$temp_ko_srt" \
+            --max-cue-chars "$cue_chars"
 
         if [[ ! -s "$temp_ko_srt" ]]; then
             printf 'Error: Korean SRT output is empty for input: %s\n' "$input_file" >&2
