@@ -29,6 +29,18 @@ jobs:
           ruby -c "$HOMEBREW_BUNDLE_FILE"
           brew bundle list --all --file "$HOMEBREW_BUNDLE_FILE" > /dev/null
 
+      - name: prepare Homebrew taps and trusted packages
+        run: |
+          brew tap icanhasjonas/tap
+          brew tap palamim/starboard https://github.com/palamim/starboard
+          brew tap pear-devs/pear
+          brew tap stianlars1/tap
+
+          brew trust --formula icanhasjonas/tap/icloud-tools
+          brew trust --cask palamim/starboard/starboard
+          brew trust --cask pear-devs/pear/pear-desktop
+          brew trust --cask stianlars1/tap/dotviewer
+
       - name: update Homebrew metadata
         run: brew update
 
