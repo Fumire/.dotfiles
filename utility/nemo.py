@@ -2,6 +2,8 @@
 """Helpers for nemo.sh: model checks, speaker-aware SRTs, and timestamp-free playbooks."""
 
 import argparse
+import base64
+import binascii
 import ctypes
 import json
 import math
@@ -10,6 +12,7 @@ import re
 import select
 import subprocess
 import sys
+import threading
 import wave
 from array import array
 from pathlib import Path
@@ -116,6 +119,28 @@ class _AsrRecognitionOptions(ctypes.Structure):
         ("max_alternatives", ctypes.c_int32),
         ("enable_speaker_diarization", ctypes.c_bool),
         ("max_speaker_count", ctypes.c_int32),
+    ]
+
+
+class _NmtBackendConfig(ctypes.Structure):
+    _fields_ = [("size", ctypes.c_size_t), ("gpu", ctypes.c_int32)]
+
+
+class _NmtModelConfig(ctypes.Structure):
+    _fields_ = [
+        ("size", ctypes.c_size_t),
+        ("path", ctypes.c_char_p),
+        ("n_ctx", ctypes.c_int32),
+    ]
+
+
+class _NmtTranslatorConfig(ctypes.Structure):
+    _fields_ = [
+        ("size", ctypes.c_size_t),
+        ("backend", ctypes.POINTER(_NmtBackendConfig)),
+        ("model", ctypes.POINTER(_NmtModelConfig)),
+        ("generation", ctypes.c_void_p),
+        ("pool", ctypes.c_void_p),
     ]
 
 
@@ -465,16 +490,12 @@ def build_source(args):
             "end": duration,
             "speaker": None,
         }]
-        print(
+        _write_diagnostic(
             "Warning: no word timestamps were returned; split the transcript into "
-            "sentence- or phrase-sized cues with estimated timestamps and labeled Speaker Unknown.",
-            file=sys.stderr,
+            "sentence- or phrase-sized cues with estimated timestamps and labeled Speaker Unknown."
         )
     elif record_kind == "segments":
-        print(
-            "Warning: word-level timestamps were not returned; using timestamped segments.",
-            file=sys.stderr,
-        )
+        _write_diagnostic("Warning: word-level timestamps were not returned; using timestamped segments.")
 
     if record_kind == "words" and not any(record_speaker(word) is not None for word in word_records):
         raise ValueError("The transcription JSON contains no speaker tags.")
@@ -583,10 +604,9 @@ def build_translation(args):
         translated_text = translated_bytes.decode("utf-8")
     except UnicodeDecodeError:
         translated_text = translated_bytes.decode("utf-8", errors="replace")
-        print(
+        _write_diagnostic(
             "Warning: translated cue text contained invalid UTF-8 bytes; "
-            "invalid sequences were replaced with U+FFFD.",
-            file=sys.stderr,
+            "invalid sequences were replaced with U+FFFD."
         )
     translations = translated_text.splitlines()
 
@@ -601,8 +621,15 @@ def build_translation(args):
     for index, (cue, translated) in enumerate(zip(cues, translations), 1):
         translated = translated.strip()
         if not translated:
-            raise ValueError(
-                f"Translation for cue {index} is empty; the existing translated SRT was left unchanged."
+            translated = str(cue.get("text", "")).strip()
+            if not translated:
+                raise ValueError(
+                    f"Translation and source text for cue {index} are empty; "
+                    "the translated SRT could not be generated."
+                )
+            _write_diagnostic(
+                f"Warning: translation for cue {index} was empty; "
+                "the source cue text was preserved."
             )
         translated_chunks = split_timed_text(
             translated,
@@ -777,16 +804,285 @@ def _load_asr_sdk(nemo_bin):
     return library
 
 
+def _load_nmt_sdk(nemo_bin):
+    try:
+        executable = Path(nemo_bin).expanduser().resolve(strict=True)
+    except OSError as exc:
+        raise ValueError(f"Could not resolve the nemo-speech executable: {exc}") from exc
+
+    install_root = executable.parent.parent
+    library_paths = (
+        install_root / "lib" / "libnemo_speech_nmt_c.dylib",
+        install_root / "lib" / "libnemo_speech_nmt_c.1.dylib",
+        install_root / "lib" / "libnemo_speech_nmt_c.so",
+        install_root / "lib" / "libnemo_speech_nmt_c.so.1",
+    )
+    library_path = next((path for path in library_paths if path.is_file()), None)
+    if library_path is None:
+        expected = ", ".join(str(path) for path in library_paths)
+        raise ValueError(f"NeMo-Speech NMT SDK library was not found. Checked: {expected}")
+
+    try:
+        library = ctypes.CDLL(str(library_path))
+    except OSError as exc:
+        raise ValueError(f"Could not load the NeMo-Speech NMT SDK library at {library_path}: {exc}") from exc
+
+    pointer = ctypes.c_void_p
+    library.nemo_speech_nmt_create.argtypes = [
+        ctypes.POINTER(_NmtTranslatorConfig),
+        ctypes.POINTER(pointer),
+    ]
+    library.nemo_speech_nmt_create.restype = ctypes.c_int
+    library.nemo_speech_nmt_destroy.argtypes = [pointer]
+    library.nemo_speech_nmt_destroy.restype = None
+    library.nemo_speech_nmt_translate.argtypes = [
+        pointer,
+        ctypes.POINTER(ctypes.c_char_p),
+        ctypes.c_size_t,
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+        ctypes.POINTER(pointer),
+    ]
+    library.nemo_speech_nmt_translate.restype = ctypes.c_int
+    library.nemo_speech_nmt_result_count.argtypes = [pointer]
+    library.nemo_speech_nmt_result_count.restype = ctypes.c_size_t
+    library.nemo_speech_nmt_result_text.argtypes = [pointer, ctypes.c_size_t]
+    library.nemo_speech_nmt_result_text.restype = ctypes.c_char_p
+    library.nemo_speech_nmt_result_destroy.argtypes = [pointer]
+    library.nemo_speech_nmt_result_destroy.restype = None
+    library.nemo_speech_nmt_last_error.argtypes = []
+    library.nemo_speech_nmt_last_error.restype = ctypes.c_char_p
+    return library
+
+
+def _emit_progress_message(message):
+    try:
+        os.write(3, f"{message}\n".encode("utf-8"))
+        return True
+    except OSError:
+        return False
+
+
+class _NativeLogForwarder:
+    """Forward native SDK stderr a line at a time through the tqdm process."""
+
+    def __init__(self):
+        self.read_fd = None
+        self.saved_stderr = None
+        self.reader = None
+
+    def start(self):
+        read_fd = None
+        write_fd = None
+        saved_stderr = None
+        try:
+            read_fd, write_fd = os.pipe()
+            saved_stderr = os.dup(2)
+            os.dup2(write_fd, 2)
+            os.close(write_fd)
+        except OSError:
+            if saved_stderr is not None:
+                try:
+                    os.dup2(saved_stderr, 2)
+                except OSError:
+                    pass
+            for fd in (read_fd, write_fd, saved_stderr):
+                if fd is not None:
+                    try:
+                        os.close(fd)
+                    except OSError:
+                        pass
+            return
+
+        self.read_fd = read_fd
+        self.saved_stderr = saved_stderr
+        self.reader = threading.Thread(target=self._read_lines, daemon=True)
+        self.reader.start()
+
+    def _forward_line(self, raw_line):
+        raw_line = raw_line.rstrip(b"\r")
+        if not raw_line:
+            return
+        line = raw_line.decode("utf-8", errors="replace")
+        if not _emit_progress_message(f"native-log {line}"):
+            try:
+                os.write(self.saved_stderr, raw_line + b"\n")
+            except OSError:
+                pass
+
+    def _read_lines(self):
+        pending = bytearray()
+        try:
+            while True:
+                chunk = os.read(self.read_fd, 4096)
+                if not chunk:
+                    break
+                pending.extend(chunk)
+                while True:
+                    newline = pending.find(b"\n")
+                    if newline < 0:
+                        break
+                    self._forward_line(bytes(pending[:newline]))
+                    del pending[: newline + 1]
+            if pending:
+                self._forward_line(bytes(pending))
+        finally:
+            os.close(self.read_fd)
+
+    def stop(self):
+        if self.saved_stderr is None:
+            return
+        try:
+            os.dup2(self.saved_stderr, 2)
+        except OSError:
+            pass
+        if self.reader is not None:
+            self.reader.join()
+        try:
+            os.close(self.saved_stderr)
+        except OSError:
+            pass
+        self.saved_stderr = None
+
+
 def _emit_progress_event(name, seconds=None):
     event = name if seconds is None else f"{name} {max(0.0, seconds):.6f}"
-    try:
-        os.write(3, f"{event}\n".encode("ascii"))
-    except OSError:
-        pass
+    _emit_progress_message(event)
+
+
+def _write_diagnostic(message):
+    encoded = base64.b64encode(message.encode("utf-8")).decode("ascii")
+    if _emit_progress_message(f"diagnostic-base64 {encoded}"):
+        return
+    print(message, file=sys.stderr)
 
 
 def _decode_sdk_text(value):
     return value.decode("utf-8", errors="replace") if value else ""
+
+
+def translate_progress(args):
+    try:
+        input_text = Path(args.input).read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise ValueError(f"Could not read translation input {args.input}: {exc}") from exc
+    source_texts = input_text.splitlines()
+    if not source_texts:
+        raise ValueError("The translation input contains no cues.")
+
+    total = len(source_texts)
+    _emit_progress_message(
+        f"translate-start {total} {args.source_language} {args.target_language}"
+    )
+    library = None
+    translator = ctypes.c_void_p()
+    completed = 0
+    success = False
+    native_logs = _NativeLogForwarder()
+    try:
+        native_logs.start()
+        library = _load_nmt_sdk(args.nemo_bin)
+        backend = _NmtBackendConfig(ctypes.sizeof(_NmtBackendConfig), 0)
+        model_path = os.fsencode(args.model)
+        model = _NmtModelConfig(ctypes.sizeof(_NmtModelConfig), model_path, 0)
+        config = _NmtTranslatorConfig()
+        config.size = ctypes.sizeof(_NmtTranslatorConfig)
+        config.backend = ctypes.pointer(backend)
+        config.model = ctypes.pointer(model)
+
+        status = library.nemo_speech_nmt_create(ctypes.byref(config), ctypes.byref(translator))
+        if status != 0 or not translator.value:
+            detail = _decode_sdk_text(library.nemo_speech_nmt_last_error()) or f"status {status}"
+            raise ValueError(f"NeMo-Speech translation initialization failed: {detail}")
+
+        source_language = args.source_language.encode("utf-8")
+        target_language = args.target_language.encode("utf-8")
+        translated_texts = []
+        for index, source_text in enumerate(source_texts, 1):
+            encoded_text = source_text.encode("utf-8")
+            text_array = (ctypes.c_char_p * 1)(encoded_text)
+            result = ctypes.c_void_p()
+            status = library.nemo_speech_nmt_translate(
+                translator,
+                text_array,
+                1,
+                source_language,
+                target_language,
+                ctypes.byref(result),
+            )
+            if status != 0 or not result.value:
+                detail = _decode_sdk_text(library.nemo_speech_nmt_last_error()) or f"status {status}"
+                raise ValueError(
+                    f"NeMo-Speech translation failed for cue {index}/{total}: {detail}"
+                )
+            try:
+                result_count = library.nemo_speech_nmt_result_count(result)
+                if result_count != 1:
+                    raise ValueError(
+                        f"NeMo-Speech returned {result_count} translations for cue {index}/{total}."
+                    )
+                translated = _decode_sdk_text(
+                    library.nemo_speech_nmt_result_text(result, 0)
+                ).replace("\r", " ").replace("\n", " ").strip()
+            finally:
+                library.nemo_speech_nmt_result_destroy(result)
+
+            for attempt in range(1, 3):
+                if translated:
+                    break
+                _write_diagnostic(
+                    f"Warning: NeMo-Speech returned an empty translation for cue "
+                    f"{index}/{total} ({args.source_language} to {args.target_language}); "
+                    f"retrying ({attempt}/2)."
+                )
+                result = ctypes.c_void_p()
+                status = library.nemo_speech_nmt_translate(
+                    translator,
+                    text_array,
+                    1,
+                    source_language,
+                    target_language,
+                    ctypes.byref(result),
+                )
+                if status != 0 or not result.value:
+                    detail = _decode_sdk_text(library.nemo_speech_nmt_last_error()) or f"status {status}"
+                    raise ValueError(
+                        f"NeMo-Speech translation retry failed for cue {index}/{total}: {detail}"
+                    )
+                try:
+                    result_count = library.nemo_speech_nmt_result_count(result)
+                    if result_count != 1:
+                        raise ValueError(
+                            f"NeMo-Speech returned {result_count} translations for cue {index}/{total}."
+                        )
+                    translated = _decode_sdk_text(
+                        library.nemo_speech_nmt_result_text(result, 0)
+                    ).replace("\r", " ").replace("\n", " ").strip()
+                finally:
+                    library.nemo_speech_nmt_result_destroy(result)
+
+            if not translated:
+                _write_diagnostic(
+                    f"Warning: translation for cue {index}/{total} remained empty after retries; "
+                    "the source cue text was preserved."
+                )
+                translated = source_text.strip()
+            translated_texts.append(translated)
+            completed = index
+            _emit_progress_message(f"translate-progress {completed}")
+
+        try:
+            Path(args.output).write_text("\n".join(translated_texts) + "\n", encoding="utf-8")
+        except OSError as exc:
+            raise ValueError(f"Could not write translated text to {args.output}: {exc}") from exc
+        success = True
+    finally:
+        if library is not None and translator.value:
+            library.nemo_speech_nmt_destroy(translator)
+        native_logs.stop()
+        if success:
+            _emit_progress_message(f"translate-progress {total}")
+        _emit_progress_message("translate-stop")
 
 
 def transcribe_stream(args):
@@ -812,7 +1108,9 @@ def transcribe_stream(args):
         stream = ctypes.c_void_p()
         processed_seconds = 0.0
         completed = False
+        native_logs = _NativeLogForwarder()
         try:
+            native_logs.start()
             library = _load_asr_sdk(args.nemo_bin)
 
             backend = _AsrBackendConfig(ctypes.sizeof(_AsrBackendConfig), 0)
@@ -987,6 +1285,7 @@ def transcribe_stream(args):
                     library.nemo_speech_asr_stream_close(stream)
                 if recognizer.value:
                     library.nemo_speech_asr_destroy(recognizer)
+            native_logs.stop()
             _emit_progress_event("asr-stop", duration if completed else processed_seconds)
 
 
@@ -1012,7 +1311,9 @@ def show_progress(args):
         dynamic_ncols=True,
         file=sys.stderr,
     )
-    asr_bar = None
+    task_bar = None
+    translation_source = "source"
+    translation_target = "target"
     pending = b""
     input_fd = sys.stdin.fileno()
     try:
@@ -1025,50 +1326,92 @@ def show_progress(args):
                 pending += chunk
                 while b"\n" in pending:
                     raw_event, pending = pending.split(b"\n", 1)
-                    event = raw_event.decode("utf-8", errors="replace").strip()
+                    event = raw_event.decode("utf-8", errors="replace").rstrip("\r")
                     if event == "1":
                         files_bar.update(1)
+                    elif event.startswith("native-log "):
+                        tqdm.write(event[len("native-log "):], file=sys.stderr)
+                    elif event.startswith(("status-base64 ", "diagnostic-base64 ")):
+                        encoded = event.partition(" ")[2]
+                        try:
+                            message = base64.b64decode(encoded, validate=True).decode(
+                                "utf-8", errors="replace"
+                            )
+                        except (ValueError, binascii.Error):
+                            continue
+                        for message_line in message.split("\n"):
+                            tqdm.write(message_line.rstrip("\r"), file=sys.stderr)
                     elif event.startswith("asr-start "):
                         try:
                             duration = max(0.0, float(event.split(maxsplit=1)[1]))
                         except (IndexError, ValueError):
                             duration = 0.0
-                        if asr_bar is not None:
-                            asr_bar.close()
-                        asr_bar = tqdm(
+                        if task_bar is not None:
+                            task_bar.close()
+                        task_bar = tqdm(
                             total=duration,
-                            desc="Transcribing",
+                            desc=f"Transcribing 00:00:00 / {_format_media_time(duration)}",
                             unit="s",
-                            bar_format="{desc}: {bar} {percentage:3.0f}% | {postfix} [{elapsed} elapsed, ETA {remaining}]",
+                            bar_format="{desc}: {bar} {percentage:3.0f}% [{elapsed} elapsed, ETA {remaining}]",
                             dynamic_ncols=True,
                             file=sys.stderr,
                             position=1,
                             leave=False,
                         )
-                        asr_bar.set_postfix_str(
-                            f"{_format_media_time(0)} / {_format_media_time(duration)} media time",
-                            refresh=True,
-                        )
-                    elif event.startswith("asr-progress ") and asr_bar is not None:
+                    elif event.startswith("asr-progress ") and task_bar is not None:
                         try:
                             processed = max(0.0, float(event.split(maxsplit=1)[1]))
                         except (IndexError, ValueError):
                             continue
-                        if asr_bar.total is not None:
-                            processed = min(processed, asr_bar.total)
-                        if processed > asr_bar.n:
-                            asr_bar.update(processed - asr_bar.n)
-                        total = asr_bar.total or 0.0
-                        asr_bar.set_postfix_str(
-                            f"{_format_media_time(processed)} / {_format_media_time(total)} media time",
+                        if task_bar.total is not None:
+                            processed = min(processed, task_bar.total)
+                        if processed > task_bar.n:
+                            task_bar.update(processed - task_bar.n)
+                        total = task_bar.total or 0.0
+                        task_bar.set_description_str(
+                            f"Transcribing {_format_media_time(processed)} / {_format_media_time(total)}",
                             refresh=True,
                         )
-                    elif event.startswith("asr-stop") and asr_bar is not None:
-                        asr_bar.close()
-                        asr_bar = None
+                    elif event.startswith("translate-start "):
+                        parts = event.split(maxsplit=3)
+                        try:
+                            total = max(0, int(parts[1]))
+                        except (IndexError, ValueError):
+                            total = 0
+                        translation_source = parts[2] if len(parts) > 2 else "source"
+                        translation_target = parts[3] if len(parts) > 3 else "target"
+                        if task_bar is not None:
+                            task_bar.close()
+                        task_bar = tqdm(
+                            total=total,
+                            desc=f"Translating ({translation_source} to {translation_target}) 0/{total} cues",
+                            unit="cue",
+                            bar_format="{desc}: {bar} {percentage:3.0f}% [{elapsed} elapsed, ETA {remaining}]",
+                            dynamic_ncols=True,
+                            file=sys.stderr,
+                            position=1,
+                            leave=False,
+                        )
+                    elif event.startswith("translate-progress ") and task_bar is not None:
+                        try:
+                            completed = max(0, int(event.split(maxsplit=1)[1]))
+                        except (IndexError, ValueError):
+                            continue
+                        if task_bar.total is not None:
+                            completed = min(completed, int(task_bar.total))
+                        if completed > task_bar.n:
+                            task_bar.update(completed - task_bar.n)
+                        total = int(task_bar.total or 0)
+                        task_bar.set_description_str(
+                            f"Translating ({translation_source} to {translation_target}) {completed}/{total} cues",
+                            refresh=True,
+                        )
+                    elif event.startswith(("asr-stop", "translate-stop")) and task_bar is not None:
+                        task_bar.close()
+                        task_bar = None
     finally:
-        if asr_bar is not None:
-            asr_bar.close()
+        if task_bar is not None:
+            task_bar.close()
         files_bar.close()
 
 
@@ -1106,6 +1449,17 @@ def build_parser():
     )
     translation_parser.set_defaults(func=build_translation)
 
+    translate_progress_parser = subparsers.add_parser(
+        "translate-progress", help="Translate subtitle cues with tqdm progress."
+    )
+    translate_progress_parser.add_argument("--nemo-bin", required=True)
+    translate_progress_parser.add_argument("--model", required=True)
+    translate_progress_parser.add_argument("--from", "--source-language", dest="source_language", required=True)
+    translate_progress_parser.add_argument("--to", "--target-language", dest="target_language", required=True)
+    translate_progress_parser.add_argument("--input", required=True)
+    translate_progress_parser.add_argument("--output", required=True)
+    translate_progress_parser.set_defaults(func=translate_progress)
+
     playbook_parser = subparsers.add_parser(
         "build-playbook", help="Build a timestamp-free speaker script from an SRT file."
     )
@@ -1114,7 +1468,7 @@ def build_parser():
     playbook_parser.set_defaults(func=build_playbook)
 
     progress_parser = subparsers.add_parser(
-        "progress", help="Display file and transcription progress with tqdm."
+        "progress", help="Display file, transcription, and translation progress with tqdm."
     )
     progress_parser.add_argument("--total", type=int, required=True)
     progress_parser.set_defaults(func=show_progress)
@@ -1140,10 +1494,10 @@ def main():
     try:
         args.func(args)
     except NoTranscriptError as exc:
-        print(f"Warning: {exc}", file=sys.stderr)
+        _write_diagnostic(f"Warning: {exc}")
         return 3
     except Exception as exc:
-        print(f"Error: {exc}", file=sys.stderr)
+        _write_diagnostic(f"Error: {exc}")
         return 1
     return 0
 

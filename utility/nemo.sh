@@ -46,9 +46,12 @@ The terminal shows an overall tqdm progress bar for the input files and a
 per-file transcription bar based on NeMo-Speech's decoded audio position. It
 shows the current media time against the full audio duration, elapsed time, and
 an ETA based on the transcription rate so far.
+Each translation pass also shows completed/total subtitle cues, elapsed time,
+and an ETA based on its translation rate.
+SDK log lines and status messages remain on separate lines while the bars update.
 The overall ETA is estimated from files completed so far. Skipped files count
-as complete. Python package tqdm and the NeMo-Speech ASR SDK library installed
-alongside nemo-speech are required.
+as complete. Python package tqdm and the NeMo-Speech ASR/NMT SDK libraries
+installed alongside nemo-speech are required.
 The ASR and diarization defaults are direct paths to local model folders; the
 script passes these paths to nemo-speech without preparing cache symlinks.
 For MP4 inputs, -s or --subtitle adds the generated source and translated SRTs as
@@ -118,12 +121,38 @@ need_value() {
     fi
 }
 
+report_status() {
+    local message="$1"
+    if (( progress_fd_open )); then
+        local encoded
+        encoded="$(printf '%s' "$message" | base64 | tr -d '\r\n')"
+        printf 'status-base64 %s\n' "$encoded" >&3 || true
+    else
+        printf '%s\n' "$message"
+    fi
+}
+
 write_playbook_from_srt() {
     local srt_path="$1"
     local txt_path="${srt_path%.srt}.txt"
 
     python3 "$nemo_helper" build-playbook --srt "$srt_path" --output "$txt_path"
-    printf 'Saved: %s\n' "$txt_path"
+    report_status "Saved: $txt_path"
+}
+
+translate_cues() {
+    local source_language="$1"
+    local target_language="$2"
+    local input_path="$3"
+    local output_path="$4"
+
+    python3 "$nemo_helper" translate-progress \
+        --nemo-bin "$nemo_bin" \
+        --model "$nmt_model" \
+        --from "$source_language" \
+        --to "$target_language" \
+        --input "$input_path" \
+        --output "$output_path"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -288,10 +317,13 @@ fi
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/nemo.XXXXXXXX")"
 subtitle_tmp_file=""
 filter_ffmpeg_diagnostics() {
-    sed -E \
+    local line
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        report_status "$line"
+    done < <(sed -E \
         -e '/channel element 0\.0 duplicate/d' \
         -e '/Error submitting packet to decoder: Invalid data found when processing input/d' \
-        "$1" >&2
+        "$1")
 }
 
 progress_fifo="$work_dir/progress.fifo"
@@ -447,8 +479,8 @@ mux_subtitles_into_mp4() {
     subtitle_tmp_file=""
 
     rm -f -- "${subtitle_files[@]}"
-    printf 'Embedded %d subtitle track(s) in: %s\n' "${#subtitle_files[@]}" "$source_file"
-    printf 'Removed generated SRT files after successful MP4 muxing.\n'
+    report_status "Embedded ${#subtitle_files[@]} subtitle track(s) in: $source_file"
+    report_status 'Removed generated SRT files after successful MP4 muxing.'
 }
 
 start_progress
@@ -476,11 +508,11 @@ for input_file in "${input_files[@]}"; do
             exit 1
         fi
         if [[ -n "$embedded_subtitle_streams" ]] && (( force_enabled == 0 )); then
-            printf 'Skipping: MP4 already contains embedded subtitle track(s): %s\n' "$input_file"
+            report_status "Skipping: MP4 already contains embedded subtitle track(s): $input_file"
             advance_progress
             continue
         elif [[ -n "$embedded_subtitle_streams" ]]; then
-            printf 'Replacing existing embedded subtitle track(s) in: %s\n' "$input_file"
+            report_status "Replacing existing embedded subtitle track(s) in: $input_file"
         fi
     fi
 
@@ -496,7 +528,7 @@ for input_file in "${input_files[@]}"; do
                 write_playbook_from_srt "$existing_srt"
             done
         fi
-        printf 'Skipping: SRT output already exists (use --force to overwrite): %s\n' "${existing_srt_files[0]}"
+        report_status "Skipping: SRT output already exists (use --force to overwrite): ${existing_srt_files[0]}"
         advance_progress
         continue
     fi
@@ -512,7 +544,7 @@ for input_file in "${input_files[@]}"; do
     temp_ko_srt="$work_dir/translation-ko.srt"
     ffmpeg_log="$work_dir/ffmpeg-convert.log"
 
-    printf 'Processing: %s\n' "$input_file"
+    report_status "Processing: $input_file"
 
     if ffmpeg -nostdin -hide_banner -loglevel error -y \
         -i "$input_file" \
@@ -553,7 +585,7 @@ for input_file in "${input_files[@]}"; do
     else
         helper_status=$?
         if (( helper_status == 3 )); then
-            printf 'Warning: no transcript was recognized; skipping SRT generation and subtitle embedding for: %s\n' "$input_file"
+            report_status "Warning: no transcript was recognized; skipping SRT generation and subtitle embedding for: $input_file"
             rm -f -- "$temp_srt" "$wav_file" "$json_file" "$cue_metadata" "$translation_input"
             advance_progress
             continue
@@ -567,7 +599,7 @@ for input_file in "${input_files[@]}"; do
     fi
 
     mv -f "$temp_srt" "$output_srt"
-    printf 'Saved: %s\n' "$output_srt"
+    report_status "Saved: $output_srt"
     if (( playbook_enabled )); then
         write_playbook_from_srt "$output_srt"
     fi
@@ -589,12 +621,12 @@ for input_file in "${input_files[@]}"; do
     declare -a generated_srt_languages=("$source_language")
 
     if (( translate_enabled == 0 )); then
-        printf 'Translation is disabled; skipping translated SRT generation.\n'
+        report_status 'Translation is disabled; skipping translated SRT generation.'
         if (( subtitle_enabled )); then
             if is_mp4_file "$input_file"; then
                 mux_subtitles_into_mp4 "$input_file" "$output_srt" "$source_language"
             else
-                printf 'Subtitle muxing applies only to MP4 inputs; keeping SRT files for: %s\n' "$input_file"
+                report_status "Subtitle muxing applies only to MP4 inputs; keeping SRT files for: $input_file"
             fi
         fi
         rm -f -- "$wav_file" "$json_file" "$cue_metadata" "$translation_input"
@@ -608,13 +640,7 @@ for input_file in "${input_files[@]}"; do
         --path "$nmt_model"
 
     if [[ "$source_language" == "en" ]]; then
-        "$nemo_bin" translate \
-            --model "$nmt_model" \
-            --from en \
-            --to ko \
-            --input "$translation_input" \
-            --output "$korean_translation" \
-            --force
+        translate_cues en ko "$translation_input" "$korean_translation"
         python3 "$nemo_helper" build-translation \
             --metadata "$cue_metadata" \
             --translation "$korean_translation" \
@@ -627,20 +653,14 @@ for input_file in "${input_files[@]}"; do
         fi
 
         mv -f "$temp_ko_srt" "$output_ko_srt"
-        printf 'Saved: %s\n' "$output_ko_srt"
+        report_status "Saved: $output_ko_srt"
         if (( playbook_enabled )); then
             write_playbook_from_srt "$output_ko_srt"
         fi
         generated_srt_files+=("$output_ko_srt")
         generated_srt_languages+=(ko)
     elif [[ "$source_language" == "ko" ]]; then
-        "$nemo_bin" translate \
-            --model "$nmt_model" \
-            --from ko \
-            --to en \
-            --input "$translation_input" \
-            --output "$english_translation" \
-            --force
+        translate_cues ko en "$translation_input" "$english_translation"
 
         python3 "$nemo_helper" build-translation \
             --metadata "$cue_metadata" \
@@ -654,20 +674,14 @@ for input_file in "${input_files[@]}"; do
         fi
 
         mv -f "$temp_en_srt" "$output_en_srt"
-        printf 'Saved: %s\n' "$output_en_srt"
+        report_status "Saved: $output_en_srt"
         if (( playbook_enabled )); then
             write_playbook_from_srt "$output_en_srt"
         fi
         generated_srt_files+=("$output_en_srt")
         generated_srt_languages+=(en)
     else
-        "$nemo_bin" translate \
-            --model "$nmt_model" \
-            --from "$source_language" \
-            --to en \
-            --input "$translation_input" \
-            --output "$english_translation" \
-            --force
+        translate_cues "$source_language" en "$translation_input" "$english_translation"
 
         python3 "$nemo_helper" build-translation \
             --metadata "$cue_metadata" \
@@ -680,13 +694,7 @@ for input_file in "${input_files[@]}"; do
             exit 1
         fi
 
-        "$nemo_bin" translate \
-            --model "$nmt_model" \
-            --from en \
-            --to ko \
-            --input "$english_translation" \
-            --output "$korean_translation" \
-            --force
+        translate_cues en ko "$english_translation" "$korean_translation"
 
         python3 "$nemo_helper" build-translation \
             --metadata "$cue_metadata" \
@@ -701,8 +709,8 @@ for input_file in "${input_files[@]}"; do
 
         mv -f "$temp_en_srt" "$output_en_srt"
         mv -f "$temp_ko_srt" "$output_ko_srt"
-        printf 'Saved: %s\n' "$output_en_srt"
-        printf 'Saved: %s\n' "$output_ko_srt"
+        report_status "Saved: $output_en_srt"
+        report_status "Saved: $output_ko_srt"
         if (( playbook_enabled )); then
             write_playbook_from_srt "$output_en_srt"
             write_playbook_from_srt "$output_ko_srt"
@@ -719,7 +727,7 @@ for input_file in "${input_files[@]}"; do
             done
             mux_subtitles_into_mp4 "$input_file" "${subtitle_mux_args[@]}"
         else
-            printf 'Subtitle muxing applies only to MP4 inputs; keeping SRT files for: %s\n' "$input_file"
+            report_status "Subtitle muxing applies only to MP4 inputs; keeping SRT files for: $input_file"
         fi
     fi
 
