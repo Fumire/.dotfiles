@@ -1,17 +1,17 @@
 #!/bin/bash
 # Maintainer: Jaewoong Lee <jaewoong@unist.ac.kr>
 # Purpose:
-#   Generate .srt subtitle files from media inputs with whisper-cli, using
+#   Generate .srt or .vtt subtitle files from media inputs with whisper-cli, using
 #   local large/turbo Whisper models and Silero VAD by default.
 # Usage:
 #   utility/whisper.sh --help
 set -euo pipefail
 IFS=$'\n\t'
 
-readonly DEFAULT_WHISPER_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model"
+readonly DEFAULT_WHISPER_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/02_whisper.cpp"
 readonly DEFAULT_WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/vad-model"
-readonly LARGE_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3.bin"
-readonly TURBO_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/ggml-large-v3-turbo.bin"
+readonly LARGE_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/large-v3/ggml-large-v3.bin"
+readonly TURBO_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/large-v3-turbo/ggml-large-v3-turbo.bin"
 readonly DEFAULT_WHISPER_SUBTITLE_MAX_WORDS=7
 readonly SILERO_VAD_MODEL_V5_1_2_SUFFIX="/ggml-silero-v5.1.2.bin"
 readonly SILERO_VAD_MODEL_V6_2_0_SUFFIX="/ggml-silero-v6.2.0.bin"
@@ -20,6 +20,7 @@ declare -a INPUT_FILES=()
 whisper_lang="${lang:-ko}"
 whisper_model_path="${WHISPER_MODEL_PATH:-}"
 whisper_model_choice="${WHISPER_MODEL_CHOICE:-${WHISPER_MODEL:-turbo}}"
+whisper_type="srt"
 whisper_vad="${WHISPER_VAD:-true}"
 whisper_vad_model_path="${WHISPER_VAD_MODEL_PATH:-}"
 whisper_vad_model_choice="${WHISPER_VAD_MODEL_CHOICE:-${WHISPER_VAD_MODEL:-auto}}"
@@ -32,26 +33,27 @@ show_help() {
 Usage:
   utility/whisper.sh [OPTIONS]... [FILE ...]
 
-Generate .srt subtitle files from mp4, avi, mkv, m4a, aac, or mp3 inputs.
-Files with an existing matching .srt are skipped.
+Generate .srt subtitle files by default; choose srt or vtt with -t or --type.
+Files with an existing output in the selected format are skipped.
 Each input is announced as (current/total) before processing.
 VAD is enabled by default; use --no-vad to disable it.
 
 Examples:
   utility/whisper.sh video.mp4 audio.mp3
-  utility/whisper.sh --lang en audio.mp3
-  utility/whisper.sh --model turbo audio.mp3
+  utility/whisper.sh -l en audio.mp3
+  utility/whisper.sh -m large audio.mp3
+  utility/whisper.sh -t vtt audio.mp3
   utility/whisper.sh --no-vad audio.mp3
   utility/whisper.sh --vad-model v5.1.2 audio.mp3
 
 Model selection:
-  Default and recommended:
-  --model large
-    $LARGE_WHISPER_MODEL
-
-  Faster turbo model:
-    --model turbo
+  Default: turbo
+    -m, --model turbo
     $TURBO_WHISPER_MODEL
+
+  Large model:
+    -m, --model large
+    $LARGE_WHISPER_MODEL
 
   Explicit model path override:
     --model-path /path/to/model.bin
@@ -72,18 +74,20 @@ VAD model selection:
   Explicit VAD model path override:
     --vad-model-path /path/to/vad-model.bin
 
-Environment:
-  --lang                               Spoken language passed to whisper-cli; default: ko
-  --subtitle-max-words                 Maximum words per subtitle line; 0 disables; default: 7
-  --model                              Model choice: large or turbo; default: large
-  --model-choice                       Alias for --model
-  --model-path                         Explicit Whisper model file path
-  --vad                                Enable/disable VAD; false/no/off/0 disables
-  --vad-model                          VAD model choice: auto, v6.2.0, v5.1.2, or path; default: auto
-  --vad-model-choice                   Alias for --vad-model
-  --vad-model-path                     Explicit VAD model file path
-  --vad-model-dir                      VAD model directory scanned by auto; default: $DEFAULT_WHISPER_VAD_MODEL_DIR
-  --subtitle                           Set to true to mux generated SRT as soft subtitle track in MP4 (mov_text), overwrite the input MP4, and remove the generated SRT
+Options:
+  -l, --lang CODE                      Spoken language; default: ko
+  -m, --model CHOICE                   large or turbo; default: turbo
+  -t, --type FORMAT                    Subtitle format: srt or vtt; default: srt
+      --model-path PATH                Explicit Whisper model file path
+      --subtitle-max-words N           Maximum words per subtitle line; 0 disables; default: 7
+      --vad                            Enable VAD; false/no/off/0 disables it
+      --no-vad                         Disable VAD
+      --vad-model CHOICE               auto, v6.2.0, v5.1.2, or a model path; default: auto
+      --vad-model-path PATH            Explicit VAD model file path
+      --vad-model-dir DIR              Directory scanned by auto; default: $DEFAULT_WHISPER_VAD_MODEL_DIR
+      --subtitle [true|false]          Mux the selected subtitle format into MP4 as mov_text
+      --no-subtitle                    Disable MP4 subtitle muxing
+  -h, --help                           Show this help message
 
 Legacy env vars (still supported):
   WHISPER_MODEL, WHISPER_MODEL_CHOICE, WHISPER_MODEL_PATH, WHISPER_VAD,
@@ -93,9 +97,6 @@ Legacy env vars (still supported):
 AAC decode errors:
   If ffmpeg fails while decoding corrupt AAC packets, whisper.sh retries the
   audio conversion with ffmpeg corruption-tolerance flags.
-
-Options:
-  -h, --help                            Show this help message
 EOF
 }
 
@@ -109,7 +110,7 @@ parse_args() {
                 show_help
                 exit 0
                 ;;
-            --lang)
+            -l | --lang)
                 if [[ $# -lt 2 || "${2:0:1}" == "-" ]]; then
                     echo "Missing value for --lang" >&2
                     exit 1
@@ -121,7 +122,7 @@ parse_args() {
                 whisper_lang="${1#*=}"
                 shift
                 ;;
-            --model | --model-choice)
+            -m | --model)
                 if [[ $# -lt 2 || "${2:0:1}" == "-" ]]; then
                     echo "Missing value for $1" >&2
                     exit 1
@@ -131,6 +132,18 @@ parse_args() {
                 ;;
             --model=*)
                 whisper_model_choice="${1#*=}"
+                shift
+                ;;
+            -t | --type)
+                if [[ $# -lt 2 || "${2:0:1}" == "-" ]]; then
+                    echo "Missing value for $1" >&2
+                    exit 1
+                fi
+                whisper_type="$2"
+                shift 2
+                ;;
+            --type=*)
+                whisper_type="${1#*=}"
                 shift
                 ;;
             --model-path)
@@ -162,7 +175,7 @@ parse_args() {
                 whisper_vad="0"
                 shift
                 ;;
-            --vad-model | --vad-model-choice)
+            --vad-model)
                 if [[ $# -lt 2 || "${2:0:1}" == "-" ]]; then
                     echo "Missing value for $1" >&2
                     exit 1
@@ -256,6 +269,15 @@ parse_args() {
 }
 
 parse_args "$@"
+
+case "$whisper_type" in
+    srt | vtt)
+        ;;
+    *)
+        echo "Invalid subtitle type: ${whisper_type}. Use srt or vtt." >&2
+        exit 2
+        ;;
+esac
 
 if [[ $(uname -s) != "Darwin" ]]; then
     echo "whisper.sh is only supported on macOS." >&2
@@ -450,14 +472,15 @@ append_whisper_vad_args() {
     WHISPER_ARGS+=("--vad" "--vad-model" "$vad_model_path")
 }
 
-normalize_srt_phrase_length() {
-    local srt_file="$1"
-    local max_words="${2:-$DEFAULT_WHISPER_SUBTITLE_MAX_WORDS}"
-    local temp_file="${srt_file}.words.$$"
+normalize_subtitle_phrase_length() {
+    local subtitle_file="$1"
+    local subtitle_type="$2"
+    local max_words="${3:-$DEFAULT_WHISPER_SUBTITLE_MAX_WORDS}"
+    local temp_file="${subtitle_file}.words.$$"
 
     [[ "$max_words" =~ ^[1-9][0-9]*$ ]] || return 0
 
-    LC_ALL=C awk -v max_words="$max_words" '
+    LC_ALL=C awk -v max_words="$max_words" -v subtitle_type="$subtitle_type" '
         BEGIN { RS = ""; ORS = "\n\n" }
 
         function wrap_text(line,   n, i, count, output, token, words) {
@@ -490,13 +513,31 @@ normalize_srt_phrase_length() {
 
         {
             n = split($0, lines, "\n")
-            if (n < 3) {
-                printf "%s\n", $0
+            if (subtitle_type == "vtt" && lines[1] ~ /^WEBVTT([[:space:]].*)?$/) {
+                printf "%s\n\n", $0
                 next
             }
 
-            printf "%s\n%s\n", lines[1], lines[2]
-            for (i = 3; i <= n; i++) {
+            if (subtitle_type == "srt") {
+                timing_line = 2
+            } else {
+                timing_line = 0
+                for (i = 1; i <= n; i++) {
+                    if (lines[i] ~ /-->/) {
+                        timing_line = i
+                        break
+                    }
+                }
+            }
+            if (timing_line == 0 || n <= timing_line || lines[timing_line] !~ /-->/) {
+                printf "%s\n\n", $0
+                next
+            }
+
+            for (i = 1; i <= timing_line; i++) {
+                printf "%s\n", lines[i]
+            }
+            for (i = timing_line + 1; i <= n; i++) {
                 if (lines[i] == "") {
                     continue
                 }
@@ -507,17 +548,18 @@ normalize_srt_phrase_length() {
             }
             printf "\n"
         }
-    ' "$srt_file" > "$temp_file" || return 1
+    ' "$subtitle_file" > "$temp_file" || return 1
 
-    mv -f "$temp_file" "$srt_file"
+    mv -f "$temp_file" "$subtitle_file"
 }
 
 run_whisper() {
     local input_file="$1"
-    local output_srt="$2"
+    local output_subtitle="$2"
+    local generated_subtitle="${input_file}.${whisper_type}"
     local WHISPER_ARGS=(
         "-m" "$WHISPER_MODEL_PATH"
-        "--output-srt"
+        "--output-${whisper_type}"
         "--language" "${whisper_lang}"
         "--threads" "8"
         "--processors" "8"
@@ -536,8 +578,8 @@ run_whisper() {
     WHISPER_ARGS+=("--file" "$input_file")
 
     whisper-cli "${WHISPER_ARGS[@]}"
-    mv -v "${input_file}.srt" "$output_srt"
-    normalize_srt_phrase_length "$output_srt" "$whisper_subtitle_max_words"
+    mv -v "$generated_subtitle" "$output_subtitle"
+    normalize_subtitle_phrase_length "$output_subtitle" "$whisper_type" "$whisper_subtitle_max_words"
 }
 
 run_ffmpeg_conversion() {
@@ -609,41 +651,41 @@ convert_to_mp3() {
 process_media_file() {
     local source_file="$1"
     local stem="${source_file%.*}"
-    local srt_file="${stem}.srt"
+    local subtitle_file="${stem}.${whisper_type}"
     local mp3_file="${stem}.mp3"
 
-    if [[ -f "$srt_file" ]]; then
+    if [[ -f "$subtitle_file" ]]; then
         return
     fi
 
     case "$source_file" in
         *.mp4)
             convert_to_mp3 "$source_file" "$mp3_file"
-            run_whisper "$mp3_file" "$srt_file"
+            run_whisper "$mp3_file" "$subtitle_file"
             rm -fv "$mp3_file"
 
             if [[ "${whisper_subtitle}" == "true" ]]; then
-                if [[ ! -s "$srt_file" ]]; then
-                    rm -fv "$srt_file"
+                if [[ ! -s "$subtitle_file" ]]; then
+                    rm -fv "$subtitle_file"
                 else
                     local tmp_mp4="${stem}.subtitle_tmp.mp4"
                     local existing_subtitle_count
                     existing_subtitle_count="$(ffprobe -v error -select_streams s -show_entries stream=index -of csv=p=0 "$source_file" | wc -l | tr -d '[:space:]')"
                     local new_subtitle_index="$existing_subtitle_count"
 
-                    ffmpeg -y -i "$source_file" -i "$srt_file" -map 0 -map 1 -c:v copy -c:a copy -c:s copy -c:s:"$new_subtitle_index" mov_text -metadata:s:s:"$new_subtitle_index" "language=${whisper_lang}" "$tmp_mp4"
+                    ffmpeg -y -i "$source_file" -i "$subtitle_file" -map 0 -map 1 -c:v copy -c:a copy -c:s copy -c:s:"$new_subtitle_index" mov_text -metadata:s:s:"$new_subtitle_index" "language=${whisper_lang}" "$tmp_mp4"
                     mv -fv "$tmp_mp4" "$source_file"
-                    rm -fv "$srt_file"
+                    rm -fv "$subtitle_file"
                 fi
             fi
             ;;
         *.avi | *.mkv | *.m4a | *.aac)
             convert_to_mp3 "$source_file" "$mp3_file"
-            run_whisper "$mp3_file" "$srt_file"
+            run_whisper "$mp3_file" "$subtitle_file"
             rm -fv "$mp3_file"
             ;;
         *.mp3)
-            run_whisper "$source_file" "$srt_file"
+            run_whisper "$source_file" "$subtitle_file"
             ;;
     esac
 }

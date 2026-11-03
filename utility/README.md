@@ -19,8 +19,8 @@ These scripts are intentionally environment-specific. Review each script before 
 | `migration_arrange.sh` | Prepares a directory for migration by deleting empty files and writing consistent `md5.txt` and `tree.txt` manifests. |
 | `migration_check.sh` | Verifies a migrated directory against `tree.txt` and `md5.txt`. |
 | `migration_store.sh` | Prepares checksums, stores a tree listing, transfers the directory with `rsync --remove-source-files`, and removes transferred source files after success. |
-| `nemo.py` | Python helper used by `nemo.sh` for model compatibility checks, speaker-aware SRT generation, and timestamp-free playbook creation. |
-| `nemo.sh` | Converts audio or video with `ffmpeg`, passes direct local ASR and diarization model paths to `nemo-speech`, writes speaker-labeled source and translated SRTs, and can mux them into MP4 subtitle tracks. |
+| `nemo.py` | Python helper used by `nemo.sh` for model compatibility checks, speaker-aware SRT/WebVTT generation, and timestamp-free playbook creation. |
+| `nemo.sh` | Converts audio or video with `ffmpeg`, passes direct local ASR and diarization model paths to `nemo-speech`, writes speaker-labeled source and translated subtitles, and can mux them into MP4 subtitle tracks. |
 | `nologin.txt` | Login-disabled message for server account administration. |
 | `pdf2jpg.sh` | Converts PDF pages to 600 DPI JPEG images with `pdftoppm` and JPEG quality 100. |
 | `r-freeze.R` | Backs up the active R package environment into `renv.lock`, `requirements.txt`, and package/session metadata files, including remote-source and Bioconductor release metadata when available. |
@@ -28,7 +28,7 @@ These scripts are intentionally environment-specific. Review each script before 
 | `report_storage.sh` | Creates and emails a storage usage report for the current directory. |
 | `reporting.sh` | Collects `sysstat` data from remote hosts, renders reports, and emails generated images. |
 | `update_key.sh` | Exports legacy trusted keys from `/etc/apt/trusted.gpg` into `/etc/apt/keyrings` for `signed-by`-style source entries. |
-| `whisper.sh` | Generates `.srt` subtitles from `mp4`, `avi`, `mkv`, `m4a`, `aac`, or `mp3` files using `ffmpeg` and `whisper-cli`. |
+| `whisper.sh` | Generates `.srt` subtitles by default, or `.vtt` when selected, from `mp4`, `avi`, `mkv`, `m4a`, `aac`, or `mp3` files using `ffmpeg` and `whisper-cli`. |
 | `yt-dlp.conf` | MP4-oriented `yt-dlp` defaults that prefer non-Premium video, use bounded retry backoff, and embed thumbnails, metadata, chapters, and manual subtitles except live chat. |
 
 ## Usage
@@ -43,17 +43,21 @@ utility/nemo.sh --help
 utility/pdf2jpg.sh --help
 utility/pdf2jpg.sh document.pdf
 utility/pdf2jpg.sh document.pdf scans/document.pdf
-utility/whisper.sh --lang en audio.mp3 video.mp4
+utility/whisper.sh -l en audio.mp3 video.mp4
 utility/nemo.sh meeting.mp4
 utility/nemo.sh --subtitle meeting.mp4
 utility/nemo.sh -s meeting.mp4
 utility/nemo.sh -f meeting.mp4
 utility/nemo.sh -p meeting.mp4
+utility/nemo.sh -m large meeting.mp4
+utility/nemo.sh -d large meeting.mp4
+utility/nemo.sh -t srt meeting.mp4
 utility/nemo.sh -l en meeting.m4a
 utility/nemo.sh --translate false meeting.wav
 utility/nemo.sh --vad-model /path/to/silero-v6.2.0.gguf meeting.wav
 utility/whisper.sh --subtitle true video.mp4
-utility/whisper.sh --model turbo --lang en audio.mp3
+utility/whisper.sh -m large -l en audio.mp3
+utility/whisper.sh -t vtt audio.mp3
 utility/whisper.sh --model-path /path/to/model.bin audio.mp3
 utility/whisper.sh --no-vad audio.mp3
 utility/whisper.sh --vad-model v5.1.2 audio.mp3
@@ -63,43 +67,48 @@ utility/whisper.sh --vad-model v5.1.2 audio.mp3
 
 #### NeMo Speech Transcription
 
-`nemo.sh` accepts one or more audio or video files supported by `ffmpeg`. It extracts the first audio stream, converts it to 16 kHz mono PCM WAV, and writes a speaker-labeled `<input-name>.srt` beside each input. The terminal displays a Python `tqdm` progress bar with completed/total inputs, elapsed time, processing rate, and estimated remaining time based on completed files; skipped inputs count as complete. While an input is transcribing, a second `tqdm` bar shows the current decoded media time against the WAV's full audio duration, elapsed time, and an ETA based on the observed transcription rate. This per-file position comes from the NeMo-Speech ASR SDK's `audio_processed` result, so it reflects decoded audio progress rather than a wall-clock estimate. Each translation pass also displays completed/total subtitle cues, elapsed time, and an ETA based on the observed translation rate. The installed NeMo-Speech ASR and NMT SDK libraries must be available alongside the `nemo-speech` executable. The Python 3 environment used by `nemo.sh` must have `tqdm` installed (`python3 -m pip install tqdm`). By default, it skips an input if a matching source or translated SRT (`.srt`, `.en.srt`, or `.ko.srt`) already exists. Use `-f` or `--force` to regenerate and replace SRT outputs. Use `-p` or `--playbook` to write a matching `.txt` file for each source or translated SRT, without timestamps and with consecutive cues combined into speaker turns. When an existing SRT triggers the default skip, `--playbook` still creates its matching text file from that SRT. `nemo.py` is the helper for runtime model checks, language metadata, SRT generation, playbook creation, SDK streaming transcription, SDK cue translation, and progress display.
+`nemo.sh` accepts one or more audio or video files supported by `ffmpeg`. It extracts the first audio stream, converts it to 16 kHz mono PCM WAV, and writes a speaker-labeled `<input-name>.vtt` beside each input by default. Use `-t srt` or `--type srt` to write SubRip files instead; both formats retain speaker labels. The terminal displays a Python `tqdm` progress bar with completed/total inputs, elapsed time, processing rate, and estimated remaining time based on completed files; skipped inputs count as complete. While an input is transcribing, a second `tqdm` bar shows the current decoded media time against the WAV's full audio duration, elapsed time, and an ETA based on the observed transcription rate. This per-file position comes from the NeMo-Speech ASR SDK's `audio_processed` result, so it reflects decoded audio progress rather than a wall-clock estimate. Each translation pass also displays completed/total subtitle cues, elapsed time, and an ETA based on the observed translation rate. The installed NeMo-Speech ASR and NMT SDK libraries must be available alongside the `nemo-speech` executable. The Python 3 environment used by `nemo.sh` must have `tqdm` installed (`python3 -m pip install tqdm`). By default, it skips an input if a matching source or translated subtitle (`.vtt`, `.en.vtt`, or `.ko.vtt`) already exists. Use `-f` or `--force` to regenerate and replace subtitle outputs. Use `-p` or `--playbook` to write a matching `.txt` file for each source or translated subtitle, without timestamps and with consecutive cues combined into speaker turns. When an existing subtitle triggers the default skip, `--playbook` still creates its matching text file. `nemo.py` is the helper for runtime model checks, language metadata, SRT/WebVTT generation, playbook creation, SDK streaming transcription, SDK cue translation, and progress display.
 
 Shell status messages and native NeMo-Speech SDK log lines are sent through the tqdm renderer, which preserves separate terminal lines while updating the progress bars. Status text is line-framed so embedded line feeds in input paths do not corrupt progress events.
 
-`nemo.sh` passes local GGUF model files directly to `nemo-speech`, so it does not clear or depend on symbolic links in the NeMo model cache. Its default ASR and diarization model arguments point to the `.gguf` files inside their versioned model directories, not to the parent directories.
+`nemo.sh` passes local GGUF model files directly to `nemo-speech`, so it does not clear or depend on symbolic links in the NeMo model cache. `-m` or `--model` selects `large` or `turbo`; turbo is the default. The ASR files are under `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/ASR`. `-d` or `--diar-model` selects `large` or `turbo` from `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/Diarization`; turbo is the default. It also accepts an explicit model path or repository.
 
-`nemo.py` reads transcript text and timestamped words from top-level or nested ASR JSON results, and also accepts timestamped segments. Each SRT cue contains no more than one sentence and is limited to 50 characters by default, including the speaker label. Set `-c CHARS` or `--cue CHARS` to adjust the maximum cue length; the minimum is 19 characters so the `[Speaker Unknown]` label and at least one text character can fit. Longer sentences are split at spaces. If only timestamped multi-sentence segments are available, the helper divides each segment's time across its sentence-sized cues according to text length. If recognized text has no word timestamps, it splits the transcript into sentence-sized cues, estimates their times across the full audio duration according to text length, labels them `Speaker Unknown`, and prints a warning. If the result has no recognized text, `nemo.sh` prints a warning with the JSON's top-level fields, skips SRT creation and MP4 subtitle embedding for that input, and continues to the next input. If recognized text has no valid audio duration, it reports an error.
+`nemo.py` reads transcript text and timestamped words from top-level or nested ASR JSON results, and also accepts timestamped segments. Each subtitle cue contains no more than one sentence and is limited to 50 characters by default, including the speaker label. Set `-c CHARS` or `--cue CHARS` to adjust the maximum cue length; the minimum is 19 characters so the `[Speaker Unknown]` label and at least one text character can fit. Longer sentences are split at spaces. If only timestamped multi-sentence segments are available, the helper divides each segment's time across its sentence-sized cues according to text length. If recognized text has no word timestamps, it splits the transcript into sentence-sized cues, estimates their times across the full audio duration according to text length, labels them `Speaker Unknown`, and prints a warning. If the result has no recognized text, `nemo.sh` prints a warning with the JSON's top-level fields, skips subtitle creation and MP4 subtitle embedding for that input, and continues to the next input. If recognized text has no valid audio duration, it reports an error.
 
-Translation is enabled by default. English sources keep the original `<input-name>.srt` and also get `<input-name>.ko.srt`. Korean sources keep the original SRT and also get `<input-name>.en.srt`. Other source languages get the original SRT plus `<input-name>.en.srt` and `<input-name>.ko.srt`; translations retain the source cue times and speaker IDs. If a translated cue must be split to meet the selected cue length, its source time span is divided according to text length. An empty cue result is retried twice; if it remains empty, that cue keeps its source text and the remaining translation continues. Set `-t true` or `--translate true` to enable translation explicitly; use `-t false` or `--translate false` to skip translated SRT generation for that run. Any existing translated SRT that is not generated during that run is left untouched. With `--language auto` (the default), the detected language determines which outputs are needed. Use `-l`, `--language`, or the existing `--lang` alias to select a source language. Non-English, non-Korean sources are translated through English before Korean.
+Translation is enabled by default. English sources keep the original `<input-name>.vtt` and also get `<input-name>.ko.vtt`. Korean sources keep the original VTT and also get `<input-name>.en.vtt`. Other source languages get the original VTT plus `<input-name>.en.vtt` and `<input-name>.ko.vtt`; `-t srt` or `--type srt` changes all these extensions to `.srt`. Translations retain the source cue times and speaker IDs. If a translated cue must be split to meet the selected cue length, its source time span is divided according to text length. An empty cue result is retried twice; if it remains empty, that cue keeps its source text and the remaining translation continues. Translation is enabled by default; use `--translate false` to skip translated subtitle generation for that run. Any existing translated subtitle that is not generated during that run is left untouched. With `--language auto` (the default), the detected language determines which outputs are needed. Use `-l`, `--language`, or the existing `--lang` alias to select a source language. Non-English, non-Korean sources are translated through English before Korean.
 
 | Option | Purpose | Default |
 | --- | --- | --- |
-| `--model MODEL` | ASR GGUF path or indexed HF repo | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/nemotron-3.5-asr-streaming-0.6b/1c8deaecc64b91f034d73e08dd8b64625eb3395d/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf` |
-| `--diar-model MODEL` | Speaker diarization model path or indexed HF repo | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/Nemotron-3-Diarization/f667ed73aee57d40cc39428eb768b4fd87a0a29e/Nemotron-3-Diarization.q8_0.gguf` |
-| `-c, --cue CHARS` | Maximum SRT cue length, including the speaker label (minimum 19) | `50` |
-| `-t, --translate BOOL` | Translate eligible inputs; accepts `true` or `false` | `true` |
-| `-f, --force` | Regenerate inputs with existing source or translated SRT files | Off unless provided |
-| `-p, --playbook` | Write timestamp-free TXT transcripts for generated or existing SRT files | Off unless provided |
+| `-m, --model MODEL` | ASR model choice (`large`, `turbo`) or path/repo | `turbo`: `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/ASR/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf` |
+| `-d, --diar-model MODEL` | Diarization choice (`large`, `turbo`) or explicit path/repo | `turbo`: `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/Diarization/Nemotron-3-Diarization.q8_0.gguf` |
+| `-t, --type FORMAT` | Subtitle format: `srt` or `vtt` | `vtt` |
+| `-c, --cue CHARS` | Maximum subtitle cue length, including the speaker label (minimum 19) | `50` |
+| `--translate BOOL` | Translate eligible inputs; accepts `true` or `false` | `true` |
+| `-f, --force` | Regenerate inputs with existing source or translated subtitle files | Off unless provided |
+| `-p, --playbook` | Write timestamp-free TXT transcripts for generated or existing subtitle files | Off unless provided |
 | `--nmt-model PATH` | Translation GGUF model | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/translation-model/Riva-Translate-4B-Instruct-v2-Q4_K_M.gguf` |
-| `-s, --subtitle` | Mux generated SRTs into an MP4 as soft subtitle tracks when provided | Off unless provided |
+| `-s, --subtitle` | Mux generated subtitles into an MP4 as soft subtitle tracks when provided | Off unless provided |
 | `-l, --language, --lang CODE` | Language code or prompt | `auto` |
-| `--vad` | Enable VAD with the configured model | Off |
-| `--vad-model PATH` | Enable VAD with the specified model | Off |
-| `--no-vad` | Disable VAD | Off |
+| `--vad MODE` | Select `silero` or `false` | `silero`: /Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/VAD/ggml-silero-v6.2.0.gguf |
+| `--vad-model PATH` | Enable VAD with a custom GGUF model | Configured Silero path |
+| `--no-vad` | Disable VAD (alias for `--vad false`) | — |
 | `-h, --help` | Show command help | — |
 | `--` | Treat remaining arguments as input paths | — |
 
-`nemo-speech` defaults to `$HOME/.local/bin/nemo-speech`. Set `NEMO_BIN`, `NEMO_MODEL`, `NEMO_DIAR_MODEL`, `NEMO_VAD_MODEL`, `NEMO_NMT_MODEL`, or `NEMO_LANGUAGE` to change the corresponding defaults. VAD is off unless `--vad` or `--vad-model PATH` is supplied; `--no-vad` disables it. The configured default VAD path is the legacy whisper.cpp `ggml-silero-v6.2.0.bin` model and is not accepted by this `nemo-speech` runtime. Use `--vad-model PATH` with a runtime-compatible VAD GGUF to enable VAD successfully.
+`-m large` selects `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/ASR/nemotron-3.5-asr-streaming-0.6b.gguf`; `-m turbo` selects the default Q8_0 model. An explicit model path or indexed HF repository can also be passed to `--model`. The `NEMO_MODEL` environment variable continues to override the default model.
 
-For MP4 inputs, providing `-s` or `--subtitle` embeds the source SRT and any translated SRTs produced in that run as soft subtitle tracks using `mov_text`. Before transcription, the script checks for embedded subtitle tracks; without `-f` or `--force`, it skips an MP4 that already has a subtitle track. With force enabled, old subtitle streams are excluded from the remux and replaced by the newly generated source and translated tracks. For MP4s without embedded subtitles, the source track is tagged with its detected or selected language; English and Korean translations are tagged `en` and `ko`. English and Korean inputs therefore receive two tracks, while other languages receive three when translation is enabled. Existing video and audio streams are preserved. The script remuxes to a temporary file beside the input, replaces the input MP4 only after a successful remux, then removes the generated SRT files. If translation is disabled, only the source track is embedded. Non-MP4 inputs keep their SRT files. Without `-s` or `--subtitle`, normal sidecar SRT outputs are kept and the MP4 is not remuxed. This option requires `ffprobe` as well as `ffmpeg`.
+`-d large` selects `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/Diarization/Nemotron-3-Diarization.gguf`; `-d turbo` selects `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/Diarization/Nemotron-3-Diarization.q8_0.gguf`. The `NEMO_DIAR_MODEL` environment variable continues to override the default.
 
-`whisper.sh` announces each input as `(current/total) FILE`, skips files that already have a matching `.srt`, uses Korean by default (`--lang ko`), and recommends the large model as the default. Set `--model turbo` or `--model-choice turbo` to use the turbo model. Set `--model-path` for a specific model file.
+`nemo-speech` defaults to `$HOME/.local/bin/nemo-speech`. Set `NEMO_BIN`, `NEMO_MODEL`, `NEMO_DIAR_MODEL`, `NEMO_VAD_MODEL`, `NEMO_NMT_MODEL`, or `NEMO_LANGUAGE` to change the corresponding defaults. VAD is enabled by default with Silero v6.2.0 at `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/VAD/ggml-silero-v6.2.0.gguf`. Use `--vad false` to disable it; `--vad silero` selects the default model. Set `NEMO_VAD_MODEL` or pass `--vad-model PATH` to select a different compatible VAD GGUF.
+
+For MP4 inputs, providing `-s` or `--subtitle` embeds the source subtitle and any translated subtitles produced in that run as soft subtitle tracks using `mov_text`. The input format follows `-t` or `--type` (`vtt` by default, `srt` when selected). Before transcription, the script checks for embedded subtitle tracks; without `-f` or `--force`, it skips an MP4 that already has a subtitle track. With force enabled, old subtitle streams are excluded from the remux and replaced by the newly generated source and translated tracks. For MP4s without embedded subtitles, the source track is tagged with its detected or selected language; English and Korean translations are tagged `en` and `ko`. English and Korean inputs therefore receive two tracks, while other languages receive three when translation is enabled. Existing video and audio streams are preserved. The script remuxes to a temporary file beside the input, replaces the input MP4 only after a successful remux, then removes the generated subtitle files. If translation is disabled, only the source track is embedded. Non-MP4 inputs keep their subtitle files. Without `-s` or `--subtitle`, normal sidecar subtitle outputs are kept and the MP4 is not remuxed. This option requires `ffprobe` as well as `ffmpeg`.
+
+`whisper.sh` announces each input as `(current/total) FILE`, skips files that already have an output in the selected subtitle format, and uses Korean by default (`-l CODE` or `--lang CODE`). The default model is turbo; use `-m large` or `--model large` to select large, or `--model-path` to specify a model file. Output is SRT by default; use `-t vtt` or `--type vtt` for WebVTT. `-t srt` or `--type srt` explicitly selects the default format. The selected format determines the sidecar extension and the Whisper CLI output flag.
 
 | Choice | Model path |
 | --- | --- |
-| `large` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3.bin` |
-| `turbo` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/ggml-large-v3-turbo.bin` |
+| `large` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/02_whisper.cpp/large-v3/ggml-large-v3.bin` |
+| `turbo` | `/Users/fumire/Library/CloudStorage/Dropbox/31_AI/whisper-model/02_whisper.cpp/large-v3-turbo/ggml-large-v3-turbo.bin` |
 
 `whisper-cli` Voice Activity Detection is enabled by default. Set `--no-vad` or `--vad 0`, `false`, `no`, or `off` to disable it. VAD auto-detects the newest available Silero model by default and falls back to the v6.2.0 path when no matching model is found. Set `--vad-model v5.1.2` for the previous model, `--vad-model v6.2.0` for the current fallback model explicitly, or `--vad-model-path` for a specific VAD model file.
 
@@ -111,10 +120,9 @@ For MP4 inputs, providing `-s` or `--subtitle` embeds the source SRT and any tra
 
 Leave `--vad-model` unset, or set it to `auto`, to scan `--vad-model-dir` for the newest matching Silero VAD model. Set `--vad-model-dir` to scan a different directory. Explicit choices such as `--vad-model=v5.1.2`, path values in `--vad-model`, and `--vad-model-path` still override auto-detection.
 
-Subtitle line wrapping is limited to `--subtitle-max-words` words per line (default: 7). Set `--subtitle-max-words 0` to disable post-processing wrapping.
+Subtitle line wrapping for SRT and WebVTT is limited to `--subtitle-max-words` words per line (default: 7). Set `--subtitle-max-words 0` to disable post-processing wrapping.
 
-If `--subtitle true`, whisper.sh muxes the generated `.srt` into the original MP4 file as a soft subtitle track (`mov_text`) after transcription. It preserves existing video/audio/subtitle tracks by remuxing streams with `copy`, overwrites the original MP4, and removes the temporary `.srt` after successful muxing.  
-If the generated `.srt` is empty (`0 byte`), whisper.sh skips mp4 muxing and only removes the `.srt` file.
+If `--subtitle true`, whisper.sh muxes the generated subtitle file (`.srt` by default or `.vtt` with `--type vtt`) into the original MP4 as a soft subtitle track (`mov_text`). It preserves existing video/audio/subtitle tracks by remuxing streams with `copy`, overwrites the original MP4, and removes the sidecar file after successful muxing. If the generated subtitle file is empty (`0 byte`), it skips MP4 muxing and removes that empty file.
 
 ```sh
 ffmpeg -i input.mp4 -i input.srt -map 0 -map 1 \
@@ -208,7 +216,7 @@ Most shell scripts use `set -euo pipefail`, so they stop when a command fails or
 
 For `whisper.sh`, command arguments are preferred (`--lang`, `--model`, `--vad-model`, `--subtitle`, etc.), while environment variables (`lang`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, `WHISPER_MODEL_PATH`, `WHISPER_VAD`, `WHISPER_VAD_MODEL`, `WHISPER_VAD_MODEL_CHOICE`, `WHISPER_VAD_MODEL_PATH`, `WHISPER_VAD_MODEL_DIR`, `WHISPER_SUBTITLE_MAX_WORDS`, `SUBTITLE`) are still supported for compatibility.
 
-For `nemo.sh`, translation defaults to `true` and is controlled with `-t` or `--translate`, followed by `true` or `false`. The language option accepts `-l`, `--language`, or `--lang`. Model and executable defaults can be overridden with `NEMO_BIN`, `NEMO_MODEL`, `NEMO_DIAR_MODEL`, `NEMO_VAD_MODEL`, `NEMO_NMT_MODEL`, and `NEMO_LANGUAGE`.
+For `nemo.sh`, `-t` or `--type` selects `vtt` (default) or `srt`. Translation defaults to `true` and is controlled with `--translate true|false`. The language option accepts `-l`, `--language`, or `--lang`. Model and executable defaults can be overridden with `NEMO_BIN`, `NEMO_MODEL`, `NEMO_DIAR_MODEL`, `NEMO_VAD_MODEL`, `NEMO_NMT_MODEL`, and `NEMO_LANGUAGE`.
 
 The migration scripts create `md5.txt` and `tree.txt` manifests in the working directory. Both manifests exclude themselves and legacy `*.md5sum` sidecars so `migration_check.sh` can reproduce the same inputs after transfer. `migration_arrange.sh` and `migration_store.sh` delete empty files before creating the manifests. `migration_store.sh` uses `rsync --remove-source-files` to move transferred files to `root@kimura.kogic.kr:/BiO/Archive/` through SSH port `3030`, so run it only after confirming the destination and command behavior.
 

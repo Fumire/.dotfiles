@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Helpers for nemo.sh: model checks, speaker-aware SRTs, and timestamp-free playbooks."""
+"""Helpers for nemo.sh: model checks, speaker-aware subtitles, and timestamp-free playbooks."""
 
 import argparse
 import base64
@@ -426,6 +426,27 @@ def speaker_label(speaker):
     return "Speaker Unknown"
 
 
+def serialize_subtitles(path, cues):
+    """Serialize speaker-labeled cues as SubRip or WebVTT based on the path."""
+    is_vtt = Path(path).suffix.lower() == ".vtt"
+    lines = ["WEBVTT", ""] if is_vtt else []
+    for index, cue in enumerate(cues, 1):
+        start = timestamp(cue["start"])
+        end = timestamp(max(cue["start"] + 0.001, cue["end"]))
+        if is_vtt:
+            start = start.replace(",", ".")
+            end = end.replace(",", ".")
+        else:
+            lines.append(str(index))
+        text = cue.get("text", cue.get("word", ""))
+        lines.extend([
+            f"{start} --> {end}",
+            f"[{speaker_label(cue.get('speaker'))}] {text}",
+            "",
+        ])
+    return "\n".join(lines)
+
+
 def cue_text_limit(speaker, max_cue_chars=MAX_SUBTITLE_CUE_CHARS):
     """Keep the complete displayed cue, including its speaker label, within the limit."""
     label_length = len(f"[{speaker_label(speaker)}] ")
@@ -559,19 +580,10 @@ def build_source(args):
 
     flush()
     if not cues:
-        raise ValueError("No SRT subtitle cues could be generated.")
-
-    srt_lines = []
-    for index, cue in enumerate(cues, 1):
-        srt_lines.extend([
-            str(index),
-            f"{timestamp(cue['start'])} --> {timestamp(max(cue['start'] + 0.001, cue['end']))}",
-            f"[{speaker_label(cue['speaker'])}] {cue['text']}",
-            "",
-        ])
+        raise ValueError("No subtitle cues could be generated.")
 
     try:
-        Path(args.srt).write_text("\n".join(srt_lines), encoding="utf-8")
+        Path(args.subtitle).write_text(serialize_subtitles(args.subtitle, cues), encoding="utf-8")
         Path(args.metadata).write_text(
             json.dumps({"source_language": source_language, "cues": cues}, ensure_ascii=False),
             encoding="utf-8",
@@ -613,11 +625,10 @@ def build_translation(args):
     if len(translations) != len(cues):
         raise ValueError(
             "The number of translated cues does not match the source cues; "
-            "the existing translated SRT was left unchanged."
+            "the existing translated subtitle file was left unchanged."
         )
 
-    lines = []
-    cue_index = 0
+    translated_cues = []
     for index, (cue, translated) in enumerate(zip(cues, translations), 1):
         translated = translated.strip()
         if not translated:
@@ -625,7 +636,7 @@ def build_translation(args):
             if not translated:
                 raise ValueError(
                     f"Translation and source text for cue {index} are empty; "
-                    "the translated SRT could not be generated."
+                    "the translated subtitle file could not be generated."
                 )
             _write_diagnostic(
                 f"Warning: translation for cue {index} was empty; "
@@ -639,30 +650,23 @@ def build_translation(args):
             args.max_cue_chars,
         )
         for translated_cue in translated_chunks:
-            cue_index += 1
-            lines.extend([
-                str(cue_index),
-                f"{timestamp(translated_cue['start'])} --> "
-                f"{timestamp(max(translated_cue['start'] + 0.001, translated_cue['end']))}",
-                f"[{speaker_label(translated_cue.get('speaker'))}] {translated_cue['word']}",
-                "",
-            ])
+            translated_cues.append(translated_cue)
 
     try:
-        Path(args.output).write_text("\n".join(lines), encoding="utf-8")
+        Path(args.output).write_text(serialize_subtitles(args.output, translated_cues), encoding="utf-8")
     except OSError as exc:
-        raise ValueError(f"Could not write the translated SRT: {exc}") from exc
+        raise ValueError(f"Could not write the translated subtitle file: {exc}") from exc
 
 
 def build_playbook(args):
     try:
-        srt_text = Path(args.srt).read_text(encoding="utf-8")
+        subtitle_text = Path(args.subtitle).read_text(encoding="utf-8")
     except (OSError, UnicodeError) as exc:
-        raise ValueError(f"Could not read the SRT file as UTF-8: {exc}") from exc
+        raise ValueError(f"Could not read the subtitle file as UTF-8: {exc}") from exc
 
     timestamp_line = re.compile(r"^\s*\d+:\d{2}:\d{2}[,.]\d{3}\s*-->")
     cue_texts = []
-    for block in re.split(r"\r?\n(?:[ \t]*\r?\n)+", srt_text.strip()):
+    for block in re.split(r"\r?\n(?:[ \t]*\r?\n)+", subtitle_text.strip()):
         lines = block.splitlines()
         timestamp_index = next(
             (index for index, line in enumerate(lines) if timestamp_line.match(line)),
@@ -685,7 +689,7 @@ def build_playbook(args):
             cue_texts.append((speaker, text))
 
     if not cue_texts:
-        raise ValueError(f"No timestamped subtitle cues were found in: {args.srt}")
+        raise ValueError(f"No timestamped subtitle cues were found in: {args.subtitle}")
 
     turns = []
     for speaker, text in cue_texts:
@@ -1425,9 +1429,9 @@ def build_parser():
     model_parser.add_argument("--path", required=True)
     model_parser.set_defaults(func=check_model)
 
-    source_parser = subparsers.add_parser("build-source", help="Build the source-language SRT.")
+    source_parser = subparsers.add_parser("build-source", help="Build the source-language subtitle file.")
     source_parser.add_argument("--json", required=True)
-    source_parser.add_argument("--srt", required=True)
+    source_parser.add_argument("--subtitle", "--srt", dest="subtitle", required=True)
     source_parser.add_argument("--metadata", required=True)
     source_parser.add_argument("--translation-input", required=True)
     source_parser.add_argument("--language", required=True)
@@ -1440,7 +1444,7 @@ def build_parser():
     language_parser.add_argument("--metadata", required=True)
     language_parser.set_defaults(func=print_source_language)
 
-    translation_parser = subparsers.add_parser("build-translation", help="Build the translated SRT.")
+    translation_parser = subparsers.add_parser("build-translation", help="Build the translated subtitle file.")
     translation_parser.add_argument("--metadata", required=True)
     translation_parser.add_argument("--translation", required=True)
     translation_parser.add_argument("--output", required=True)
@@ -1461,9 +1465,9 @@ def build_parser():
     translate_progress_parser.set_defaults(func=translate_progress)
 
     playbook_parser = subparsers.add_parser(
-        "build-playbook", help="Build a timestamp-free speaker script from an SRT file."
+        "build-playbook", help="Build a timestamp-free speaker script from a subtitle file."
     )
-    playbook_parser.add_argument("--srt", required=True)
+    playbook_parser.add_argument("--subtitle", "--srt", dest="subtitle", required=True)
     playbook_parser.add_argument("--output", required=True)
     playbook_parser.set_defaults(func=build_playbook)
 
