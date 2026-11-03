@@ -23,7 +23,7 @@ diar_model="${NEMO_DIAR_MODEL:-$DEFAULT_NEMO_DIAR_MODEL}"
 vad_model="${NEMO_VAD_MODEL:-$DEFAULT_NEMO_VAD_MODEL}"
 nmt_model="${NEMO_NMT_MODEL:-$DEFAULT_NEMO_NMT_MODEL}"
 language="${NEMO_LANGUAGE:-auto}"
-translate_enabled=1
+translate_enabled=0
 cue_chars=50
 subtitle_type="vtt"
 vad_enabled=1
@@ -39,7 +39,8 @@ Usage:
 
 Convert audio or video inputs to 16 kHz mono PCM WAV, transcribe them, and
 write speaker-labeled source subtitles beside the inputs as VTT by default.
-Use -t or --type to select SRT instead. With translation enabled, English
+Use -t or --type to select SRT or VTT. Translation is disabled by default;
+use --translate to enable it. With translation enabled, English
 sources also get <name>.ko.<type>, Korean sources get <name>.en.<type>, and
 other sources get both <name>.en.<type> and <name>.ko.<type>.
 Inputs with an existing source or translated subtitle are skipped unless -f
@@ -84,7 +85,8 @@ Options:
   -t, --type FORMAT      Subtitle format: srt or vtt; default: $subtitle_type
   -c, --cue CHARS        Maximum subtitle cue length, including speaker label;
                          default: $cue_chars (minimum: 19)
-      --translate BOOL   Generate translated subtitles; true or false (default: true)
+      --translate [BOOL]  Enable translation; bare option enables it
+                         Accepts true or false; default: false
   -f, --force            Regenerate and replace existing subtitle outputs
   -p, --playbook         Write timestamp-free TXT transcripts from subtitle files
   --nmt-model PATH       Translation GGUF model; default: ${nmt_model##*/}
@@ -94,8 +96,8 @@ Options:
   -h, --help             Show this help
   --                     Treat all following arguments as input file paths
 
-Speaker IDs are retained in the source and translated subtitle files. Set
---translate false to skip translated subtitle generation. With --language auto, the
+Speaker IDs are retained in the source and translated subtitle files. Translation
+is skipped unless --translate is provided. With --language auto, the
 detected language in the structured ASR result determines whether translation
 is needed. If translation is enabled, this script translates each subtitle cue separately
 so translated subtitles keep the original cue times and speaker labels. If a translated
@@ -124,7 +126,8 @@ Examples:
   $(basename "$0") --language en meeting.m4a
   $(basename "$0") -l de meeting.mp4
   $(basename "$0") -t srt meeting.mp4
-  $(basename "$0") --translate false meeting.wav
+  $(basename "$0") --type vtt meeting.mp4
+  $(basename "$0") --translate meeting.wav
   $(basename "$0") -c 40 meeting.mp4
   $(basename "$0") -f meeting.mp4
   $(basename "$0") -p meeting.mp4
@@ -311,20 +314,13 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --translate)
-            need_value "$1" "${2:-}"
-            case "$2" in
-                true)
-                    translate_enabled=1
-                    ;;
-                false)
-                    translate_enabled=0
-                    ;;
-                *)
-                    printf 'Error: %s must be either true or false.\n' "$1" >&2
-                    exit 2
-                    ;;
-            esac
-            shift 2
+            if [[ "${2:-}" == true || "${2:-}" == false ]]; then
+                [[ "$2" == true ]] && translate_enabled=1 || translate_enabled=0
+                shift 2
+            else
+                translate_enabled=1
+                shift
+            fi
             ;;
         --translate=*)
             translate_value="${1#*=}"
@@ -638,8 +634,12 @@ for input_file in "${input_files[@]}"; do
         fi
     fi
 
+    subtitle_candidates=("$output_srt")
+    if (( translate_enabled )); then
+        subtitle_candidates+=("$output_en_srt" "$output_ko_srt")
+    fi
     existing_srt_files=()
-    for existing_srt in "$output_srt" "$output_en_srt" "$output_ko_srt"; do
+    for existing_srt in "${subtitle_candidates[@]}"; do
         if [[ -e "$existing_srt" || -L "$existing_srt" ]]; then
             existing_srt_files+=("$existing_srt")
         fi
