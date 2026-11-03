@@ -13,6 +13,7 @@ readonly DEFAULT_WHISPER_VAD_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropb
 readonly LARGE_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/large-v3/ggml-large-v3.bin"
 readonly TURBO_WHISPER_MODEL="${DEFAULT_WHISPER_MODEL_DIR}/large-v3-turbo/ggml-large-v3-turbo.bin"
 readonly DEFAULT_WHISPER_SUBTITLE_MAX_WORDS=7
+readonly DEFAULT_WHISPER_CUE_CHARS=50
 readonly SILERO_VAD_MODEL_V5_1_2_SUFFIX="/ggml-silero-v5.1.2.bin"
 readonly SILERO_VAD_MODEL_V6_2_0_SUFFIX="/ggml-silero-v6.2.0.bin"
 
@@ -27,6 +28,7 @@ whisper_vad_model_choice="${WHISPER_VAD_MODEL_CHOICE:-${WHISPER_VAD_MODEL:-auto}
 whisper_vad_model_dir="${WHISPER_VAD_MODEL_DIR:-$DEFAULT_WHISPER_VAD_MODEL_DIR}"
 whisper_subtitle="${SUBTITLE:-false}"
 whisper_subtitle_max_words="${WHISPER_SUBTITLE_MAX_WORDS:-$DEFAULT_WHISPER_SUBTITLE_MAX_WORDS}"
+whisper_cue_chars="${WHISPER_CUE_CHARS:-$DEFAULT_WHISPER_CUE_CHARS}"
 
 show_help() {
     cat <<EOF
@@ -43,6 +45,7 @@ Examples:
   utility/whisper.sh -l en audio.mp3
   utility/whisper.sh -m large audio.mp3
   utility/whisper.sh -t vtt audio.mp3
+  utility/whisper.sh -c 35 audio.mp3
   utility/whisper.sh --no-vad audio.mp3
   utility/whisper.sh --vad-model v5.1.2 audio.mp3
 
@@ -78,6 +81,7 @@ Options:
   -l, --lang CODE                      Spoken language; default: ko
   -m, --model CHOICE                   large or turbo; default: turbo
   -t, --type FORMAT                    Subtitle format: srt or vtt; default: srt
+  -c, --cue CHARS                      Maximum characters per subtitle cue; default: $whisper_cue_chars (minimum: 19)
       --model-path PATH                Explicit Whisper model file path
       --subtitle-max-words N           Maximum words per subtitle line; 0 disables; default: 7
       --vad                            Enable VAD; false/no/off/0 disables it
@@ -92,7 +96,7 @@ Options:
 Legacy env vars (still supported):
   WHISPER_MODEL, WHISPER_MODEL_CHOICE, WHISPER_MODEL_PATH, WHISPER_VAD,
   WHISPER_VAD_MODEL, WHISPER_VAD_MODEL_CHOICE, WHISPER_VAD_MODEL_PATH, WHISPER_VAD_MODEL_DIR,
-  WHISPER_SUBTITLE_MAX_WORDS, lang, SUBTITLE
+  WHISPER_SUBTITLE_MAX_WORDS, WHISPER_CUE_CHARS, lang, SUBTITLE
 
 AAC decode errors:
   If ffmpeg fails while decoding corrupt AAC packets, whisper.sh retries the
@@ -144,6 +148,18 @@ parse_args() {
                 ;;
             --type=*)
                 whisper_type="${1#*=}"
+                shift
+                ;;
+            -c | --cue)
+                if [[ $# -lt 2 || "${2:0:1}" == "-" ]]; then
+                    echo "Missing value for $1" >&2
+                    exit 1
+                fi
+                whisper_cue_chars="$2"
+                shift 2
+                ;;
+            --cue=*)
+                whisper_cue_chars="${1#*=}"
                 shift
                 ;;
             --model-path)
@@ -269,6 +285,11 @@ parse_args() {
 }
 
 parse_args "$@"
+
+if ! [[ "$whisper_cue_chars" =~ ^[0-9]+$ ]] || (( whisper_cue_chars < 19 )); then
+    echo "Invalid cue length: ${whisper_cue_chars}. Use an integer of at least 19." >&2
+    exit 2
+fi
 
 case "$whisper_type" in
     srt | vtt)
@@ -553,6 +574,138 @@ normalize_subtitle_phrase_length() {
     mv -f "$temp_file" "$subtitle_file"
 }
 
+normalize_subtitle_cue_length() {
+    local subtitle_file="$1"
+    local subtitle_type="$2"
+    local max_chars="$3"
+
+    python3 - "$subtitle_file" "$subtitle_type" "$max_chars" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+subtitle_path = Path(sys.argv[1])
+subtitle_type = sys.argv[2]
+max_chars = int(sys.argv[3])
+content = subtitle_path.read_text(encoding="utf-8")
+content = content.replace("\r\n", "\n").replace("\r", "\n").strip()
+blocks = re.split(r"\n[ \t]*\n", content) if content else []
+timing_pattern = re.compile(
+    r"^\s*(\d{2,}:\d{2}(?::\d{2})?[,.]\d{3})\s*-->\s*"
+    r"(\d{2,}:\d{2}(?::\d{2})?[,.]\d{3})(.*)$"
+)
+
+def to_milliseconds(value):
+    fields = value.replace(",", ".").split(":")
+    if len(fields) == 3:
+        hours, minutes, seconds = fields
+    elif len(fields) == 2:
+        hours = "0"
+        minutes, seconds = fields
+    else:
+        raise ValueError(f"Invalid subtitle timestamp: {value}")
+    whole_seconds, fraction = seconds.split(".")
+    return (
+        int(hours) * 3_600_000
+        + int(minutes) * 60_000
+        + int(whole_seconds) * 1_000
+        + int(fraction[:3].ljust(3, "0"))
+    )
+
+def from_milliseconds(value):
+    hours, value = divmod(value, 3_600_000)
+    minutes, value = divmod(value, 60_000)
+    seconds, milliseconds = divmod(value, 1_000)
+    separator = "." if subtitle_type == "vtt" else ","
+    return f"{hours:02}:{minutes:02}:{seconds:02}{separator}{milliseconds:03}"
+
+def split_sentence(sentence):
+    pieces = []
+    remaining = sentence.strip()
+    while len(remaining) > max_chars:
+        split_at = remaining.rfind(" ", 0, max_chars + 1)
+        if split_at <= 0:
+            split_at = max_chars
+        pieces.append(remaining[:split_at].strip())
+        remaining = remaining[split_at:].strip()
+    if remaining:
+        pieces.append(remaining)
+    return pieces
+
+def split_text(text):
+    text = " ".join(text.split())
+    if not text:
+        return []
+    sentences = re.split(r"(?<=[.!?。！？])\s+", text)
+    return [
+        piece
+        for sentence in sentences
+        for piece in split_sentence(sentence)
+    ]
+
+output_blocks = []
+srt_index = 0
+for block in blocks:
+    lines = block.splitlines()
+    timing_index = next(
+        (index for index, line in enumerate(lines) if "-->" in line),
+        None,
+    )
+    if timing_index is None:
+        output_blocks.append(block)
+        continue
+
+    match = timing_pattern.match(lines[timing_index])
+    if not match or timing_index + 1 >= len(lines):
+        output_blocks.append(block)
+        continue
+
+    text = " ".join(line.strip() for line in lines[timing_index + 1:] if line.strip())
+    chunks = split_text(text)
+    if not chunks:
+        output_blocks.append(block)
+        continue
+
+    start_ms = to_milliseconds(match.group(1))
+    end_ms = max(start_ms, to_milliseconds(match.group(2)))
+    duration_ms = end_ms - start_ms
+    if len(chunks) > 1 and duration_ms < len(chunks):
+        duration_ms = len(chunks)
+        end_ms = start_ms + duration_ms
+
+    prefix = lines[:timing_index]
+    weights = [max(1, len(chunk)) for chunk in chunks]
+    total_weight = sum(weights)
+    elapsed_weight = 0
+    cue_start = start_ms
+    for chunk_index, (chunk, weight) in enumerate(zip(chunks, weights), 1):
+        elapsed_weight += weight
+        if chunk_index == len(chunks):
+            cue_end = end_ms
+        else:
+            target_end = start_ms + round(duration_ms * elapsed_weight / total_weight)
+            remaining_cues = len(chunks) - chunk_index
+            cue_end = max(cue_start + 1, min(target_end, end_ms - remaining_cues))
+
+        if subtitle_type == "srt":
+            srt_index += 1
+            cue_prefix = [str(srt_index)]
+        elif len(chunks) > 1 and prefix:
+            cue_prefix = [*prefix[:-1], f"{prefix[-1]}-{chunk_index}"]
+        else:
+            cue_prefix = prefix
+
+        timing = (
+            f"{from_milliseconds(cue_start)} --> {from_milliseconds(cue_end)}"
+            f"{match.group(3)}"
+        )
+        output_blocks.append("\n".join([*cue_prefix, timing, chunk]))
+        cue_start = cue_end
+
+subtitle_path.write_text("\n\n".join(output_blocks) + ("\n" if output_blocks else ""), encoding="utf-8")
+PY
+}
+
 run_whisper() {
     local input_file="$1"
     local output_subtitle="$2"
@@ -579,6 +732,7 @@ run_whisper() {
 
     whisper-cli "${WHISPER_ARGS[@]}"
     mv -v "$generated_subtitle" "$output_subtitle"
+    normalize_subtitle_cue_length "$output_subtitle" "$whisper_type" "$whisper_cue_chars"
     normalize_subtitle_phrase_length "$output_subtitle" "$whisper_type" "$whisper_subtitle_max_words"
 }
 

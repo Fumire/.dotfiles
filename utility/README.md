@@ -58,6 +58,7 @@ utility/nemo.sh --vad-model /path/to/silero-v6.2.0.gguf meeting.wav
 utility/whisper.sh --subtitle true video.mp4
 utility/whisper.sh -m large -l en audio.mp3
 utility/whisper.sh -t vtt audio.mp3
+utility/whisper.sh -c 35 audio.mp3
 utility/whisper.sh --model-path /path/to/model.bin audio.mp3
 utility/whisper.sh --no-vad audio.mp3
 utility/whisper.sh --vad-model v5.1.2 audio.mp3
@@ -103,7 +104,7 @@ Translation is enabled by default. English sources keep the original `<input-nam
 
 For MP4 inputs, providing `-s` or `--subtitle` embeds the source subtitle and any translated subtitles produced in that run as soft subtitle tracks using `mov_text`. The input format follows `-t` or `--type` (`vtt` by default, `srt` when selected). Before transcription, the script checks for embedded subtitle tracks; without `-f` or `--force`, it skips an MP4 that already has a subtitle track. With force enabled, old subtitle streams are excluded from the remux and replaced by the newly generated source and translated tracks. For MP4s without embedded subtitles, the source track is tagged with its detected or selected language; English and Korean translations are tagged `en` and `ko`. English and Korean inputs therefore receive two tracks, while other languages receive three when translation is enabled. Existing video and audio streams are preserved. The script remuxes to a temporary file beside the input, replaces the input MP4 only after a successful remux, then removes the generated subtitle files. If translation is disabled, only the source track is embedded. Non-MP4 inputs keep their subtitle files. Without `-s` or `--subtitle`, normal sidecar subtitle outputs are kept and the MP4 is not remuxed. This option requires `ffprobe` as well as `ffmpeg`.
 
-`whisper.sh` announces each input as `(current/total) FILE`, skips files that already have an output in the selected subtitle format, and uses Korean by default (`-l CODE` or `--lang CODE`). The default model is turbo; use `-m large` or `--model large` to select large, or `--model-path` to specify a model file. Output is SRT by default; use `-t vtt` or `--type vtt` for WebVTT. `-t srt` or `--type srt` explicitly selects the default format. The selected format determines the sidecar extension and the Whisper CLI output flag.
+`whisper.sh` announces each input as `(current/total) FILE`, skips files that already have an output in the selected subtitle format, and uses Korean by default (`-l CODE` or `--lang CODE`). The default model is turbo; use `-m large` or `--model large` to select large, or `--model-path` to specify a model file. Output is SRT by default; use `-t vtt` or `--type vtt` for WebVTT. `-t srt` or `--type srt` explicitly selects the default format. The selected format determines the sidecar extension and the Whisper CLI output flag. By default, each subtitle cue is limited to 50 characters; `-c CHARS` or `--cue CHARS` changes that limit (minimum 19). Long cues are split at sentence boundaries and spaces where possible, and their original time span is divided across the resulting cues according to text length. Set `WHISPER_CUE_CHARS` to change the default.
 
 | Choice | Model path |
 | --- | --- |
@@ -214,7 +215,7 @@ Dependencies vary by script:
 
 Most shell scripts use `set -euo pipefail`, so they stop when a command fails or an expected variable is missing. Some scripts require or accept environment variables, such as `PORT` for `reporting.sh`, `CHECK_SYSTEM_ALERT_RECIPIENT` for the default `check_system.sh` alert recipient.
 
-For `whisper.sh`, command arguments are preferred (`--lang`, `--model`, `--vad-model`, `--subtitle`, etc.), while environment variables (`lang`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, `WHISPER_MODEL_PATH`, `WHISPER_VAD`, `WHISPER_VAD_MODEL`, `WHISPER_VAD_MODEL_CHOICE`, `WHISPER_VAD_MODEL_PATH`, `WHISPER_VAD_MODEL_DIR`, `WHISPER_SUBTITLE_MAX_WORDS`, `SUBTITLE`) are still supported for compatibility.
+For `whisper.sh`, command arguments are preferred (`--lang`, `--model`, `--vad-model`, `--subtitle`, etc.), while environment variables (`lang`, `WHISPER_MODEL`, `WHISPER_MODEL_CHOICE`, `WHISPER_MODEL_PATH`, `WHISPER_VAD`, `WHISPER_VAD_MODEL`, `WHISPER_VAD_MODEL_CHOICE`, `WHISPER_VAD_MODEL_PATH`, `WHISPER_VAD_MODEL_DIR`, `WHISPER_SUBTITLE_MAX_WORDS`, `WHISPER_CUE_CHARS`, `SUBTITLE`) are still supported for compatibility.
 
 For `nemo.sh`, `-t` or `--type` selects `vtt` (default) or `srt`. Translation defaults to `true` and is controlled with `--translate true|false`. The language option accepts `-l`, `--language`, or `--lang`. Model and executable defaults can be overridden with `NEMO_BIN`, `NEMO_MODEL`, `NEMO_DIAR_MODEL`, `NEMO_VAD_MODEL`, `NEMO_NMT_MODEL`, and `NEMO_LANGUAGE`.
 
