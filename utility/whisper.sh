@@ -39,6 +39,8 @@ Generate .srt subtitle files by default; choose srt or vtt with -t or --type.
 Files with an existing output in the selected format are skipped.
 Each input is announced as (current/total) before processing.
 VAD is enabled by default; use --no-vad to disable it.
+Intermediate audio and raw subtitle files use a temporary directory under
+${TMPDIR:-/tmp}, which is removed when the script exits.
 
 Examples:
   utility/whisper.sh video.mp4 audio.mp3
@@ -46,6 +48,7 @@ Examples:
   utility/whisper.sh -m large audio.mp3
   utility/whisper.sh -t vtt audio.mp3
   utility/whisper.sh -c 35 audio.mp3
+  utility/whisper.sh -s video.mp4
   utility/whisper.sh --no-vad audio.mp3
   utility/whisper.sh --vad-model v5.1.2 audio.mp3
 
@@ -89,7 +92,7 @@ Options:
       --vad-model CHOICE               auto, v6.2.0, v5.1.2, or a model path; default: auto
       --vad-model-path PATH            Explicit VAD model file path
       --vad-model-dir DIR              Directory scanned by auto; default: $DEFAULT_WHISPER_VAD_MODEL_DIR
-      --subtitle [true|false]          Mux the selected subtitle format into MP4 as mov_text
+  -s, --subtitle                       Mux the generated subtitle into the MP4 as mov_text
       --no-subtitle                    Disable MP4 subtitle muxing
   -h, --help                           Show this help message
 
@@ -227,17 +230,8 @@ parse_args() {
                 whisper_vad_model_dir="${1#*=}"
                 shift
                 ;;
-            --subtitle)
-                if [[ $# -ge 2 && "${2:0:1}" != "-" ]]; then
-                    whisper_subtitle="$2"
-                    shift 2
-                else
-                    whisper_subtitle="true"
-                    shift
-                fi
-                ;;
-            --subtitle=*)
-                whisper_subtitle="${1#*=}"
+            -s | --subtitle)
+                whisper_subtitle="true"
                 shift
                 ;;
             --no-subtitle)
@@ -571,7 +565,7 @@ normalize_subtitle_phrase_length() {
         }
     ' "$subtitle_file" > "$temp_file" || return 1
 
-    mv -f "$temp_file" "$subtitle_file"
+    mv -f -- "$temp_file" "$subtitle_file"
 }
 
 normalize_subtitle_cue_length() {
@@ -587,7 +581,16 @@ from pathlib import Path
 subtitle_path = Path(sys.argv[1])
 subtitle_type = sys.argv[2]
 max_chars = int(sys.argv[3])
-content = subtitle_path.read_text(encoding="utf-8")
+raw_content = subtitle_path.read_bytes()
+try:
+    content = raw_content.decode("utf-8")
+except UnicodeDecodeError as error:
+    print(
+        f"Warning: invalid UTF-8 at byte {error.start} in {subtitle_path}; "
+        "replacing invalid bytes.",
+        file=sys.stderr,
+    )
+    content = raw_content.decode("utf-8", errors="replace")
 content = content.replace("\r\n", "\n").replace("\r", "\n").strip()
 blocks = re.split(r"\n[ \t]*\n", content) if content else []
 timing_pattern = re.compile(
@@ -710,7 +713,7 @@ run_whisper() {
     local input_file="$1"
     local output_subtitle="$2"
     local generated_subtitle="${input_file}.${whisper_type}"
-    local WHISPER_ARGS=(
+    local -a WHISPER_BASE_ARGS=(
         "-m" "$WHISPER_MODEL_PATH"
         "--output-${whisper_type}"
         "--language" "${whisper_lang}"
@@ -719,6 +722,7 @@ run_whisper() {
         "--print-colors"
         "--print-confidence"
     )
+    local -a WHISPER_ARGS=("${WHISPER_BASE_ARGS[@]}")
 
     if ! [[ "$whisper_subtitle_max_words" =~ ^[0-9]+$ ]]; then
         whisper_subtitle_max_words="$DEFAULT_WHISPER_SUBTITLE_MAX_WORDS"
@@ -731,7 +735,26 @@ run_whisper() {
     WHISPER_ARGS+=("--file" "$input_file")
 
     whisper-cli "${WHISPER_ARGS[@]}"
-    mv -v "$generated_subtitle" "$output_subtitle"
+    if whisper_vad_enabled && [[ ! -s "$generated_subtitle" ]]; then
+        printf 'Warning: VAD produced no subtitle cues for %s; retrying once without VAD.\n' "$input_file" >&2
+        rm -f -- "$generated_subtitle"
+        WHISPER_ARGS=("${WHISPER_BASE_ARGS[@]}" "--file" "$input_file")
+        whisper-cli "${WHISPER_ARGS[@]}"
+    fi
+
+    local staged_subtitle
+    staged_subtitle="$(mktemp "${output_subtitle}.tmp.XXXXXXXX")"
+    if ! cat "$generated_subtitle" > "$staged_subtitle"; then
+        rm -f -- "$staged_subtitle"
+        printf 'Error: could not stage subtitle output beside: %s\n' "$output_subtitle" >&2
+        return 1
+    fi
+    if ! mv -f -- "$staged_subtitle" "$output_subtitle"; then
+        rm -f -- "$staged_subtitle"
+        printf 'Error: could not replace subtitle output: %s\n' "$output_subtitle" >&2
+        return 1
+    fi
+    rm -f -- "$generated_subtitle"
     normalize_subtitle_cue_length "$output_subtitle" "$whisper_type" "$whisper_cue_chars"
     normalize_subtitle_phrase_length "$output_subtitle" "$whisper_type" "$whisper_subtitle_max_words"
 }
@@ -802,13 +825,42 @@ convert_to_mp3() {
     esac
 }
 
+embed_subtitle_in_mp4() {
+    local source_file="$1"
+    local subtitle_file="$2"
+    local stem="${source_file%.*}"
+    local tmp_mp4="${stem}.subtitle_tmp.mp4"
+    local existing_subtitle_count
+    local new_subtitle_index
+
+    if [[ ! -s "$subtitle_file" ]]; then
+        printf 'Warning: no subtitle cues were generated for %s; skipping MP4 subtitle embedding.\n' "$source_file" >&2
+        rm -fv -- "$subtitle_file"
+        return 0
+    fi
+
+    existing_subtitle_count="$(ffprobe -v error -select_streams s -show_entries stream=index -of csv=p=0 "$source_file" | wc -l | tr -d '[:space:]')"
+    new_subtitle_index="$existing_subtitle_count"
+    subtitle_tmp_file="$tmp_mp4"
+
+    ffmpeg -y -i "$source_file" -i "$subtitle_file" -map 0 -map 1 -c:v copy -c:a copy -c:s copy -c:s:"$new_subtitle_index" mov_text -metadata:s:s:"$new_subtitle_index" "language=${whisper_lang}" "$subtitle_tmp_file"
+    mv -fv -- "$subtitle_tmp_file" "$source_file"
+    subtitle_tmp_file=""
+    rm -fv -- "$subtitle_file"
+}
+
 process_media_file() {
     local source_file="$1"
     local stem="${source_file%.*}"
     local subtitle_file="${stem}.${whisper_type}"
-    local mp3_file="${stem}.mp3"
+    local mp3_file="${work_dir}/input.mp3"
 
     if [[ -f "$subtitle_file" ]]; then
+        if [[ "$source_file" == *.mp4 && "${whisper_subtitle}" == "true" ]]; then
+            normalize_subtitle_cue_length "$subtitle_file" "$whisper_type" "$whisper_cue_chars"
+            normalize_subtitle_phrase_length "$subtitle_file" "$whisper_type" "$whisper_subtitle_max_words"
+            embed_subtitle_in_mp4 "$source_file" "$subtitle_file"
+        fi
         return
     fi
 
@@ -816,33 +868,34 @@ process_media_file() {
         *.mp4)
             convert_to_mp3 "$source_file" "$mp3_file"
             run_whisper "$mp3_file" "$subtitle_file"
-            rm -fv "$mp3_file"
+            rm -fv -- "$mp3_file"
 
             if [[ "${whisper_subtitle}" == "true" ]]; then
-                if [[ ! -s "$subtitle_file" ]]; then
-                    rm -fv "$subtitle_file"
-                else
-                    local tmp_mp4="${stem}.subtitle_tmp.mp4"
-                    local existing_subtitle_count
-                    existing_subtitle_count="$(ffprobe -v error -select_streams s -show_entries stream=index -of csv=p=0 "$source_file" | wc -l | tr -d '[:space:]')"
-                    local new_subtitle_index="$existing_subtitle_count"
-
-                    ffmpeg -y -i "$source_file" -i "$subtitle_file" -map 0 -map 1 -c:v copy -c:a copy -c:s copy -c:s:"$new_subtitle_index" mov_text -metadata:s:s:"$new_subtitle_index" "language=${whisper_lang}" "$tmp_mp4"
-                    mv -fv "$tmp_mp4" "$source_file"
-                    rm -fv "$subtitle_file"
-                fi
+                embed_subtitle_in_mp4 "$source_file" "$subtitle_file"
             fi
             ;;
         *.avi | *.mkv | *.m4a | *.aac)
             convert_to_mp3 "$source_file" "$mp3_file"
             run_whisper "$mp3_file" "$subtitle_file"
-            rm -fv "$mp3_file"
+            rm -fv -- "$mp3_file"
             ;;
         *.mp3)
-            run_whisper "$source_file" "$subtitle_file"
+            ln -s "$source_file" "$mp3_file"
+            run_whisper "$mp3_file" "$subtitle_file"
+            rm -fv -- "$mp3_file"
             ;;
     esac
 }
+
+work_dir="$(mktemp -d "${TMPDIR:-/tmp}/whisper.XXXXXXXX")"
+subtitle_tmp_file=""
+cleanup() {
+    if [[ -n "$subtitle_tmp_file" ]]; then
+        rm -f -- "$subtitle_tmp_file"
+    fi
+    rm -rf -- "$work_dir"
+}
+trap cleanup EXIT
 
 total_input_files="${#INPUT_FILES[@]}"
 current_input_file=0

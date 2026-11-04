@@ -56,7 +56,7 @@ utility/nemo.sh -l en meeting.m4a
 utility/nemo.sh --translate meeting.mp4
 utility/nemo.sh --translate false meeting.wav
 utility/nemo.sh --vad-model /path/to/silero-v6.2.0.gguf meeting.wav
-utility/whisper.sh --subtitle true video.mp4
+utility/whisper.sh -s video.mp4
 utility/whisper.sh -m large -l en audio.mp3
 utility/whisper.sh -t vtt audio.mp3
 utility/whisper.sh -c 35 audio.mp3
@@ -105,7 +105,7 @@ Translation is disabled by default. With `--translate`, English sources keep the
 
 For MP4 inputs, providing `-s` or `--subtitle` embeds the source subtitle and any translated subtitles produced in that run as soft subtitle tracks using `mov_text`. The input format follows `-t` or `--type` (`vtt` by default, `srt` when selected). Before transcription, the script checks for embedded subtitle tracks; without `-f` or `--force`, it skips an MP4 that already has a subtitle track. With force enabled, old subtitle streams are excluded from the remux and replaced by the newly generated source and translated tracks. For MP4s without embedded subtitles, the source track is tagged with its detected or selected language; English and Korean translations are tagged `en` and `ko`. English and Korean inputs therefore receive two tracks, while other languages receive three when translation is enabled. Existing video and audio streams are preserved. The script remuxes to a temporary file beside the input, replaces the input MP4 only after a successful remux, then removes the generated subtitle files. If translation is disabled, only the source track is embedded. Non-MP4 inputs keep their subtitle files. Without `-s` or `--subtitle`, normal sidecar subtitle outputs are kept and the MP4 is not remuxed. This option requires `ffprobe` as well as `ffmpeg`.
 
-`whisper.sh` announces each input as `(current/total) FILE`, skips files that already have an output in the selected subtitle format, and uses Korean by default (`-l CODE` or `--lang CODE`). The default model is turbo; use `-m large` or `--model large` to select large, or `--model-path` to specify a model file. Output is SRT by default; use `-t vtt` or `--type vtt` for WebVTT. `-t srt` or `--type srt` explicitly selects the default format. The selected format determines the sidecar extension and the Whisper CLI output flag. By default, each subtitle cue is limited to 50 characters; `-c CHARS` or `--cue CHARS` changes that limit (minimum 19). Long cues are split at sentence boundaries and spaces where possible, and their original time span is divided across the resulting cues according to text length. Set `WHISPER_CUE_CHARS` to change the default.
+`whisper.sh` announces each input as `(current/total) FILE`, skips files that already have an output in the selected subtitle format, and uses Korean by default (`-l CODE` or `--lang CODE`). The default model is turbo; use `-m large` or `--model large` to select large, or `--model-path` to specify a model file. Output is SRT by default; use `-t vtt` or `--type vtt` for WebVTT. `-t srt` or `--type srt` explicitly selects the default format. The selected format determines the sidecar extension and the Whisper CLI output flag. By default, each subtitle cue is limited to 50 characters; `-c CHARS` or `--cue CHARS` changes that limit (minimum 19). Long cues are split at sentence boundaries and spaces where possible, and their original time span is divided across the resulting cues according to text length. Set `WHISPER_CUE_CHARS` to change the default. If VAD produces no subtitle cues, `whisper.sh` retries once without VAD. Invalid UTF-8 bytes in generated subtitles are replaced so the remaining cues can still be normalized and embedded. Converted audio and raw Whisper subtitle output are written to a temporary work directory under `${TMPDIR:-/tmp}`, then removed when the script exits. Final subtitle files remain beside their inputs. Subtitle replacements use a temporary file beside the destination to avoid cross-volume ownership errors. MP4 remux output is staged beside the source video so it can replace the original on the same filesystem; the temporary remux file is removed on failure. If `-s` is rerun while a matching MP4 subtitle file already exists, the script reuses and normalizes that file before embedding it.
 
 | Choice | Model path |
 | --- | --- |
@@ -124,7 +124,7 @@ Leave `--vad-model` unset, or set it to `auto`, to scan `--vad-model-dir` for th
 
 Subtitle line wrapping for SRT and WebVTT is limited to `--subtitle-max-words` words per line (default: 7). Set `--subtitle-max-words 0` to disable post-processing wrapping.
 
-If `--subtitle true`, whisper.sh muxes the generated subtitle file (`.srt` by default or `.vtt` with `--type vtt`) into the original MP4 as a soft subtitle track (`mov_text`). It preserves existing video/audio/subtitle tracks by remuxing streams with `copy`, overwrites the original MP4, and removes the sidecar file after successful muxing. If the generated subtitle file is empty (`0 byte`), it skips MP4 muxing and removes that empty file.
+If `-s` or `--subtitle` is provided for an MP4 input, whisper.sh muxes the generated subtitle file (`.srt` by default or `.vtt` with `--type vtt`) into the original MP4 as a soft subtitle track (`mov_text`). It preserves existing video/audio/subtitle tracks by remuxing streams with `copy`, overwrites the original MP4, and removes the sidecar file after successful muxing. If the generated subtitle file is empty (`0 byte`), it skips MP4 muxing and removes that empty file. If a matching subtitle file already exists when `-s` is provided, it is normalized and reused for the mux.
 
 ```sh
 ffmpeg -i input.mp4 -i input.srt -map 0 -map 1 \
@@ -135,7 +135,7 @@ ffmpeg -i input.mp4 -i input.srt -map 0 -map 1 \
 
 (`output.mp4` is the temporary muxed file that is renamed back to the input path.)
 
-For MP4, AVI, MKV, M4A, and AAC inputs, `whisper.sh` extracts the audio to MP3 with `ffmpeg -i INPUT -vn -q:a 0 -map a OUTPUT.mp3` before running `whisper-cli`.
+For MP4, AVI, MKV, M4A, and AAC inputs, `whisper.sh` extracts the audio to a temporary MP3 with `ffmpeg` before running `whisper-cli`. MP3 inputs are linked into the temporary work directory so Whisper's generated subtitle also stays there until it is moved beside the input.
 
 ### R Environment Backup
 
