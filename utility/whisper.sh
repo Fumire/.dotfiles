@@ -39,6 +39,8 @@ Generate .srt subtitle files by default; choose srt or vtt with -t or --type.
 Files with an existing output in the selected format are skipped.
 Each input is announced as (current/total) before processing.
 VAD is enabled by default; use --no-vad to disable it.
+Audio conversion, transcription, and MP4 subtitle embedding display media
+progress, elapsed time, and ETA without printing recognized speech to the terminal.
 Intermediate audio and raw subtitle files use a temporary directory under
 ${TMPDIR:-/tmp}, which is removed when the script exits.
 
@@ -329,6 +331,8 @@ resolve_input_files() {
 }
 
 resolve_input_files
+whisper_script_path="$(realpath "${BASH_SOURCE[0]}")"
+whisper_progress_helper="${whisper_script_path%/*}/whisper.py"
 
 resolve_whisper_model() {
     if [[ -n "${whisper_model_path}" ]]; then
@@ -485,6 +489,41 @@ append_whisper_vad_args() {
     fi
 
     WHISPER_ARGS+=("--vad" "--vad-model" "$vad_model_path")
+}
+
+run_whisper_cli_with_progress() {
+    local input_file="$1"
+    shift
+    local duration="0"
+
+    if command -v ffprobe >/dev/null 2>&1; then
+        duration="$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$input_file" 2>/dev/null || true)"
+    fi
+    if ! [[ "$duration" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+        duration="0"
+    fi
+
+    python3 "$whisper_progress_helper" --duration "$duration" -- whisper-cli "$@"
+}
+
+run_ffmpeg_with_progress() {
+    local input_file="$1"
+    local description="$2"
+    shift 2
+    local duration="0"
+
+    if command -v ffprobe >/dev/null 2>&1; then
+        duration="$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$input_file" 2>/dev/null || true)"
+    fi
+    if ! [[ "$duration" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+        duration="0"
+    fi
+
+    python3 "$whisper_progress_helper" \
+        --progress-mode ffmpeg \
+        --duration "$duration" \
+        --description "$description" \
+        -- ffmpeg -nostdin -hide_banner -loglevel error -nostats -stats_period 0.5 -progress pipe:1 "$@"
 }
 
 normalize_subtitle_phrase_length() {
@@ -719,8 +758,8 @@ run_whisper() {
         "--language" "${whisper_lang}"
         "--threads" "8"
         "--processors" "8"
-        "--print-colors"
-        "--print-confidence"
+        "--no-prints"
+        "--print-progress"
     )
     local -a WHISPER_ARGS=("${WHISPER_BASE_ARGS[@]}")
 
@@ -734,12 +773,12 @@ run_whisper() {
 
     WHISPER_ARGS+=("--file" "$input_file")
 
-    whisper-cli "${WHISPER_ARGS[@]}"
+    run_whisper_cli_with_progress "$input_file" "${WHISPER_ARGS[@]}"
     if whisper_vad_enabled && [[ ! -s "$generated_subtitle" ]]; then
         printf 'Warning: VAD produced no subtitle cues for %s; retrying once without VAD.\n' "$input_file" >&2
         rm -f -- "$generated_subtitle"
         WHISPER_ARGS=("${WHISPER_BASE_ARGS[@]}" "--file" "$input_file")
-        whisper-cli "${WHISPER_ARGS[@]}"
+        run_whisper_cli_with_progress "$input_file" "${WHISPER_ARGS[@]}"
     fi
 
     local staged_subtitle
@@ -769,17 +808,17 @@ run_ffmpeg_conversion() {
 
     case "$conversion_type" in
         video)
-            if ffmpeg -y -i "$source_file" -q:a 0 -map 0:a:0 -af "asetpts=N/SR/TB" "$mp3_file"; then
+            if run_ffmpeg_with_progress "$source_file" "Converting" -y -i "$source_file" -q:a 0 -map 0:a:0 -af "asetpts=N/SR/TB" "$mp3_file"; then
                 return
             fi
             ;;
         m4a)
-            if ffmpeg -i "$source_file" -c:v copy -c:a libmp3lame -q:a 4 -af "asetpts=N/SR/TB" "$mp3_file"; then
+            if run_ffmpeg_with_progress "$source_file" "Converting" -i "$source_file" -c:v copy -c:a libmp3lame -q:a 4 -af "asetpts=N/SR/TB" "$mp3_file"; then
                 return
             fi
             ;;
         aac)
-            if ffmpeg -i "$source_file" -af "asetpts=N/SR/TB" -acodec libmp3lame "$mp3_file"; then
+            if run_ffmpeg_with_progress "$source_file" "Converting" -i "$source_file" -af "asetpts=N/SR/TB" -acodec libmp3lame "$mp3_file"; then
                 return
             fi
             ;;
@@ -793,13 +832,13 @@ run_ffmpeg_conversion() {
 
     case "$conversion_type" in
         video)
-            ffmpeg -y -fflags +discardcorrupt -err_detect ignore_err -i "$source_file" -q:a 0 -map 0:a:0 -af "asetpts=N/SR/TB" -max_error_rate 1 "$mp3_file"
+            run_ffmpeg_with_progress "$source_file" "Retrying conversion" -y -fflags +discardcorrupt -err_detect ignore_err -i "$source_file" -q:a 0 -map 0:a:0 -af "asetpts=N/SR/TB" -max_error_rate 1 "$mp3_file"
             ;;
         m4a)
-            ffmpeg -y -fflags +discardcorrupt -err_detect ignore_err -i "$source_file" -c:v copy -c:a libmp3lame -q:a 4 -af "asetpts=N/SR/TB" -max_error_rate 1 "$mp3_file"
+            run_ffmpeg_with_progress "$source_file" "Retrying conversion" -y -fflags +discardcorrupt -err_detect ignore_err -i "$source_file" -c:v copy -c:a libmp3lame -q:a 4 -af "asetpts=N/SR/TB" -max_error_rate 1 "$mp3_file"
             ;;
         aac)
-            ffmpeg -y -fflags +discardcorrupt -err_detect ignore_err -i "$source_file" -af "asetpts=N/SR/TB" -acodec libmp3lame -max_error_rate 1 "$mp3_file"
+            run_ffmpeg_with_progress "$source_file" "Retrying conversion" -y -fflags +discardcorrupt -err_detect ignore_err -i "$source_file" -af "asetpts=N/SR/TB" -acodec libmp3lame -max_error_rate 1 "$mp3_file"
             ;;
         *)
             echo "Unknown ffmpeg conversion type: ${conversion_type}" >&2
@@ -843,7 +882,7 @@ embed_subtitle_in_mp4() {
     new_subtitle_index="$existing_subtitle_count"
     subtitle_tmp_file="$tmp_mp4"
 
-    ffmpeg -y -i "$source_file" -i "$subtitle_file" -map 0 -map 1 -c:v copy -c:a copy -c:s copy -c:s:"$new_subtitle_index" mov_text -metadata:s:s:"$new_subtitle_index" "language=${whisper_lang}" "$subtitle_tmp_file"
+    run_ffmpeg_with_progress "$source_file" "Embedding subtitles" -y -i "$source_file" -i "$subtitle_file" -map 0 -map 1 -c:v copy -c:a copy -c:s copy -c:s:"$new_subtitle_index" mov_text -metadata:s:s:"$new_subtitle_index" "language=${whisper_lang}" "$subtitle_tmp_file"
     mv -fv -- "$subtitle_tmp_file" "$source_file"
     subtitle_tmp_file=""
     rm -fv -- "$subtitle_file"
