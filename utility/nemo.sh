@@ -12,7 +12,6 @@ readonly NEMO_DIAR_MODEL_LARGE="${DEFAULT_NEMO_DIAR_MODEL_DIR}/Nemotron-3-Diariz
 readonly NEMO_DIAR_MODEL_TURBO="${DEFAULT_NEMO_DIAR_MODEL_DIR}/Nemotron-3-Diarization.q8_0.gguf"
 readonly DEFAULT_NEMO_DIAR_MODEL="$NEMO_DIAR_MODEL_TURBO"
 readonly DEFAULT_NEMO_VAD_MODEL="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/VAD/ggml-silero-v6.2.0.gguf"
-readonly DEFAULT_NEMO_NMT_MODEL="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/translation-model/Riva-Translate-4B-Instruct-v2-Q4_K_M.gguf"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 nemo_helper="/Users/fumire/.dotfiles/utility/nemo.py"
@@ -21,9 +20,7 @@ nemo_bin="${NEMO_BIN:-$DEFAULT_NEMO_BIN}"
 asr_model="${NEMO_MODEL:-$DEFAULT_NEMO_MODEL}"
 diar_model="${NEMO_DIAR_MODEL:-$DEFAULT_NEMO_DIAR_MODEL}"
 vad_model="${NEMO_VAD_MODEL:-$DEFAULT_NEMO_VAD_MODEL}"
-nmt_model="${NEMO_NMT_MODEL:-$DEFAULT_NEMO_NMT_MODEL}"
 language="${NEMO_LANGUAGE:-auto}"
-translate_enabled=0
 cue_chars=50
 subtitle_type="vtt"
 vad_enabled=1
@@ -39,12 +36,9 @@ Usage:
 
 Convert audio or video inputs to 16 kHz mono PCM WAV, transcribe them, and
 write speaker-labeled source subtitles beside the inputs as VTT by default.
-Use -t or --type to select SRT or VTT. Translation is disabled by default;
-use --translate to enable it. With translation enabled, English
-sources also get <name>.ko.<type>, Korean sources get <name>.en.<type>, and
-other sources get both <name>.en.<type> and <name>.ko.<type>.
-Inputs with an existing source or translated subtitle are skipped unless -f
-or --force is provided. With force enabled, generated subtitle files are replaced.
+Use -t or --type to select SRT or VTT.
+Inputs with an existing source subtitle are skipped unless -f or --force is
+provided. With force enabled, generated subtitle files are replaced.
 With -p or --playbook, each generated subtitle also gets a matching timestamp-free
 TXT transcript in speaker-turn format. Existing subtitle files are converted before skip.
 Each subtitle cue contains no more than one sentence and is limited to $cue_chars
@@ -55,20 +49,17 @@ The terminal shows an overall tqdm progress bar for the input files and a
 per-file transcription bar based on NeMo-Speech's decoded audio position. It
 shows the current media time against the full audio duration, elapsed time, and
 an ETA based on the transcription rate so far.
-Each translation pass also shows completed/total subtitle cues, elapsed time,
-and an ETA based on its translation rate.
-SDK log lines and status messages remain on separate lines while the bars update.
 The overall ETA is estimated from files completed so far. Skipped files count
-as complete. Python package tqdm and the NeMo-Speech ASR/NMT SDK libraries
+as complete. Python package tqdm and the NeMo-Speech ASR SDK libraries
 installed alongside nemo-speech are required.
 The ASR and diarization defaults are direct paths to local model files; the
 script passes these paths to nemo-speech without preparing cache symlinks.
-For MP4 inputs, -s or --subtitle adds the generated source and translated subtitles as
-soft subtitle tracks (mov_text), replaces the input MP4 after a successful
-remux, and removes those generated subtitle files. Subtitle muxing is off by default.
+For MP4 inputs, -s or --subtitle adds the generated source subtitle as a soft
+subtitle track (mov_text), replaces the input MP4 after a successful remux,
+and removes the generated subtitle file. Subtitle muxing is off by default.
 With -s or --subtitle, MP4 inputs that already contain a subtitle track are
-skipped unless -f or --force is provided. Force replaces the embedded tracks
-with the newly generated source and translated subtitle tracks.
+skipped unless -f or --force is provided. Force replaces the embedded track
+with the newly generated source subtitle.
 
 Options:
   -m, --model MODEL      ASR model: large or turbo, or an explicit path/repo;
@@ -85,31 +76,18 @@ Options:
   -t, --type FORMAT      Subtitle format: srt or vtt; default: $subtitle_type
   -c, --cue CHARS        Maximum subtitle cue length, including speaker label;
                          default: $cue_chars (minimum: 19)
-      --translate [BOOL]  Enable translation; bare option enables it
-                         Accepts true or false; default: false
-  -f, --force            Regenerate and replace existing subtitle outputs
+  -f, --force            Regenerate and replace existing source subtitle output
   -p, --playbook         Write timestamp-free TXT transcripts from subtitle files
-  --nmt-model PATH       Translation GGUF model; default: ${nmt_model##*/}
-  -s, --subtitle         Mux generated subtitles into MP4 inputs when provided
+  -s, --subtitle         Mux generated source subtitles into MP4 inputs
   -l, --language, --lang CODE
                          Language code or prompt; default: $language
   -h, --help             Show this help
   --                     Treat all following arguments as input file paths
 
-Speaker IDs are retained in the source and translated subtitle files. Translation
-is skipped unless --translate is provided. With --language auto, the
-detected language in the structured ASR result determines whether translation
-is needed. If translation is enabled, this script translates each subtitle cue separately
-so translated subtitles keep the original cue times and speaker labels. If a translated
-cue needs splitting for the selected cue limit, its time span is divided by text length. Sources
-other than English or Korean are translated to both English and Korean through
-English because supported Riva-Translate pairs include English.
-English and Korean sources receive the other language when translation is enabled.
-With -s or --subtitle, the source language and any generated English and Korean
-translations are embedded as separate MP4 subtitle tracks. Existing video and
-audio streams are preserved, and generated sidecar subtitle files are removed after a
-successful mux. MP4 inputs with embedded subtitles are skipped unless --force is
-provided; force replaces those tracks with the generated subtitle tracks.
+Speaker IDs are retained in the generated source subtitle files. Translation
+is handled separately: run nemo_translate.sh on an SRT or VTT file. Generated
+subtitles include a language comment, which nemo_translate.sh reads; it also
+recognizes a .en or .ko filename suffix and accepts --from CODE.
 
 VAD is enabled by default with Silero v6.2.0:
   $DEFAULT_NEMO_VAD_MODEL
@@ -127,7 +105,6 @@ Examples:
   $(basename "$0") -l de meeting.mp4
   $(basename "$0") -t srt meeting.mp4
   $(basename "$0") --type vtt meeting.mp4
-  $(basename "$0") --translate meeting.wav
   $(basename "$0") -c 40 meeting.mp4
   $(basename "$0") -f meeting.mp4
   $(basename "$0") -p meeting.mp4
@@ -209,21 +186,6 @@ write_playbook_from_srt() {
 
     python3 "$nemo_helper" build-playbook --subtitle "$srt_path" --output "$txt_path"
     report_status "Saved: $txt_path"
-}
-
-translate_cues() {
-    local source_language="$1"
-    local target_language="$2"
-    local input_path="$3"
-    local output_path="$4"
-
-    python3 "$nemo_helper" translate-progress \
-        --nemo-bin "$nemo_bin" \
-        --model "$nmt_model" \
-        --from "$source_language" \
-        --to "$target_language" \
-        --input "$input_path" \
-        --output "$output_path"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -313,24 +275,6 @@ while [[ $# -gt 0 ]]; do
             subtitle_type="${1#*=}"
             shift
             ;;
-        --translate)
-            if [[ "${2:-}" == true || "${2:-}" == false ]]; then
-                [[ "$2" == true ]] && translate_enabled=1 || translate_enabled=0
-                shift 2
-            else
-                translate_enabled=1
-                shift
-            fi
-            ;;
-        --translate=*)
-            translate_value="${1#*=}"
-            case "$translate_value" in
-                true) translate_enabled=1 ;;
-                false) translate_enabled=0 ;;
-                *) printf 'Error: --translate must be either true or false.\n' >&2; exit 2 ;;
-            esac
-            shift
-            ;;
         -c | --cue)
             need_value "$1" "${2:-}"
             if ! [[ "$2" =~ ^[0-9]+$ ]]; then
@@ -338,11 +282,6 @@ while [[ $# -gt 0 ]]; do
                 exit 2
             fi
             cue_chars="$2"
-            shift 2
-            ;;
-        --nmt-model)
-            need_value "$1" "${2:-}"
-            nmt_model="$2"
             shift 2
             ;;
         -s | --subtitle)
@@ -615,8 +554,6 @@ for input_file in "${input_files[@]}"; do
     [[ -n "$stem" ]] || stem="$input_name"
 
     output_srt="$input_dir/$stem.$subtitle_type"
-    output_en_srt="$input_dir/$stem.en.$subtitle_type"
-    output_ko_srt="$input_dir/$stem.ko.$subtitle_type"
 
     if (( subtitle_enabled )) && is_mp4_file "$input_file"; then
         if ! embedded_subtitle_streams="$(
@@ -635,9 +572,6 @@ for input_file in "${input_files[@]}"; do
     fi
 
     subtitle_candidates=("$output_srt")
-    if (( translate_enabled )); then
-        subtitle_candidates+=("$output_en_srt" "$output_ko_srt")
-    fi
     existing_srt_files=()
     for existing_srt in "${subtitle_candidates[@]}"; do
         if [[ -e "$existing_srt" || -L "$existing_srt" ]]; then
@@ -660,10 +594,6 @@ for input_file in "${input_files[@]}"; do
     temp_srt="$work_dir/transcript.$subtitle_type"
     cue_metadata="$work_dir/cues.json"
     translation_input="$work_dir/translation-input.txt"
-    english_translation="$work_dir/translation-en.txt"
-    korean_translation="$work_dir/translation-ko.txt"
-    temp_en_srt="$work_dir/translation-en.$subtitle_type"
-    temp_ko_srt="$work_dir/translation-ko.$subtitle_type"
     ffmpeg_log="$work_dir/ffmpeg-convert.log"
 
     report_status "Processing: $input_file"
@@ -720,139 +650,32 @@ for input_file in "${input_files[@]}"; do
         exit 1
     fi
 
-    mv -f "$temp_srt" "$output_srt"
-    report_status "Saved: $output_srt"
-    if (( playbook_enabled )); then
-        write_playbook_from_srt "$output_srt"
-    fi
-
     source_language="$(python3 "$nemo_helper" get-language --metadata "$cue_metadata")"
     case "$source_language" in
         eng) source_language=en ;;
         kor) source_language=ko ;;
     esac
     if [[ -z "$source_language" ]]; then
-        if (( translate_enabled )); then
-            printf 'Error: source language could not be detected; specify a language code with --language.\n' >&2
-            exit 1
-        fi
         source_language=und
     fi
+    python3 "$nemo_helper" annotate-subtitle \
+        --subtitle "$temp_srt" \
+        --language "$source_language"
 
-    declare -a generated_srt_files=("$output_srt")
-    declare -a generated_srt_languages=("$source_language")
-
-    if (( translate_enabled == 0 )); then
-        report_status 'Translation is disabled; skipping translated subtitle generation.'
-        if (( subtitle_enabled )); then
-            if is_mp4_file "$input_file"; then
-                mux_subtitles_into_mp4 "$input_file" "$output_srt" "$source_language"
-            else
-                report_status "Subtitle muxing applies only to MP4 inputs; keeping subtitle files for: $input_file"
-            fi
-        fi
-        rm -f -- "$wav_file" "$json_file" "$cue_metadata" "$translation_input"
-        advance_progress
-        continue
-    fi
-
-    python3 "$nemo_helper" check-model \
-        --kind nmt \
-        --nemo-bin "$nemo_bin" \
-        --path "$nmt_model"
-
-    if [[ "$source_language" == "en" ]]; then
-        translate_cues en ko "$translation_input" "$korean_translation"
-        python3 "$nemo_helper" build-translation \
-            --metadata "$cue_metadata" \
-            --translation "$korean_translation" \
-            --output "$temp_ko_srt" \
-            --max-cue-chars "$cue_chars"
-
-        if [[ ! -s "$temp_ko_srt" ]]; then
-            printf 'Error: Korean subtitle output is empty for input: %s\n' "$input_file" >&2
-            exit 1
-        fi
-
-        mv -f "$temp_ko_srt" "$output_ko_srt"
-        report_status "Saved: $output_ko_srt"
-        if (( playbook_enabled )); then
-            write_playbook_from_srt "$output_ko_srt"
-        fi
-        generated_srt_files+=("$output_ko_srt")
-        generated_srt_languages+=(ko)
-    elif [[ "$source_language" == "ko" ]]; then
-        translate_cues ko en "$translation_input" "$english_translation"
-
-        python3 "$nemo_helper" build-translation \
-            --metadata "$cue_metadata" \
-            --translation "$english_translation" \
-            --output "$temp_en_srt" \
-            --max-cue-chars "$cue_chars"
-
-        if [[ ! -s "$temp_en_srt" ]]; then
-            printf 'Error: English subtitle output is empty for input: %s\n' "$input_file" >&2
-            exit 1
-        fi
-
-        mv -f "$temp_en_srt" "$output_en_srt"
-        report_status "Saved: $output_en_srt"
-        if (( playbook_enabled )); then
-            write_playbook_from_srt "$output_en_srt"
-        fi
-        generated_srt_files+=("$output_en_srt")
-        generated_srt_languages+=(en)
-    else
-        translate_cues "$source_language" en "$translation_input" "$english_translation"
-
-        python3 "$nemo_helper" build-translation \
-            --metadata "$cue_metadata" \
-            --translation "$english_translation" \
-            --output "$temp_en_srt" \
-            --max-cue-chars "$cue_chars"
-
-        if [[ ! -s "$temp_en_srt" ]]; then
-            printf 'Error: English subtitle output is empty for input: %s\n' "$input_file" >&2
-            exit 1
-        fi
-
-        translate_cues en ko "$english_translation" "$korean_translation"
-
-        python3 "$nemo_helper" build-translation \
-            --metadata "$cue_metadata" \
-            --translation "$korean_translation" \
-            --output "$temp_ko_srt" \
-            --max-cue-chars "$cue_chars"
-
-        if [[ ! -s "$temp_ko_srt" ]]; then
-            printf 'Error: Korean subtitle output is empty for input: %s\n' "$input_file" >&2
-            exit 1
-        fi
-
-        mv -f "$temp_en_srt" "$output_en_srt"
-        mv -f "$temp_ko_srt" "$output_ko_srt"
-        report_status "Saved: $output_en_srt"
-        report_status "Saved: $output_ko_srt"
-        if (( playbook_enabled )); then
-            write_playbook_from_srt "$output_en_srt"
-            write_playbook_from_srt "$output_ko_srt"
-        fi
-        generated_srt_files+=("$output_en_srt" "$output_ko_srt")
-        generated_srt_languages+=(en ko)
+    mv -f "$temp_srt" "$output_srt"
+    report_status "Saved: $output_srt"
+    if (( playbook_enabled )); then
+        write_playbook_from_srt "$output_srt"
     fi
 
     if (( subtitle_enabled )); then
         if is_mp4_file "$input_file"; then
-            subtitle_mux_args=()
-            for i in "${!generated_srt_files[@]}"; do
-                subtitle_mux_args+=("${generated_srt_files[$i]}" "${generated_srt_languages[$i]}")
-            done
-            mux_subtitles_into_mp4 "$input_file" "${subtitle_mux_args[@]}"
+            mux_subtitles_into_mp4 "$input_file" "$output_srt" "$source_language"
         else
             report_status "Subtitle muxing applies only to MP4 inputs; keeping subtitle files for: $input_file"
         fi
     fi
 
-    rm -f -- "$wav_file" "$json_file" "$cue_metadata" "$translation_input" "$english_translation" "$korean_translation"
+    rm -f -- "$wav_file" "$json_file" "$cue_metadata" "$translation_input"
     advance_progress
 done

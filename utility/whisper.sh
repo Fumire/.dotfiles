@@ -16,6 +16,7 @@ readonly DEFAULT_WHISPER_SUBTITLE_MAX_WORDS=7
 readonly DEFAULT_WHISPER_CUE_CHARS=50
 readonly SILERO_VAD_MODEL_V5_1_2_SUFFIX="/ggml-silero-v5.1.2.bin"
 readonly SILERO_VAD_MODEL_V6_2_0_SUFFIX="/ggml-silero-v6.2.0.bin"
+readonly NEMO_SUBTITLE_HELPER="/Users/fumire/.dotfiles/utility/nemo.py"
 
 declare -a INPUT_FILES=()
 whisper_lang="${lang:-ko}"
@@ -37,6 +38,8 @@ Usage:
 
 Generate .srt subtitle files by default; choose srt or vtt with -t or --type.
 Files with an existing output in the selected format are skipped.
+Generated subtitles include a language comment for nemo_translate.sh; with
+--lang auto, the detected language is read from Whisper's JSON result.
 Each input is announced as (current/total) before processing.
 VAD is enabled by default; use --no-vad to disable it.
 Audio conversion, transcription, and MP4 subtitle embedding display media
@@ -751,10 +754,16 @@ PY
 run_whisper() {
     local input_file="$1"
     local output_subtitle="$2"
-    local generated_subtitle="${input_file}.${whisper_type}"
+    local generated_base="${work_dir}/whisper-output"
+    local generated_subtitle="${generated_base}.${whisper_type}"
+    local generated_json="${generated_base}.json"
+    local normalized_language
+    local detected_language="$whisper_lang"
+    normalized_language="$(printf '%s' "$whisper_lang" | tr '[:upper:]' '[:lower:]')"
     local -a WHISPER_BASE_ARGS=(
         "-m" "$WHISPER_MODEL_PATH"
         "--output-${whisper_type}"
+        "--output-file" "$generated_base"
         "--language" "${whisper_lang}"
         "--threads" "8"
         "--processors" "8"
@@ -762,6 +771,12 @@ run_whisper() {
         "--print-progress"
     )
     local -a WHISPER_ARGS=("${WHISPER_BASE_ARGS[@]}")
+
+    rm -f -- "$generated_subtitle" "$generated_json"
+    if [[ "$normalized_language" == "auto" ]]; then
+        WHISPER_BASE_ARGS+=("--output-json")
+        WHISPER_ARGS=("${WHISPER_BASE_ARGS[@]}")
+    fi
 
     if ! [[ "$whisper_subtitle_max_words" =~ ^[0-9]+$ ]]; then
         whisper_subtitle_max_words="$DEFAULT_WHISPER_SUBTITLE_MAX_WORDS"
@@ -776,9 +791,30 @@ run_whisper() {
     run_whisper_cli_with_progress "$input_file" "${WHISPER_ARGS[@]}"
     if whisper_vad_enabled && [[ ! -s "$generated_subtitle" ]]; then
         printf 'Warning: VAD produced no subtitle cues for %s; retrying once without VAD.\n' "$input_file" >&2
-        rm -f -- "$generated_subtitle"
+        rm -f -- "$generated_subtitle" "$generated_json"
         WHISPER_ARGS=("${WHISPER_BASE_ARGS[@]}" "--file" "$input_file")
         run_whisper_cli_with_progress "$input_file" "${WHISPER_ARGS[@]}"
+    fi
+
+    if [[ "$normalized_language" == "auto" ]]; then
+        detected_language="$(python3 - "$generated_json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+try:
+    result = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+    language = result.get("result", {}).get("language", "")
+    if isinstance(language, str):
+        print(language.strip())
+except (OSError, UnicodeError, json.JSONDecodeError, AttributeError):
+    pass
+PY
+)"
+    fi
+    rm -f -- "$generated_json"
+    if [[ -z "$detected_language" ]]; then
+        detected_language=und
     fi
 
     local staged_subtitle
@@ -796,6 +832,9 @@ run_whisper() {
     rm -f -- "$generated_subtitle"
     normalize_subtitle_cue_length "$output_subtitle" "$whisper_type" "$whisper_cue_chars"
     normalize_subtitle_phrase_length "$output_subtitle" "$whisper_type" "$whisper_subtitle_max_words"
+    python3 "$NEMO_SUBTITLE_HELPER" annotate-subtitle \
+        --subtitle "$output_subtitle" \
+        --language "$detected_language"
 }
 
 run_ffmpeg_conversion() {

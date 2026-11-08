@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Helpers for nemo.sh: model checks, speaker-aware subtitles, and timestamp-free playbooks."""
+"""Helpers for nemo.sh and nemo_translate.sh: model checks and subtitle utilities."""
 
 import argparse
 import base64
@@ -599,6 +599,59 @@ def build_source(args):
 def print_source_language(args):
     metadata = read_json(args.metadata)
     print(metadata.get("source_language") or "")
+
+
+def annotate_subtitle(args):
+    path = Path(args.subtitle)
+    is_vtt = path.suffix.lower() == ".vtt"
+    if path.suffix.lower() not in (".srt", ".vtt"):
+        raise ValueError(f"Subtitle metadata can only be added to SRT or VTT files: {path}")
+
+    try:
+        content = path.read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeError) as exc:
+        raise ValueError(f"Could not read subtitle file {path}: {exc}") from exc
+
+    content = content.replace("\r\n", "\n").replace("\r", "\n").strip()
+    blocks = re.split(r"\n[ \t]*\n+", content) if content else []
+    if not blocks:
+        raise ValueError(f"Subtitle file is empty: {path}")
+
+    header = None
+    if is_vtt:
+        header = blocks.pop(0)
+        if not header.splitlines()[0].startswith("WEBVTT"):
+            raise ValueError(f"WebVTT file has no WEBVTT header: {path}")
+
+    def is_nemo_metadata_block(block):
+        if "-->" in block:
+            return False
+        return any(
+            re.match(
+                r"(?i)^(?:NOTE[ \t]+)?nemo:(?:language|translated-by)=",
+                line.strip(),
+            )
+            for line in block.splitlines()
+        )
+
+    blocks = [block for block in blocks if not is_nemo_metadata_block(block)]
+    language = base_language(args.language)
+    if language == "eng":
+        language = "en"
+    elif language == "kor":
+        language = "ko"
+    language = language or "und"
+
+    metadata_lines = [f"NOTE nemo:language={language}"]
+    if args.translated:
+        metadata_lines.append("nemo:translated-by=nemo_translate.sh")
+    metadata_block = "\n".join(metadata_lines)
+
+    output_blocks = ([header] if header is not None else []) + [metadata_block] + blocks
+    try:
+        path.write_text("\n\n".join(output_blocks) + "\n", encoding="utf-8")
+    except OSError as exc:
+        raise ValueError(f"Could not write subtitle metadata to {path}: {exc}") from exc
 
 
 def build_translation(args):
@@ -1443,6 +1496,14 @@ def build_parser():
     language_parser = subparsers.add_parser("get-language", help="Print the source language code.")
     language_parser.add_argument("--metadata", required=True)
     language_parser.set_defaults(func=print_source_language)
+
+    annotate_parser = subparsers.add_parser(
+        "annotate-subtitle", help="Add NeMo language and translation comments to a subtitle file."
+    )
+    annotate_parser.add_argument("--subtitle", required=True)
+    annotate_parser.add_argument("--language", required=True)
+    annotate_parser.add_argument("--translated", action="store_true")
+    annotate_parser.set_defaults(func=annotate_subtitle)
 
     translation_parser = subparsers.add_parser("build-translation", help="Build the translated subtitle file.")
     translation_parser.add_argument("--metadata", required=True)
