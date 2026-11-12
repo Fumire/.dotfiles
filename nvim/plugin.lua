@@ -6,69 +6,72 @@
 -- * override the configuration of LazyVim plugins
 
 local function parser_is_compatible_with_host(parser_info, host_machine)
-  if not parser_info:find("Mach-O", 1, true) then
+    if not parser_info:find("Mach-O", 1, true) then
+        return true
+    end
+
+    if host_machine:find("arm64", 1, true) then
+        return parser_info:find("arm64", 1, true) or parser_info:find("arm64e", 1, true)
+    end
+
+    if host_machine:find("x86_64", 1, true) then
+        return parser_info:find("x86_64", 1, true)
+    end
+
     return true
-  end
-
-  if host_machine:find("arm64", 1, true) then
-    return parser_info:find("arm64", 1, true) or parser_info:find("arm64e", 1, true)
-  end
-
-  if host_machine:find("x86_64", 1, true) then
-    return parser_info:find("x86_64", 1, true)
-  end
-
-  return true
 end
 
 local function repair_treesitter_parsers()
-  local parser_dir = vim.fn.stdpath("data") .. "/site/parser"
-  local host_machine = vim.loop.os_uname().machine
-  local parsers_to_repair = {}
+    local parser_dir = vim.fn.stdpath("data") .. "/site/parser"
+    local host_machine = vim.uv.os_uname().machine
+    local parsers_to_repair = {}
 
-  for _, parser_name in ipairs({ "vim", "r" }) do
-    local parser_path = parser_dir .. "/" .. parser_name .. ".so"
-    if vim.fn.filereadable(parser_path) == 1 then
-      local info = vim.fn.system({ "file", "-b", parser_path })
-      if vim.v.shell_error == 0 and not parser_is_compatible_with_host(info, host_machine) then
-        if vim.fn.delete(parser_path) == 0 then
-          vim.notify("Removed incompatible tree-sitter parser: " .. parser_path, vim.log.levels.WARN)
-          table.insert(parsers_to_repair, parser_name)
+    for _, parser_name in ipairs({ "vim", "r" }) do
+        local parser_path = parser_dir .. "/" .. parser_name .. ".so"
+        if vim.fn.filereadable(parser_path) == 1 then
+            local info = vim.fn.system({ "file", "-b", parser_path })
+            if vim.v.shell_error == 0 and not parser_is_compatible_with_host(info, host_machine) then
+                if vim.fn.delete(parser_path) == 0 then
+                    vim.notify("Removed incompatible tree-sitter parser: " .. parser_path, vim.log.levels.WARN)
+                    table.insert(parsers_to_repair, parser_name)
+                end
+            end
         end
-      end
     end
-  end
 
-  if #parsers_to_repair == 0 then
-    return
-  end
-
-  vim.schedule(function()
-    vim.notify("Reinstalling parser(s) for current architecture: " .. table.concat(parsers_to_repair, ", "), vim.log.levels.INFO)
-    for _, parser_name in ipairs(parsers_to_repair) do
-      vim.cmd("silent! TSInstall " .. parser_name)
+    if #parsers_to_repair == 0 then
+        return
     end
-  end)
+
+    vim.schedule(function()
+        vim.notify(
+            "Reinstalling parser(s) for current architecture: " .. table.concat(parsers_to_repair, ", "),
+            vim.log.levels.INFO
+        )
+        for _, parser_name in ipairs(parsers_to_repair) do
+            vim.cmd("silent! TSInstall " .. parser_name)
+        end
+    end)
 end
 
 local pyright_diagnostics = vim.api.nvim_create_augroup("PyrightDiagnostics", { clear = true })
 vim.api.nvim_create_autocmd("LspAttach", {
-  group = pyright_diagnostics,
-  callback = function(event)
-    local client = vim.lsp.get_client_by_id(event.data.client_id)
-    if not client or client.name ~= "pyright" then
-      return
-    end
+    group = pyright_diagnostics,
+    callback = function(event)
+        local client = vim.lsp.get_client_by_id(event.data.client_id)
+        if not client or client.name ~= "pyright" then
+            return
+        end
 
-    local namespace = vim.lsp.diagnostic.get_namespace(client.id)
-    vim.diagnostic.config({
-      severity = {
-        vim.diagnostic.severity.ERROR,
-        vim.diagnostic.severity.INFO,
-        vim.diagnostic.severity.HINT,
-      },
-    }, namespace)
-  end,
+        local namespace = vim.lsp.diagnostic.get_namespace(client.id)
+        vim.diagnostic.config({
+            severity = {
+                vim.diagnostic.severity.ERROR,
+                vim.diagnostic.severity.INFO,
+                vim.diagnostic.severity.HINT,
+            },
+        }, namespace)
+    end,
 })
 
 return {
@@ -264,6 +267,10 @@ return {
         config = function()
             vim.g.ale_ruby_rubocop_auto_correct_all = 1
 
+            vim.g.ale_type_map = {
+                mypy = { E = "W" },
+            }
+
             vim.g.ale_linters = {
                 make = { "checkmake" },
                 python = { "ruff", "mypy" },
@@ -275,7 +282,10 @@ return {
             vim.g.ale_r_lintr_options =
                 "linters = if (exists('with_defaults')) with_defaults(indentation_linter = NULL, line_length_linter = NULL) else linters_with_defaults(indentation_linter = NULL, line_length_linter = NULL)"
             vim.g.ale_python_ruff_options = "--select E,F,W,N --ignore E501"
-            vim.g.ale_python_mypy_options = "--ignore-missing-imports --install-types --non-interactive"
+            -- Mypy cannot identify only safely convertible arg-type cases.
+            -- This disables all mypy arg-type diagnostics.
+            vim.g.ale_python_mypy_options =
+                "--ignore-missing-imports --install-types --non-interactive --disable-error-code=arg-type"
             vim.g.ale_disable_lsp = 0
             vim.g.ale_completion_enabled = 1
             vim.g.ale_completion_delay = 250
