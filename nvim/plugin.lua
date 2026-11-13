@@ -163,6 +163,10 @@ return {
                         python = {
                             analysis = {
                                 typeCheckingMode = "off",
+                                diagnosticSeverityOverrides = {
+                                    reportMissingImports = "none",
+                                    reportMissingModuleSource = "none",
+                                },
                             },
                         },
                     },
