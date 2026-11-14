@@ -448,6 +448,7 @@ mux_subtitles_into_mp4() {
     local i
     local input_dir
     local input_name
+    local mux_subtitle_file
 
     while (( $# >= 2 )); do
         subtitle_files+=("$1")
@@ -493,7 +494,16 @@ mux_subtitles_into_mp4() {
 
     ffmpeg_args=(-nostdin -hide_banner -loglevel error -y -i "$source_file")
     for i in "${!subtitle_files[@]}"; do
-        ffmpeg_args+=(-i "${subtitle_files[$i]}")
+        mux_subtitle_file="${subtitle_files[$i]}"
+        case "$mux_subtitle_file" in
+            *.[sS][rR][tT])
+                mux_subtitle_file="$work_dir/mux-subtitle-${i}.srt"
+                python3 "$nemo_helper" prepare-mux-subtitle \
+                    --subtitle "${subtitle_files[$i]}" \
+                    --output "$mux_subtitle_file"
+                ;;
+        esac
+        ffmpeg_args+=(-i "$mux_subtitle_file")
     done
 
     if (( force_enabled )); then

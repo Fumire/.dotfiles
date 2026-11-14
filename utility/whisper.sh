@@ -910,6 +910,7 @@ embed_subtitle_in_mp4() {
     local tmp_mp4="${stem}.subtitle_tmp.mp4"
     local existing_subtitle_count
     local new_subtitle_index
+    local mux_subtitle_file="$subtitle_file"
 
     if [[ ! -s "$subtitle_file" ]]; then
         printf 'Warning: no subtitle cues were generated for %s; skipping MP4 subtitle embedding.\n' "$source_file" >&2
@@ -921,7 +922,14 @@ embed_subtitle_in_mp4() {
     new_subtitle_index="$existing_subtitle_count"
     subtitle_tmp_file="$tmp_mp4"
 
-    run_ffmpeg_with_progress "$source_file" "Embedding subtitles" -y -i "$source_file" -i "$subtitle_file" -map 0 -map 1 -c:v copy -c:a copy -c:s copy -c:s:"$new_subtitle_index" mov_text -metadata:s:s:"$new_subtitle_index" "language=${whisper_lang}" "$subtitle_tmp_file"
+    if [[ "$whisper_type" == "srt" ]]; then
+        mux_subtitle_file="${work_dir}/subtitle-for-mux.srt"
+        python3 "$NEMO_SUBTITLE_HELPER" prepare-mux-subtitle \
+            --subtitle "$subtitle_file" \
+            --output "$mux_subtitle_file"
+    fi
+
+    run_ffmpeg_with_progress "$source_file" "Embedding subtitles" -y -i "$source_file" -i "$mux_subtitle_file" -map 0 -map 1 -c:v copy -c:a copy -c:s copy -c:s:"$new_subtitle_index" mov_text -metadata:s:s:"$new_subtitle_index" "language=${whisper_lang}" "$subtitle_tmp_file"
     mv -fv -- "$subtitle_tmp_file" "$source_file"
     subtitle_tmp_file=""
     rm -fv -- "$subtitle_file"

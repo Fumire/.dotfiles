@@ -601,6 +601,18 @@ def print_source_language(args):
     print(metadata.get("source_language") or "")
 
 
+def is_nemo_metadata_block(block):
+    if "-->" in block:
+        return False
+    return any(
+        re.match(
+            r"(?i)^(?:NOTE[ \t]+)?nemo:(?:language|translated-by)=",
+            line.strip(),
+        )
+        for line in block.splitlines()
+    )
+
+
 def annotate_subtitle(args):
     path = Path(args.subtitle)
     is_vtt = path.suffix.lower() == ".vtt"
@@ -623,17 +635,6 @@ def annotate_subtitle(args):
         if not header.splitlines()[0].startswith("WEBVTT"):
             raise ValueError(f"WebVTT file has no WEBVTT header: {path}")
 
-    def is_nemo_metadata_block(block):
-        if "-->" in block:
-            return False
-        return any(
-            re.match(
-                r"(?i)^(?:NOTE[ \t]+)?nemo:(?:language|translated-by)=",
-                line.strip(),
-            )
-            for line in block.splitlines()
-        )
-
     blocks = [block for block in blocks if not is_nemo_metadata_block(block)]
     language = base_language(args.language)
     if language == "eng":
@@ -652,6 +653,36 @@ def annotate_subtitle(args):
         path.write_text("\n\n".join(output_blocks) + "\n", encoding="utf-8")
     except OSError as exc:
         raise ValueError(f"Could not write subtitle metadata to {path}: {exc}") from exc
+
+
+def prepare_subtitle_for_mux(args):
+    """Remove NeMo metadata blocks that FFmpeg cannot parse in SubRip input."""
+    source_path = Path(args.subtitle)
+    output_path = Path(args.output)
+    suffix = source_path.suffix.lower()
+    if suffix not in (".srt", ".vtt"):
+        raise ValueError(f"Subtitle mux input must be SRT or VTT: {source_path}")
+
+    try:
+        content = source_path.read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeError) as exc:
+        raise ValueError(f"Could not read subtitle file {source_path}: {exc}") from exc
+
+    content = content.replace("\r\n", "\n").replace("\r", "\n")
+    if suffix == ".srt":
+        # Keep metadata in the source SRT for nemo_translate.sh, but omit it from the mux copy.
+        blocks = re.split(r"\n[ \t]*\n+", content.strip()) if content.strip() else []
+        blocks = [block for block in blocks if not is_nemo_metadata_block(block)]
+        if not any("-->" in block for block in blocks):
+            raise ValueError(f"No timestamped subtitle cues were found in: {source_path}")
+        content = "\n\n".join(blocks) + "\n"
+
+    try:
+        output_path.write_text(content, encoding="utf-8")
+    except OSError as exc:
+        raise ValueError(
+            f"Could not prepare subtitle file for muxing at {output_path}: {exc}"
+        ) from exc
 
 
 def build_translation(args):
@@ -1504,6 +1535,13 @@ def build_parser():
     annotate_parser.add_argument("--language", required=True)
     annotate_parser.add_argument("--translated", action="store_true")
     annotate_parser.set_defaults(func=annotate_subtitle)
+
+    mux_subtitle_parser = subparsers.add_parser(
+        "prepare-mux-subtitle", help="Prepare a subtitle file for MP4 muxing."
+    )
+    mux_subtitle_parser.add_argument("--subtitle", required=True)
+    mux_subtitle_parser.add_argument("--output", required=True)
+    mux_subtitle_parser.set_defaults(func=prepare_subtitle_for_mux)
 
     translation_parser = subparsers.add_parser("build-translation", help="Build the translated subtitle file.")
     translation_parser.add_argument("--metadata", required=True)
