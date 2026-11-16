@@ -304,4 +304,18 @@ rsconnect/
 
 # End of https://www.toptal.com/developers/gitignore/api/r
 
+# Created by https://www.toptal.com/developers/gitignore/api/backup
+# Edit at https://www.toptal.com/developers/gitignore?templates=backup
+
+### Backup ###
+*.bak
+*.gho
+*.ori
+*.orig
+*.tmp
+
+# End of https://www.toptal.com/developers/gitignore/api/backup
+*.sqlite-shm
+*.sqlite-wal
 31_AI/Codex/db-backups
+.git/
