@@ -11,6 +11,7 @@ source_language_option=""
 target_mode="auto"
 max_cue_chars=50
 force_enabled=0
+subtitle_enabled=0
 declare -a input_files=()
 
 show_help() {
@@ -20,7 +21,11 @@ Usage:
 
 Translate SRT or WebVTT subtitle files. Outputs keep the input format and cue
 timing and are saved beside the input as <name>.en.srt, <name>.ko.vtt, etc.
-Existing translated output files are skipped by default.
+Existing translated output files are skipped by default. With -s, the source
+subtitle and each requested translation are muxed into the matching MP4 as
+mov_text tracks. Existing MP4 streams are retained; tracks with matching
+language tags are reused. The -f option replaces translated sidecars; combined
+with -s, it also replaces embedded MP4 subtitle tracks with the requested set.
 
 The source language is read from a nemo:language comment when present, then
 inferred from a filename ending in .en or .ko. For other filenames, provide
@@ -34,7 +39,9 @@ Options:
   -t, --to LANGUAGE      auto, en, ko, or both; default: auto
   -m, --nmt-model PATH   Translation GGUF model; default: ${nmt_model##*/}
   -c, --cue CHARS        Maximum translated cue length; default: $max_cue_chars
-  -f, --force            Replace existing translated subtitle files (default: skip)
+  -f, --force            Replace translated files; with -s, replace MP4 subtitle tracks
+  -s, --subtitle         Mux source and translated subtitles into the matching
+                         MP4 as mov_text tracks
   -h, --help             Show this help
   --                     Treat all following arguments as input file paths
 
@@ -46,6 +53,7 @@ Examples:
   $(basename "$0") --from ja --to both meeting.srt
   $(basename "$0") meeting.en.vtt
   $(basename "$0") -f --to en meeting.ko.srt
+  $(basename "$0") -s --to both meeting.srt
 EOF
 }
 
@@ -271,6 +279,11 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         -f | --force) force_enabled=1; shift ;;
+        -s | --subtitle) subtitle_enabled=1; shift ;;
+        --subtitle=*)
+            printf 'Error: --subtitle is a flag and does not take a value.\n' >&2
+            exit 2
+            ;;
         --) shift; while [[ $# -gt 0 ]]; do input_files+=("$1"); shift; done; break ;;
         --*) printf 'Error: unknown option: %s\n' "$1" >&2; show_help >&2; exit 2 ;;
         *) input_files+=("$1"); shift ;;
@@ -286,6 +299,14 @@ if ! command -v python3 >/dev/null 2>&1; then
     printf 'Error: required command not found: python3\n' >&2
     exit 127
 fi
+if (( subtitle_enabled )); then
+    for command_name in ffmpeg ffprobe; do
+        if ! command -v "$command_name" >/dev/null 2>&1; then
+            printf 'Error: required command not found: %s\n' "$command_name" >&2
+            exit 127
+        fi
+    done
+fi
 if [[ ! -r "$nemo_helper" ]]; then
     printf 'Error: Python helper not found or unreadable: %s\n' "$nemo_helper" >&2
     exit 1
@@ -298,6 +319,7 @@ if ! python3 -c 'import tqdm' >/dev/null 2>&1; then
 fi
 
 tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/nemo-translate.XXXXXXXX")"
+subtitle_tmp_file=""
 progress_fifo=""
 progress_pid=""
 progress_fd_open=0
@@ -317,6 +339,9 @@ stop_progress() {
 }
 cleanup() {
     stop_progress
+    if [[ -n "$subtitle_tmp_file" ]]; then
+        rm -f -- "$subtitle_tmp_file"
+    fi
     rm -rf -- "$tmp_dir"
 }
 trap cleanup EXIT
@@ -338,6 +363,158 @@ advance_progress() {
     if (( progress_fd_open )); then
         printf '1\n' >&3 || true
     fi
+}
+
+mux_subtitles_into_mp4() {
+    local source_file="$1"
+    local source_subtitle="$2"
+    local source_language="$3"
+    shift 3
+    local -a candidate_files=("$source_subtitle")
+    local -a candidate_languages=("$source_language")
+    local -a existing_languages=()
+    local -a mux_files=()
+    local -a mux_languages=()
+    local -a ffmpeg_args=()
+    local existing_streams
+    local existing_language_tags
+    local existing_subtitle_count
+    local current_language
+    local candidate_language
+    local language_found
+    local source_mode
+    local input_name
+    local input_dir
+    local mux_input
+    local mux_suffix
+    local input_index=1
+    local subtitle_index
+    local i
+
+    while (( $# >= 2 )); do
+        candidate_files+=("$1")
+        candidate_languages+=("$2")
+        shift 2
+    done
+    if (( ${#candidate_files[@]} == 0 )); then
+        printf 'Error: no subtitle tracks were supplied for MP4 muxing: %s\n' "$source_file" >&2
+        return 1
+    fi
+    for i in "${!candidate_files[@]}"; do
+        if [[ ! -s "${candidate_files[$i]}" || ! -r "${candidate_files[$i]}" ]]; then
+            printf 'Error: subtitle file is missing, empty, or unreadable: %s\n' "${candidate_files[$i]}" >&2
+            return 1
+        fi
+    done
+
+    if ! existing_streams="$(ffprobe -v error -select_streams s -show_entries stream=index -of csv=p=0 "$source_file" 2>/dev/null)"; then
+        printf 'Error: could not inspect existing subtitle tracks in: %s\n' "$source_file" >&2
+        return 1
+    fi
+    existing_subtitle_count="$(printf '%s\n' "$existing_streams" | awk 'NF { count++ } END { print count + 0 }')"
+    if ! existing_language_tags="$(ffprobe -v error -select_streams s -show_entries stream_tags=language -of default=noprint_wrappers=1:nokey=1 "$source_file" 2>/dev/null)"; then
+        printf 'Error: could not read existing subtitle language tags in: %s\n' "$source_file" >&2
+        return 1
+    fi
+    while IFS= read -r current_language; do
+        if [[ -n "$current_language" ]]; then
+            existing_languages+=("$current_language")
+        fi
+    done <<< "$existing_language_tags"
+
+    for i in "${!candidate_files[@]}"; do
+        language_found=0
+        candidate_language="${candidate_languages[$i]%%[-_]*}"
+        candidate_language="$(normalize_language "$candidate_language")"
+        if (( force_enabled == 0 )); then
+            for current_language in "${existing_languages[@]}"; do
+                current_language="${current_language%%[-_]*}"
+                current_language="$(normalize_language "$current_language")"
+                if [[ "$candidate_language" == "$current_language" ]]; then
+                    language_found=1
+                    break
+                fi
+            done
+        fi
+        if (( language_found )); then
+            report_status "Keeping existing MP4 subtitle track for language $candidate_language: $source_file"
+        else
+            mux_files+=("${candidate_files[$i]}")
+            mux_languages+=("${candidate_languages[$i]}")
+        fi
+    done
+
+    if (( ${#mux_files[@]} == 0 )); then
+        report_status "All requested subtitle languages are already embedded in: $source_file"
+        return 0
+    fi
+
+    input_dir="$(dirname "$source_file")"
+    input_name="$(basename "$source_file")"
+    if source_mode="$(stat -f '%Lp' "$source_file" 2>/dev/null)"; then
+        :
+    elif source_mode="$(stat -c '%a' "$source_file" 2>/dev/null)"; then
+        :
+    else
+        printf 'Error: could not read file permissions for: %s\n' "$source_file" >&2
+        return 1
+    fi
+    if ! subtitle_tmp_file="$(mktemp "${input_dir}/.${input_name}.subtitle_tmp.XXXXXXXX")"; then
+        printf 'Error: could not create a temporary MP4 beside: %s\n' "$source_file" >&2
+        return 1
+    fi
+
+    ffmpeg_args=(-nostdin -hide_banner -loglevel error -y -i "$source_file")
+    for i in "${!mux_files[@]}"; do
+        case "${mux_files[$i]}" in
+            *.[sS][rR][tT]) mux_suffix=srt ;;
+            *.[vV][tT][tT]) mux_suffix=vtt ;;
+            *) printf 'Error: unsupported subtitle file for muxing: %s\n' "${mux_files[$i]}" >&2; return 1 ;;
+        esac
+        mux_input="$tmp_dir/mux-subtitle-${i}.${mux_suffix}"
+        python3 "$nemo_helper" prepare-mux-subtitle \
+            --subtitle "${mux_files[$i]}" \
+            --output "$mux_input"
+        ffmpeg_args+=(-i "$mux_input")
+    done
+
+    if (( force_enabled )); then
+        if (( existing_subtitle_count > 0 )); then
+            ffmpeg_args+=(-map 0 -map -0:s)
+        else
+            ffmpeg_args+=(-map 0)
+        fi
+        existing_subtitle_count=0
+    else
+        ffmpeg_args+=(-map 0)
+    fi
+    for ((i = 0; i < ${#mux_files[@]}; i++)); do
+        ffmpeg_args+=(-map "${input_index}:0")
+        input_index=$((input_index + 1))
+    done
+
+    ffmpeg_args+=(-c:v copy -c:a copy -c:s copy)
+    for i in "${!mux_files[@]}"; do
+        subtitle_index=$((existing_subtitle_count + i))
+        ffmpeg_args+=("-c:s:${subtitle_index}" mov_text)
+        ffmpeg_args+=("-metadata:s:s:${subtitle_index}" "language=${mux_languages[$i]}")
+    done
+    ffmpeg_args+=(-f mp4 "$subtitle_tmp_file")
+
+    if ! ffmpeg "${ffmpeg_args[@]}"; then
+        printf 'Error: failed to mux source and translated subtitles into: %s\n' "$source_file" >&2
+        return 1
+    fi
+    if ! chmod "$source_mode" "$subtitle_tmp_file"; then
+        printf 'Error: could not preserve file permissions for: %s\n' "$source_file" >&2
+        return 1
+    fi
+    if ! mv -f -- "$subtitle_tmp_file" "$source_file"; then
+        printf 'Error: could not replace the MP4 with its subtitle-enabled version: %s\n' "$source_file" >&2
+        return 1
+    fi
+    subtitle_tmp_file=""
+    report_status "Embedded ${#mux_files[@]} source/translated subtitle track(s) in: $source_file"
 }
 source_text="$tmp_dir/source.txt"
 metadata_file="$tmp_dir/cues.json"
@@ -396,25 +573,27 @@ for input_file in "${input_files[@]}"; do
         printf 'Error: invalid source language code: %s\n' "$source_language" >&2
         exit 2
     fi
+    source_base_language="${source_language%%[-_]*}"
+    source_base_language="$(normalize_language "$source_base_language")"
     base_stem="$stem"
-    if [[ -n "$filename_language" && "$filename_language" == "$source_language" ]]; then
+    if [[ -n "$filename_language" && "$filename_language" == "$source_base_language" ]]; then
         base_stem="${stem%.*}"
     fi
 
     same_language=0
     case "$target_mode" in
         auto | both)
-            case "$source_language" in
+            case "$source_base_language" in
                 en) target_languages=(ko) ;;
                 ko) target_languages=(en) ;;
                 *) target_languages=(en ko) ;;
             esac
             ;;
         en)
-            if [[ "$source_language" == "en" ]]; then same_language=1; else target_languages=(en); fi
+            if [[ "$source_base_language" == "en" ]]; then same_language=1; else target_languages=(en); fi
             ;;
         ko)
-            if [[ "$source_language" == "ko" ]]; then same_language=1; else target_languages=(ko); fi
+            if [[ "$source_base_language" == "ko" ]]; then same_language=1; else target_languages=(ko); fi
             ;;
         *) printf 'Error: --to must be auto, en, ko, or both.\n' >&2; exit 2 ;;
     esac
@@ -424,13 +603,41 @@ for input_file in "${input_files[@]}"; do
         continue
     fi
 
+    mp4_file=""
+    if (( subtitle_enabled )); then
+        for mp4_candidate in "$input_dir/$base_stem".[mM][pP]4; do
+            if [[ -f "$mp4_candidate" && -r "$mp4_candidate" ]]; then
+                mp4_file="$mp4_candidate"
+                break
+            fi
+        done
+        if [[ -z "$mp4_file" ]]; then
+            printf 'Error: could not find the matching MP4 for subtitle input: %s\n' "$input_file" >&2
+            exit 1
+        fi
+    fi
+
     target_outputs=()
+    target_languages_to_translate=()
+    translation_target_outputs=()
     existing_output=""
-    for target_language in "${target_languages[@]}"; do
+    for index in "${!target_languages[@]}"; do
+        target_language="${target_languages[$index]}"
         target_output="$input_dir/$base_stem.$target_language.$subtitle_type"
         target_outputs+=("$target_output")
-        if [[ -z "$existing_output" && ( -e "$target_output" || -L "$target_output" ) ]]; then
-            existing_output="$target_output"
+        if (( force_enabled == 0 )) && [[ -e "$target_output" || -L "$target_output" ]]; then
+            if (( subtitle_enabled )); then
+                if [[ ! -s "$target_output" || ! -r "$target_output" ]]; then
+                    printf 'Error: existing translated subtitle is empty or unreadable: %s\n' "$target_output" >&2
+                    exit 1
+                fi
+                report_status "Reusing existing translated subtitle for MP4 muxing: $target_output"
+            elif [[ -z "$existing_output" ]]; then
+                existing_output="$target_output"
+            fi
+        else
+            target_languages_to_translate+=("$target_language")
+            translation_target_outputs+=("$target_output")
         fi
     done
     if [[ -n "$existing_output" && "$force_enabled" -eq 0 ]]; then
@@ -438,22 +645,25 @@ for input_file in "${input_files[@]}"; do
         advance_progress
         continue
     fi
-    if [[ ! -x "$nemo_bin" ]]; then
-        printf 'Error: nemo-speech executable not found or not executable: %s\n' "$nemo_bin" >&2
-        exit 127
+    if (( ${#target_languages_to_translate[@]} > 0 )); then
+        if [[ ! -x "$nemo_bin" ]]; then
+            printf 'Error: nemo-speech executable not found or not executable: %s\n' "$nemo_bin" >&2
+            exit 127
+        fi
+        if (( model_checked == 0 )); then
+            python3 "$nemo_helper" check-model --kind nmt --nemo-bin "$nemo_bin" --path "$nmt_model"
+            model_checked=1
+        fi
+        report_status "Translating: $input_file"
+    else
+        report_status "Using existing translations for MP4 muxing: $input_file"
     fi
-    if (( model_checked == 0 )); then
-        python3 "$nemo_helper" check-model --kind nmt --nemo-bin "$nemo_bin" --path "$nmt_model"
-        model_checked=1
-    fi
-
-    report_status "Translating: $input_file"
     english_ready=0
     english_subtitle="$tmp_dir/translated.en.$subtitle_type"
     korean_subtitle="$tmp_dir/translated.ko.$subtitle_type"
     declare -a temporary_outputs=()
 
-    for target_language in "${target_languages[@]}"; do
+    for target_language in "${target_languages_to_translate[@]}"; do
         if [[ "$target_language" == "en" ]]; then
             ensure_english
             subtitle_tool build "$metadata_file" "$english_text" "$english_subtitle" "$max_cue_chars"
@@ -480,7 +690,7 @@ for input_file in "${input_files[@]}"; do
 
     if (( force_enabled == 0 )); then
         existing_output=""
-        for target_output in "${target_outputs[@]}"; do
+        for target_output in "${translation_target_outputs[@]}"; do
             if [[ -e "$target_output" || -L "$target_output" ]]; then
                 existing_output="$target_output"
                 break
@@ -493,8 +703,8 @@ for input_file in "${input_files[@]}"; do
         fi
     fi
 
-    for index in "${!target_languages[@]}"; do
-        target_output="${target_outputs[$index]}"
+    for index in "${!target_languages_to_translate[@]}"; do
+        target_output="${translation_target_outputs[$index]}"
         temporary_output="${temporary_outputs[$index]}"
         if [[ ! -s "$temporary_output" ]]; then
             printf 'Error: translated subtitle output is empty: %s\n' "$temporary_output" >&2
@@ -518,5 +728,18 @@ for input_file in "${input_files[@]}"; do
         fi
         report_status "Saved: $target_output"
     done
+
+    if (( subtitle_enabled )); then
+        mux_subtitle_pairs=()
+        for index in "${!target_languages[@]}"; do
+            mux_subtitle_pairs+=("${target_outputs[$index]}" "${target_languages[$index]}")
+        done
+        if ! mux_subtitles_into_mp4 \
+            "$mp4_file" \
+            "$input_file" "$source_base_language" \
+            "${mux_subtitle_pairs[@]}"; then
+            exit 1
+        fi
+    fi
     advance_progress
 done
