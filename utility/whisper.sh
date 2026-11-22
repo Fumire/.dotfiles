@@ -929,7 +929,10 @@ embed_subtitle_in_mp4() {
             --output "$mux_subtitle_file"
     fi
 
-    run_ffmpeg_with_progress "$source_file" "Embedding subtitles" -y -i "$source_file" -i "$mux_subtitle_file" -map 0 -map 1 -c:v copy -c:a copy -c:s copy -c:s:"$new_subtitle_index" mov_text -metadata:s:s:"$new_subtitle_index" "language=${whisper_lang}" "$subtitle_tmp_file"
+    # mov_text defaults to a microsecond time base, where long subtitle cues can
+    # exceed MP4's signed 32-bit packet-duration limit. Preserve millisecond
+    # subtitle precision while keeping those durations representable.
+    run_ffmpeg_with_progress "$source_file" "Embedding subtitles" -y -i "$source_file" -i "$mux_subtitle_file" -map 0 -map 1 -c:v copy -c:a copy -c:s copy -c:s:"$new_subtitle_index" mov_text -bsf:s:"$new_subtitle_index" "setts=time_base=1/1000:prescale=1" -metadata:s:s:"$new_subtitle_index" "language=${whisper_lang}" "$subtitle_tmp_file"
     mv -fv -- "$subtitle_tmp_file" "$source_file"
     subtitle_tmp_file=""
     rm -fv -- "$subtitle_file"

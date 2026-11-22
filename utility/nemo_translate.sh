@@ -3,7 +3,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 readonly DEFAULT_NEMO_BIN="${HOME}/.local/bin/nemo-speech"
-readonly DEFAULT_NMT_MODEL="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/translation-model/Riva-Translate-4B-Instruct-v2-Q4_K_M.gguf"
+readonly DEFAULT_NMT_MODEL="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/translation-model/Riva-Translate-4B-Instruct-v2-Q5_K_M.gguf"
 nemo_bin="${NEMO_BIN:-$DEFAULT_NEMO_BIN}"
 nmt_model="${NEMO_NMT_MODEL:-$DEFAULT_NMT_MODEL}"
 nemo_helper="/Users/fumire/.dotfiles/utility/nemo.py"
