@@ -6,11 +6,13 @@ readonly DEFAULT_NEMO_BIN="${HOME}/.local/bin/nemo-speech"
 readonly DEFAULT_NEMO_ASR_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/ASR"
 readonly NEMO_ASR_MODEL_LARGE="${DEFAULT_NEMO_ASR_MODEL_DIR}/nemotron-3.5-asr-streaming-0.6b.gguf"
 readonly NEMO_ASR_MODEL_TURBO="${DEFAULT_NEMO_ASR_MODEL_DIR}/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf"
+readonly NEMO_ASR_MODEL_PARAKEET="${DEFAULT_NEMO_ASR_MODEL_DIR}/parakeet-tdt-0.6b-v3.gguf"
+readonly NEMO_ASR_MODEL_PARAKEET_TURBO="${DEFAULT_NEMO_ASR_MODEL_DIR}/parakeet-tdt-0.6b-v3.q8_0.gguf"
 readonly DEFAULT_NEMO_MODEL="$NEMO_ASR_MODEL_TURBO"
 readonly DEFAULT_NEMO_DIAR_MODEL_DIR="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/Diarization"
 readonly NEMO_DIAR_MODEL_LARGE="${DEFAULT_NEMO_DIAR_MODEL_DIR}/Nemotron-3-Diarization.gguf"
 readonly NEMO_DIAR_MODEL_TURBO="${DEFAULT_NEMO_DIAR_MODEL_DIR}/Nemotron-3-Diarization.q8_0.gguf"
-readonly DEFAULT_NEMO_DIAR_MODEL="$NEMO_DIAR_MODEL_TURBO"
+readonly DEFAULT_NEMO_DIAR_MODEL="$NEMO_DIAR_MODEL_LARGE"
 readonly DEFAULT_NEMO_VAD_MODEL="/Users/fumire/Library/CloudStorage/Dropbox/31_AI/nemo-speech-model/VAD/ggml-silero-v6.2.0.gguf"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -62,12 +64,15 @@ skipped unless -f or --force is provided. Force replaces the embedded track
 with the newly generated source subtitle.
 
 Options:
-  -m, --model MODEL      ASR model: large or turbo, or an explicit path/repo;
+  -m, --model MODEL      ASR model: large or turbo (Nemotron), parakeet or
+                         parakeet-turbo, or an explicit path/repo;
                          default: turbo (overridden by NEMO_MODEL when set)
                          Large: $NEMO_ASR_MODEL_LARGE
                          Turbo: $NEMO_ASR_MODEL_TURBO
+                         Parakeet: $NEMO_ASR_MODEL_PARAKEET
+                         Parakeet turbo: $NEMO_ASR_MODEL_PARAKEET_TURBO
   -d, --diar-model MODEL Speaker model: large or turbo, or an explicit
-                         path/repo; default: turbo (overridden by NEMO_DIAR_MODEL)
+                         path/repo; default: large (overridden by NEMO_DIAR_MODEL)
                          Large: $NEMO_DIAR_MODEL_LARGE
                          Turbo: $NEMO_DIAR_MODEL_TURBO
   --vad MODE             VAD mode: silero or false; default: silero
@@ -98,6 +103,8 @@ Examples:
   $(basename "$0") meeting.mp4
   $(basename "$0") -m large meeting.mp4
   $(basename "$0") --model turbo meeting.mp4
+  $(basename "$0") -m parakeet meeting.mp4
+  $(basename "$0") --model parakeet-turbo meeting.mp4
   $(basename "$0") -d large meeting.mp4
   $(basename "$0") --subtitle meeting.mp4
   $(basename "$0") -s meeting.mp4
@@ -128,6 +135,12 @@ set_asr_model() {
             ;;
         turbo)
             asr_model="$NEMO_ASR_MODEL_TURBO"
+            ;;
+        parakeet | parakeet-tdt-0.6b-v3.gguf)
+            asr_model="$NEMO_ASR_MODEL_PARAKEET"
+            ;;
+        parakeet-turbo | parakeet-tdt-0.6b-v3.q8_0.gguf)
+            asr_model="$NEMO_ASR_MODEL_PARAKEET_TURBO"
             ;;
         *)
             asr_model="$1"
