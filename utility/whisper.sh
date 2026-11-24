@@ -903,6 +903,23 @@ convert_to_mp3() {
     esac
 }
 
+has_audio_stream() {
+    local source_file="$1"
+    local audio_streams
+
+    if ! audio_streams="$(ffprobe -v error -select_streams a:0 -show_entries stream=index -of csv=p=0 "$source_file" 2>/dev/null)"; then
+        printf 'Warning: could not inspect audio streams in %s; attempting conversion.\n' "$source_file" >&2
+        return 0
+    fi
+
+    if [[ -z "$audio_streams" ]]; then
+        printf 'Warning: no audio stream found in %s; skipping transcription.\n' "$source_file" >&2
+        return 1
+    fi
+
+    return 0
+}
+
 embed_subtitle_in_mp4() {
     local source_file="$1"
     local subtitle_file="$2"
@@ -952,6 +969,14 @@ process_media_file() {
         fi
         return
     fi
+
+    case "$source_file" in
+        *.mp4 | *.avi | *.mkv)
+            if ! has_audio_stream "$source_file"; then
+                return 0
+            fi
+            ;;
+    esac
 
     case "$source_file" in
         *.mp4)

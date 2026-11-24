@@ -27,15 +27,14 @@ mov_text tracks. Existing MP4 streams are retained; tracks with matching
 language tags are reused. The -f option replaces translated sidecars; combined
 with -s, it also replaces embedded MP4 subtitle tracks with the requested set.
 
-The source language is read from a nemo:language comment when present, then
-inferred from a filename ending in .en or .ko. For other filenames, provide
---from CODE. Files marked as translated by nemo_translate.sh are always skipped.
+The source language is read from a nemo:language comment when present;
+otherwise provide --from CODE. Files marked as translated by nemo_translate.sh
+and files whose basename ends in .en or .ko are always skipped, even with --force.
 English inputs produce Korean by default, Korean inputs produce English, and
 other source languages produce both English and Korean through English.
 
 Options:
-  -l, --from CODE        Source language; overrides file comment and filename
-                         inference
+  -l, --from CODE        Source language; overrides the file comment
   -t, --to LANGUAGE      auto, en, ko, or both; default: auto
   -m, --nmt-model PATH   Translation GGUF model; default: ${nmt_model##*/}
   -c, --cue CHARS        Maximum translated cue length; default: $max_cue_chars
@@ -51,8 +50,7 @@ Examples:
   $(basename "$0") --from en meeting.vtt
   $(basename "$0") --from ko meeting.srt
   $(basename "$0") --from ja --to both meeting.srt
-  $(basename "$0") meeting.en.vtt
-  $(basename "$0") -f --to en meeting.ko.srt
+  $(basename "$0") -f --from ko --to en meeting.srt
   $(basename "$0") -s --to both meeting.srt
 EOF
 }
@@ -535,6 +533,14 @@ for input_file in "${input_files[@]}"; do
         vtt | VTT | Vtt | vtT | VtT | vTt | vTT | VTt) subtitle_type=vtt ;;
         *) printf 'Error: input must be an .srt or .vtt file: %s\n' "$input_file" >&2; exit 2 ;;
     esac
+    stem="${input_name%.*}"
+    case "$stem" in
+        *.[Ee][Nn] | *.[Kk][Oo])
+            report_status "Skipping: language-tagged subtitle is treated as a translated output: $input_file"
+            advance_progress
+            continue
+            ;;
+    esac
     subtitle_tool parse "$input_file" "$metadata_file" "$source_text"
     subtitle_info="$(subtitle_tool metadata "$metadata_file")"
     comment_language="${subtitle_info%%$'\t'*}"
@@ -546,21 +552,15 @@ for input_file in "${input_files[@]}"; do
     fi
 
     input_dir="$(dirname "$input_file")"
-    stem="${input_name%.*}"
-    filename_language=""
-    case "$stem" in
-        *.[Ee][Nn]) filename_language=en ;;
-        *.[Kk][Oo]) filename_language=ko ;;
-    esac
     if [[ -n "$source_language_option" ]]; then
         source_language="$(normalize_language "$source_language_option")"
     elif [[ -n "$comment_language" && "$comment_language" != "und" && "$comment_language" != "auto" ]]; then
         source_language="$(normalize_language "$comment_language")"
     else
-        source_language="$filename_language"
+        source_language=""
     fi
     if [[ -z "$source_language" ]]; then
-        printf 'Error: source language is unknown for %s; provide --from CODE or use a .en/.ko filename suffix.\n' "$input_file" >&2
+        printf 'Error: source language is unknown for %s; provide --from CODE or add a nemo:language comment.\n' "$input_file" >&2
         exit 2
     fi
     case "$source_language" in
@@ -576,9 +576,6 @@ for input_file in "${input_files[@]}"; do
     source_base_language="${source_language%%[-_]*}"
     source_base_language="$(normalize_language "$source_base_language")"
     base_stem="$stem"
-    if [[ -n "$filename_language" && "$filename_language" == "$source_base_language" ]]; then
-        base_stem="${stem%.*}"
-    fi
 
     same_language=0
     case "$target_mode" in
