@@ -30,6 +30,7 @@ whisper_vad_model_dir="${WHISPER_VAD_MODEL_DIR:-$DEFAULT_WHISPER_VAD_MODEL_DIR}"
 whisper_subtitle="${SUBTITLE:-false}"
 whisper_subtitle_max_words="${WHISPER_SUBTITLE_MAX_WORDS:-$DEFAULT_WHISPER_SUBTITLE_MAX_WORDS}"
 whisper_cue_chars="${WHISPER_CUE_CHARS:-$DEFAULT_WHISPER_CUE_CHARS}"
+force_enabled=0
 
 show_help() {
     cat <<EOF
@@ -37,7 +38,8 @@ Usage:
   utility/whisper.sh [OPTIONS]... [FILE ...]
 
 Generate .srt subtitle files by default; choose srt or vtt with -t or --type.
-Files with an existing output in the selected format are skipped.
+An existing output is reused without retranscription by default; with -s it is
+used for MP4 muxing. Use -f or --force to regenerate and replace the subtitle.
 Generated subtitles include a language comment for nemo_translate.sh; with
 --lang auto, the detected language is read from Whisper's JSON result.
 Each input is announced as (current/total) before processing.
@@ -53,6 +55,7 @@ Examples:
   utility/whisper.sh -m large audio.mp3
   utility/whisper.sh -t vtt audio.mp3
   utility/whisper.sh -c 35 audio.mp3
+  utility/whisper.sh --force video.mp4
   utility/whisper.sh -s video.mp4
   utility/whisper.sh --no-vad audio.mp3
   utility/whisper.sh --vad-model v5.1.2 audio.mp3
@@ -89,6 +92,7 @@ Options:
   -l, --lang CODE                      Spoken language; default: ko
   -m, --model CHOICE                   large or turbo; default: turbo
   -t, --type FORMAT                    Subtitle format: srt or vtt; default: srt
+  -f, --force                          Regenerate and replace an existing subtitle
   -c, --cue CHARS                      Maximum characters per subtitle cue; default: $whisper_cue_chars (minimum: 19)
       --model-path PATH                Explicit Whisper model file path
       --subtitle-max-words N           Maximum words per subtitle line; 0 disables; default: 7
@@ -156,6 +160,10 @@ parse_args() {
                 ;;
             --type=*)
                 whisper_type="${1#*=}"
+                shift
+                ;;
+            -f | --force)
+                force_enabled=1
                 shift
                 ;;
             -c | --cue)
@@ -961,7 +969,7 @@ process_media_file() {
     local subtitle_file="${stem}.${whisper_type}"
     local mp3_file="${work_dir}/input.mp3"
 
-    if [[ -f "$subtitle_file" ]]; then
+    if [[ -f "$subtitle_file" ]] && (( force_enabled == 0 )); then
         if [[ "$source_file" == *.mp4 && "${whisper_subtitle}" == "true" ]]; then
             normalize_subtitle_cue_length "$subtitle_file" "$whisper_type" "$whisper_cue_chars"
             normalize_subtitle_phrase_length "$subtitle_file" "$whisper_type" "$whisper_subtitle_max_words"

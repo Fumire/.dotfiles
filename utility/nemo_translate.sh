@@ -370,7 +370,6 @@ mux_subtitles_into_mp4() {
     shift 3
     local -a candidate_files=("$source_subtitle")
     local -a candidate_languages=("$source_language")
-    local -a existing_languages=()
     local -a mux_files=()
     local -a mux_languages=()
     local -a ffmpeg_args=()
@@ -414,25 +413,20 @@ mux_subtitles_into_mp4() {
         printf 'Error: could not read existing subtitle language tags in: %s\n' "$source_file" >&2
         return 1
     fi
-    while IFS= read -r current_language; do
-        if [[ -n "$current_language" ]]; then
-            existing_languages+=("$current_language")
-        fi
-    done <<< "$existing_language_tags"
-
     for i in "${!candidate_files[@]}"; do
         language_found=0
         candidate_language="${candidate_languages[$i]%%[-_]*}"
         candidate_language="$(normalize_language "$candidate_language")"
         if (( force_enabled == 0 )); then
-            for current_language in "${existing_languages[@]}"; do
+            while IFS= read -r current_language; do
+                [[ -n "$current_language" ]] || continue
                 current_language="${current_language%%[-_]*}"
                 current_language="$(normalize_language "$current_language")"
                 if [[ "$candidate_language" == "$current_language" ]]; then
                     language_found=1
                     break
                 fi
-            done
+            done <<< "$existing_language_tags"
         fi
         if (( language_found )); then
             report_status "Keeping existing MP4 subtitle track for language $candidate_language: $source_file"
